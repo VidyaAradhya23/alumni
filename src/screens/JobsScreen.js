@@ -23,9 +23,9 @@ const JobsScreen = ({ navigation, route }) => {
   const [workModeModalVisible, setWorkModeModalVisible] = useState(false);
 
   const [jobList, setJobList] = useState([
-    { id: '1', role: 'Sr Software Engineer', company: 'Paypal', workMode: 'Full-Time', experience: '5+ years', location: 'Bengaluru', description: 'We are looking for a Senior Software Engineer with strong background in Node.js and scalable architectures to join our core team.' },
-    { id: '2', role: 'Backend Developer', company: 'Amazon', workMode: 'Remote', experience: '3-5 years', location: 'Remote', description: 'Join our AWS team to build highly available backend services.' },
-    { id: '3', role: 'Frontend Engineer', company: 'Google', workMode: 'Hybrid', experience: '2+ years', location: 'Hyderabad', description: 'Build beautiful user interfaces with React and Next.js.' },
+    { id: '1', role: 'Sr Software Engineer', company: 'Paypal', workMode: 'Full-Time', experience: '5+ years', location: 'Bengaluru', views: 124, applied: 38, shared: 14, description: 'We are looking for a Senior Software Engineer with strong background in Node.js and scalable architectures to join our core team.' },
+    { id: '2', role: 'Backend Developer', company: 'Amazon', workMode: 'Remote', experience: '3-5 years', location: 'Remote', views: 89, applied: 22, shared: 8, description: 'Join our AWS team to build highly available backend services.' },
+    { id: '3', role: 'Frontend Engineer', company: 'Google', workMode: 'Hybrid', experience: '2+ years', location: 'Hyderabad', views: 156, applied: 45, shared: 25, description: 'Build beautiful user interfaces with React and Next.js.' },
   ]);
 
   const profileMatches = [
@@ -81,6 +81,9 @@ const JobsScreen = ({ navigation, route }) => {
       workMode: jobWorkMode,
       experience: jobExperience || 'Not specified',
       location: jobLocation || 'Remote',
+      views: 0,
+      applied: 0,
+      shared: 0,
       description: jobDescription || 'No description provided.',
     };
 
@@ -143,6 +146,22 @@ const JobsScreen = ({ navigation, route }) => {
                 <Ionicons name="location-outline" size={12} color="#64748B" style={{marginRight:4}} />
                 <Text style={styles.jobDetailText}>{selectedJob.location}</Text>
               </View>
+            </View>
+          </View>
+
+          {/* Stats Section */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statEmoji}>👁</Text>
+              <Text style={styles.statValue}>{selectedJob.views || 0} Views</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statEmoji}>📄</Text>
+              <Text style={styles.statValue}>{selectedJob.applied || 0} Applied</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statEmoji}>🔗</Text>
+              <Text style={styles.statValue}>{selectedJob.shared || 0} Shared</Text>
             </View>
           </View>
 
@@ -425,6 +444,9 @@ const JobsScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.headerIcons}>
+          <TouchableOpacity style={[styles.headerIconBtn, { marginRight: 8 }]} onPress={() => setShowEditor(true)}>
+            <Ionicons name="add-circle-outline" size={22} color="#003366" />
+          </TouchableOpacity>
           <TouchableOpacity style={[styles.headerIconBtn, { marginRight: 8 }]} onPress={() => navigation.navigate('Messages')}>
             <Ionicons name="chatbubble-ellipses-outline" size={22} color="#003366" />
             <View style={styles.dot} />
@@ -493,6 +515,21 @@ const JobsScreen = ({ navigation, route }) => {
                       </View>
                     </View>
                     
+                    <View style={styles.jobStatsRow}>
+                      <View style={styles.jobStatItem}>
+                        <Ionicons name="eye-outline" size={14} color="#64748B" />
+                        <Text style={styles.jobStatText}>{item.views || 0} Views</Text>
+                      </View>
+                      <View style={styles.jobStatItem}>
+                        <Ionicons name="document-text-outline" size={14} color="#64748B" />
+                        <Text style={styles.jobStatText}>{item.applied || 0} Applied</Text>
+                      </View>
+                      <View style={styles.jobStatItem}>
+                        <Ionicons name="share-social-outline" size={14} color="#64748B" />
+                        <Text style={styles.jobStatText}>{item.shared || 0} Shared</Text>
+                      </View>
+                    </View>
+
                     <View style={styles.viewMoreBtn}>
                       <Text style={styles.viewMoreText}>View More</Text>
                       <Ionicons name="arrow-forward" size={14} color="#003366" style={{marginLeft: 4}} />
@@ -1239,6 +1276,52 @@ const styles = StyleSheet.create({
   selectedModalItemText: {
     color: '#003366',
     fontWeight: '600',
+  },
+  jobStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  jobStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  jobStatText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    marginLeft: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  statCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  statValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
   },
 });
 

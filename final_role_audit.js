@@ -2,12 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 const filesToAudit = [
-  'mobile-app/src/screens/RoleSelectionScreen.js',
-  'mobile-app/src/screens/RegisterScreen.js',
-  'mobile-app/src/screens/DashboardScreen.js',
-  'mobile-app/src/screens/ProfileSetupScreen.js',
-  'mobile-app/src/screens/MentorshipScreen.js',
-  'mobile-app/App.js',
+  'src/screens/RoleSelectionScreen.js',
+  'src/screens/RegisterScreen.js',
+  'src/screens/DashboardScreen.js',
+  'src/screens/ProfileSetupScreen.js',
+  'src/screens/MentorshipScreen.js',
+  'App.js',
   'flow.mmd'
 ];
 

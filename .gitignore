@@ -19,8 +19,8 @@ node_modules/
 **/web-build/
 **/expo-env.d.ts
 **/.metro-health-check*
-/mobile-app/ios/
-/mobile-app/android/
+/ios/
+/android/
 
 # Build & compiled outputs
 dist/

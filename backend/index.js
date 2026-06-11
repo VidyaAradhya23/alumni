@@ -33,11 +33,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL) {
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
 }
 
 module.exports = app;
-

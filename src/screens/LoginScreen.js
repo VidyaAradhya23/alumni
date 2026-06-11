@@ -7,6 +7,7 @@ import api from '../services/api';
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('alumni@rvitm.edu.in');
   const [password, setPassword] = useState('alumni123');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -73,16 +74,23 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <TextInput 
-                  style={styles.input}
+                  style={[styles.input, { flex: 1 }]}
                   placeholder="Enter Password"
                   placeholderTextColor="#94A3B8"
                   value={password}
                   onChangeText={setPassword}
                   autoCapitalize="none"
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
+                  <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#94A3B8" />
+                </TouchableOpacity>
               </View>
             </View>
+
+            <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }}>
+              <Text style={{ color: '#003366', fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity 
               style={[styles.primaryButton, loading && styles.disabledButton]} 

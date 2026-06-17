@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, Modal, Image, TextInput, Dimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,6 +21,43 @@ const AdminProfileScreen = ({ navigation }) => {
     followers: 1248,
     following: 56,
   });
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const info = await AsyncStorage.getItem('userInfo');
+        if (info) {
+          const parsed = JSON.parse(info);
+          if (parsed.role === 'superadmin') {
+            setProfileData({
+              name: parsed.name || 'Super Admin',
+              username: '@superadmin',
+              bio: 'Global controls governance account • Managing all institutions, admins & system settings.',
+              branch: 'Global System Admin',
+              batch: '2026',
+              posts: 120,
+              followers: 15420,
+              following: 12,
+            });
+          } else {
+            setProfileData({
+              name: parsed.name || 'RVITM Admin',
+              username: parsed.email ? `@${parsed.email.split('@')[0]}` : '@rvitm_admin',
+              bio: `Official Admin • ${parsed.name || 'RVITM'} Alumni Network • Managing institutional connections & opportunities.`,
+              branch: 'Administration',
+              batch: '2024',
+              posts: 48,
+              followers: 1248,
+              following: 56,
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const posts = [
     { id: '1', uri: 'https://images.unsplash.com/photo-1523050854058-8df90110c476?auto=format&fit=crop&w=300&h=300&q=80' },

@@ -17,7 +17,6 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -1624,54 +1623,75 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   // Get active module metadata
   const currentModuleData = panelItems.find(p => p.moduleName === activeModule);
 
+  const filteredPanelItems = useMemo(() => {
+    if (!searchQuery.trim()) return panelItems;
+    return panelItems.filter(item => 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.desc && item.desc.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [searchQuery]);
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={activeModule ? "light-content" : "dark-content"} backgroundColor={activeModule ? "#002144" : "#FFFFFF"} />
 
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {activeModule ? (
+      {activeModule ? (
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
             <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>
-            {activeModule ? currentModuleData?.title : 'Super Admin Panel'}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.profileBtn}
-          onPress={() => {
-            Alert.alert('Super Admin', 'Global Controls governance account.', [
-              { text: 'Close', style: 'cancel' },
-              {
-                text: 'Logout',
-                style: 'destructive',
-                onPress: async () => {
-                  try {
-                    await AsyncStorage.removeItem('userInfo');
-                  } catch (error) {
-                    console.error('Failed to clear user session', error);
-                  }
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Welcome' }],
-                  });
-                }
-              }
-            ]);
-          }}
-        >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>SA</Text>
+            <Text style={styles.headerTitle}>{currentModuleData?.title}</Text>
           </View>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.profileBtn}
+            onPress={() => navigation && navigation.navigate('AdminProfile')}
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>SA</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.headerAdminStyle}>
+          <TouchableOpacity
+            style={styles.headerAvatarAdminStyle}
+            activeOpacity={0.8}
+            onPress={() => navigation && navigation.navigate('AdminProfile')}
+          >
+            <Text style={styles.headerAvatarTextAdminStyle}>SA</Text>
+          </TouchableOpacity>
+
+          <View style={styles.searchBarAdminStyle}>
+            <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
+            <TextInput
+              style={styles.searchInputAdminStyle}
+              placeholder="Search Panel..."
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
+          <View style={styles.headerIconsAdminStyle}>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={() => navigation && navigation.navigate('Messages')}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+              <View style={styles.dotAdminStyle} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={() => navigation && navigation.navigate('Notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color="#003366" />
+              <View style={styles.dotAdminStyle} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Main Content Area */}
       {activeModule === null ? (
@@ -1682,7 +1702,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           <Text style={styles.sectionHeaderTitle}>Administration Modules</Text>
           {/* Main Grid Options */}
           <View style={styles.gridContainer}>
-            {panelItems.map((item) => (
+            {filteredPanelItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={[styles.gridCard, { backgroundColor: item.color }]}
@@ -1718,6 +1738,69 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  headerAdminStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    height: 60,
+  },
+  headerAvatarAdminStyle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#D97706',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerAvatarTextAdminStyle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  searchBarAdminStyle: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    height: 38,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  searchInputAdminStyle: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0F172A',
+    paddingVertical: 0,
+  },
+  headerIconsAdminStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtnAdminStyle: {
+    position: 'relative',
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dotAdminStyle: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   flexContainer: {
     flex: 1,

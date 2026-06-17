@@ -1633,25 +1633,36 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={activeModule ? "light-content" : "dark-content"} backgroundColor={activeModule ? "#002144" : "#FFFFFF"} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
       {activeModule ? (
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{currentModuleData?.title}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.profileBtn}
-            onPress={() => navigation && navigation.navigate('AdminProfile')}
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>SA</Text>
-            </View>
+        <View style={styles.headerAdminStyle}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.headerIconBtnAdminStyle}>
+            <Ionicons name="arrow-back" size={24} color="#002144" />
           </TouchableOpacity>
+          
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#002144' }}>{currentModuleData?.title}</Text>
+            <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '500' }}>Super Admin Panel</Text>
+          </View>
+
+          <View style={styles.headerIconsAdminStyle}>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={() => navigation && navigation.navigate('Messages')}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+              <View style={styles.dotAdminStyle} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={() => navigation && navigation.navigate('Notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color="#003366" />
+              <View style={styles.dotAdminStyle} />
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         <View style={styles.headerAdminStyle}>

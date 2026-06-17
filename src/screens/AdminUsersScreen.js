@@ -15,21 +15,21 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const FRIENDS_DATA = [
-  { id: '1', name: 'Priya Sharma', branch: 'CSE', department: 'Computer Science', batch: '2020', location: 'Bengaluru', course: 'B.E.', avatar: 'PS' },
-  { id: '2', name: 'Rahul Verma', branch: 'ECE', department: 'Electronics', batch: '2019', location: 'Hyderabad', course: 'B.E.', avatar: 'RV' },
-  { id: '3', name: 'Sneha Patel', branch: 'ISE', department: 'Information Science', batch: '2021', location: 'Remote', course: 'B.E.', avatar: 'SP' },
-  { id: '4', name: 'Arjun Reddy', branch: 'ME', department: 'Mechanical', batch: '2018', location: 'Bengaluru', course: 'B.E.', avatar: 'AR' },
-  { id: '5', name: 'Kavitha Nair', branch: 'EEE', department: 'Electrical', batch: '2022', location: 'Mumbai', course: 'M.Tech', avatar: 'KN' },
-  { id: '6', name: 'Deepak Kumar', branch: 'CSE', department: 'Computer Science', batch: '2017', location: 'Bengaluru', course: 'MCA', avatar: 'DK' },
-  { id: '7', name: 'Sarthak Banka', branch: 'CSE', department: 'Computer Science', batch: '2023', location: 'Bengaluru', course: 'B.E.', avatar: 'SB' },
-  { id: '8', name: 'Manjunath N', branch: 'MBA', department: 'Management', batch: '2015', location: 'Mumbai', course: 'MBA', avatar: 'MN' },
+  { id: '1', name: 'Priya Sharma', branch: 'CSE', department: 'Computer Science', batch: '2020', location: 'Bengaluru', course: 'B.E.', avatar: 'PS', institution: 'RVCE' },
+  { id: '2', name: 'Rahul Verma', branch: 'ECE', department: 'Electronics', batch: '2019', location: 'Hyderabad', course: 'B.E.', avatar: 'RV', institution: 'RVCE' },
+  { id: '3', name: 'Sneha Patel', branch: 'ISE', department: 'Information Science', batch: '2021', location: 'Remote', course: 'B.E.', avatar: 'SP', institution: 'RVITM' },
+  { id: '4', name: 'Arjun Reddy', branch: 'ME', department: 'Mechanical', batch: '2018', location: 'Bengaluru', course: 'B.E.', avatar: 'AR', institution: 'RVITM' },
+  { id: '5', name: 'Kavitha Nair', branch: 'EEE', department: 'Electrical', batch: '2022', location: 'Mumbai', course: 'M.Tech', avatar: 'KN', institution: 'RVPU' },
+  { id: '6', name: 'Deepak Kumar', branch: 'CSE', department: 'Computer Science', batch: '2017', location: 'Bengaluru', course: 'MCA', avatar: 'DK', institution: 'RVPU' },
+  { id: '7', name: 'Sarthak Banka', branch: 'CSE', department: 'Computer Science', batch: '2023', location: 'Bengaluru', course: 'B.E.', avatar: 'SB', institution: 'RVIS' },
+  { id: '8', name: 'Manjunath N', branch: 'MBA', department: 'Management', batch: '2015', location: 'Mumbai', course: 'MBA', avatar: 'MN', institution: 'RVIS' },
 ];
 
 const COMMUNITIES_DATA = [
-  { id: '1', name: 'RVITM Tech Community', members: '1.2K', icon: 'code-slash-outline', joined: true },
-  { id: '2', name: 'Alumni Entrepreneurs Club', members: '856', icon: 'rocket-outline', joined: false },
-  { id: '3', name: 'RVITM Placement Network', members: '2.1K', icon: 'briefcase-outline', joined: true },
-  { id: '4', name: 'Sports Alumni Association', members: '432', icon: 'football-outline', joined: false },
+  { id: '1', name: 'RVITM Tech Community', members: '1.2K', icon: 'code-slash-outline', joined: true, institution: 'RVITM' },
+  { id: '2', name: 'Alumni Entrepreneurs Club', members: '856', icon: 'rocket-outline', joined: false, institution: 'RVCE' },
+  { id: '3', name: 'RVITM Placement Network', members: '2.1K', icon: 'briefcase-outline', joined: true, institution: 'RVITM' },
+  { id: '4', name: 'Sports Alumni Association', members: '432', icon: 'football-outline', joined: false, institution: 'RVIS' },
 ];
 
 const AVATAR_COLORS = ['#003366', '#0F172A', '#1E3A5F', '#2C5282', '#1A365D', '#2D3748'];
@@ -40,7 +40,9 @@ const DEPT_OPTIONS = ['All', 'Computer Science', 'Electronics', 'Information Sci
 const LOC_OPTIONS = ['All', 'Bengaluru', 'Hyderabad', 'Mumbai', 'Remote'];
 const COURSE_OPTIONS = ['All', 'B.E.', 'M.Tech', 'MCA', 'MBA'];
 
-const AdminUsersScreen = ({ navigation }) => {
+const AdminUsersScreen = ({ navigation, route }) => {
+  const isSuperAdmin = route?.params?.isSuperAdmin || false;
+  const [selectedInstitution, setSelectedInstitution] = useState('All');
   const [activeTab, setActiveTab] = useState('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [communities, setCommunities] = useState(COMMUNITIES_DATA);
@@ -91,8 +93,20 @@ const AdminUsersScreen = ({ navigation }) => {
       data = data.filter((friend) => friend.course === selectedCourse);
     }
 
+    if (isSuperAdmin && selectedInstitution !== 'All') {
+      data = data.filter((friend) => friend.institution === selectedInstitution);
+    }
+
     return data;
-  }, [searchQuery, selectedBatch, selectedBranch, selectedDept, selectedLoc, selectedCourse]);
+  }, [searchQuery, selectedBatch, selectedBranch, selectedDept, selectedLoc, selectedCourse, isSuperAdmin, selectedInstitution]);
+
+  const filteredCommunities = useMemo(() => {
+    let data = communities;
+    if (isSuperAdmin && selectedInstitution !== 'All') {
+      data = data.filter((comm) => comm.institution === selectedInstitution);
+    }
+    return data;
+  }, [communities, isSuperAdmin, selectedInstitution]);
 
   const handleToggleJoin = (communityId) => {
     setCommunities((prev) =>
@@ -245,6 +259,28 @@ const AdminUsersScreen = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {renderHeader()}
+      {isSuperAdmin && (
+        <View style={styles.superAdminSelector}>
+          <Text style={styles.selectorLabel}>Institution:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selectorScroll}>
+            {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+              <TouchableOpacity
+                key={inst}
+                style={[
+                  styles.selectorChip,
+                  selectedInstitution === inst && styles.selectorChipActive
+                ]}
+                onPress={() => setSelectedInstitution(inst)}
+              >
+                <Text style={[
+                  styles.selectorChipText,
+                  selectedInstitution === inst && styles.selectorChipTextActive
+                ]}>{inst}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
       {renderTabs()}
 
       {activeTab === 'friends' && (
@@ -280,7 +316,7 @@ const AdminUsersScreen = ({ navigation }) => {
         />
       ) : (
         <FlatList
-          data={communities}
+          data={filteredCommunities}
           keyExtractor={(item) => item.id}
           renderItem={renderCommunityItem}
           contentContainerStyle={styles.listContent}
@@ -743,6 +779,41 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontSize: 15,
     fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  superAdminSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectorLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginRight: 8,
+  },
+  selectorScroll: {
+    gap: 8,
+  },
+  selectorChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+  },
+  selectorChipActive: {
+    backgroundColor: '#003366',
+  },
+  selectorChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  selectorChipTextActive: {
     color: '#FFFFFF',
   },
 });

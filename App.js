@@ -179,11 +179,11 @@ function SuperAdminTabs() {
           let iconName = 'help-circle-outline';
           let label = route.name;
 
-          if (route.name === 'SADashboard') { iconName = focused ? 'grid' : 'grid-outline'; label = 'Dashboard'; }
-          else if (route.name === 'SAInstitutions') { iconName = focused ? 'business' : 'business-outline'; label = 'Institutes'; }
-          else if (route.name === 'SAAdmins') { iconName = focused ? 'person-add' : 'person-add-outline'; label = 'Admins'; }
-          else if (route.name === 'SALogs') { iconName = focused ? 'stats-chart' : 'stats-chart-outline'; label = 'Logs'; }
-          else if (route.name === 'SAPanel') { iconName = focused ? 'apps' : 'apps-outline'; label = 'Panel'; }
+          if (route.name === 'SADashboard') { iconName = focused ? 'home' : 'home-outline'; label = 'Dashboard'; }
+          else if (route.name === 'SAUsers') { iconName = focused ? 'people' : 'people-outline'; label = 'Users'; }
+          else if (route.name === 'SAJobs') { iconName = focused ? 'briefcase' : 'briefcase-outline'; label = 'Jobs'; }
+          else if (route.name === 'SAEvents') { iconName = focused ? 'calendar' : 'calendar-outline'; label = 'Events'; }
+          else if (route.name === 'SAPanel') { iconName = focused ? 'grid' : 'grid-outline'; label = 'Panel'; }
 
           return (
             <View style={{ alignItems: 'center' }}>
@@ -212,10 +212,10 @@ function SuperAdminTabs() {
         },
       })}
     >
-      <SuperAdminTab.Screen name="SADashboard" component={SuperAdminDashboardScreen} />
-      <SuperAdminTab.Screen name="SAInstitutions" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'master_list' }} />
-      <SuperAdminTab.Screen name="SAAdmins" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'administrator' }} />
-      <SuperAdminTab.Screen name="SALogs" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'logs_stats' }} />
+      <SuperAdminTab.Screen name="SADashboard" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'dashboard_home' }} />
+      <SuperAdminTab.Screen name="SAUsers" component={AdminUsersScreen} initialParams={{ isSuperAdmin: true }} />
+      <SuperAdminTab.Screen name="SAJobs" component={AdminJobsScreen} initialParams={{ isSuperAdmin: true }} />
+      <SuperAdminTab.Screen name="SAEvents" component={AdminEventsScreen} initialParams={{ isSuperAdmin: true }} />
       <SuperAdminTab.Screen name="SAPanel" component={SuperAdminDashboardScreen} initialParams={{ initialModule: null }} />
     </SuperAdminTab.Navigator>
   );

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, StatusBar, Alert, Modal, FlatList, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-const AdminEventsScreen = ({ navigation }) => {
+const AdminEventsScreen = ({ navigation, route }) => {
+  const isSuperAdmin = route?.params?.isSuperAdmin || false;
+  const [selectedInstitution, setSelectedInstitution] = useState('All');
   const [showEditor, setShowEditor] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [commentModalEvent, setCommentModalEvent] = useState(null);
@@ -33,6 +35,7 @@ const AdminEventsScreen = ({ navigation }) => {
         { id: 'c2', user: 'Rahul V.', text: 'Will there be online participation?', time: '5h ago' },
       ],
       reshares: 24,
+      institution: 'RVCE',
     },
     {
       id: 'e2',
@@ -48,6 +51,7 @@ const AdminEventsScreen = ({ navigation }) => {
         { id: 'c3', user: 'Arjun R.', text: 'Great lineup of speakers!', time: '1d ago' },
       ],
       reshares: 12,
+      institution: 'RVITM',
     },
     {
       id: 'e3',
@@ -61,6 +65,7 @@ const AdminEventsScreen = ({ navigation }) => {
       attachment: 'mentorship_guidelines.docx',
       comments: [],
       reshares: 8,
+      institution: 'RVPU',
     },
   ]);
 
@@ -111,6 +116,7 @@ const AdminEventsScreen = ({ navigation }) => {
       comments: [],
       reshares: 0,
       attachment: eventAttachment,
+      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
     };
     setEventList([newEvent, ...eventList]);
     setEventTitle('');
@@ -129,6 +135,14 @@ const AdminEventsScreen = ({ navigation }) => {
   const handleShare = (eventTitle) => {
     Alert.alert('Share', `Share link for "${eventTitle}" copied to clipboard.`);
   };
+
+  const filteredEvents = useMemo(() => {
+    let data = eventList;
+    if (isSuperAdmin && selectedInstitution !== 'All') {
+      data = data.filter((event) => event.institution === selectedInstitution);
+    }
+    return data;
+  }, [eventList, isSuperAdmin, selectedInstitution]);
 
   // Get the latest comment data for the modal
   const currentModalEvent = commentModalEvent ? eventList.find(e => e.id === commentModalEvent.id) : null;
@@ -306,9 +320,31 @@ const AdminEventsScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {isSuperAdmin && (
+        <View style={styles.superAdminSelector}>
+          <Text style={styles.selectorLabel}>Institution:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selectorScroll}>
+            {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+              <TouchableOpacity
+                key={inst}
+                style={[
+                  styles.selectorChip,
+                  selectedInstitution === inst && styles.selectorChipActive
+                ]}
+                onPress={() => setSelectedInstitution(inst)}
+              >
+                <Text style={[
+                  styles.selectorChipText,
+                  selectedInstitution === inst && styles.selectorChipTextActive
+                ]}>{inst}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <FlatList
-        data={eventList}
+        data={filteredEvents}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -537,6 +573,41 @@ const styles = StyleSheet.create({
   commentInputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   commentInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, height: 40, fontSize: 14, color: '#0F172A', marginRight: 10 },
   commentSendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center' },
+  superAdminSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectorLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginRight: 8,
+  },
+  selectorScroll: {
+    gap: 8,
+  },
+  selectorChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+  },
+  selectorChipActive: {
+    backgroundColor: '#003366',
+  },
+  selectorChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  selectorChipTextActive: {
+    color: '#FFFFFF',
+  },
 });
 
 export default AdminEventsScreen;

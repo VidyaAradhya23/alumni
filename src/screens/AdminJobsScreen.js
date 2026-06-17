@@ -28,6 +28,7 @@ const DUMMY_JOBS = [
     applied: 38,
     shared: 14,
     description: 'We are looking for a Senior Software Engineer to join our payments platform team.',
+    institution: 'RVCE',
   },
   {
     id: '2',
@@ -40,6 +41,7 @@ const DUMMY_JOBS = [
     applied: 22,
     shared: 8,
     description: 'Amazon is hiring a Backend Developer to work on our cloud infrastructure services.',
+    institution: 'RVITM',
   },
   {
     id: '3',
@@ -52,6 +54,7 @@ const DUMMY_JOBS = [
     applied: 45,
     shared: 25,
     description: 'Google is seeking a Frontend Engineer to build next-generation web applications.',
+    institution: 'RVPU',
   },
 ];
 
@@ -181,9 +184,11 @@ function ResumeCard({ item }) {
 }
 
 // ─── MAIN SCREEN COMPONENT ──────────────────────────────────────────
-export default function AdminJobsScreen({ navigation }) {
+export default function AdminJobsScreen({ navigation, route }) {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
+  const isSuperAdmin = route?.params?.isSuperAdmin || false;
+  const [selectedInstitution, setSelectedInstitution] = useState('All');
   const [screen, setScreen] = useState('list');
   const [jobs, setJobs] = useState(DUMMY_JOBS);
   const [detail, setDetail] = useState(null);
@@ -206,6 +211,7 @@ export default function AdminJobsScreen({ navigation }) {
       workMode: fMode || 'Full-Time', experience: fExp.trim() || 'Not specified',
       location: fLoc.trim() || 'Not specified', views: 0, applied: 0, shared: 0,
       description: fDesc.trim() || 'No description provided.',
+      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
     }, ...jobs]);
     clearForm();
     setScreen('list');
@@ -225,6 +231,9 @@ export default function AdminJobsScreen({ navigation }) {
   const openDetail = (job) => { setDetail(job); setScreen('detail'); };
 
   const filtered = jobs.filter(j => {
+    if (isSuperAdmin && selectedInstitution !== 'All') {
+      if (j.institution !== selectedInstitution) return false;
+    }
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return j.role.toLowerCase().includes(q) || j.company.toLowerCase().includes(q) || j.location.toLowerCase().includes(q);
@@ -383,6 +392,28 @@ export default function AdminJobsScreen({ navigation }) {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {header}
+      {isSuperAdmin && (
+        <View style={s.superAdminSelector}>
+          <Text style={s.selectorLabel}>Institution:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
+            {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+              <TouchableOpacity
+                key={inst}
+                style={[
+                  s.selectorChip,
+                  selectedInstitution === inst && s.selectorChipActive
+                ]}
+                onPress={() => setSelectedInstitution(inst)}
+              >
+                <Text style={[
+                  s.selectorChipText,
+                  selectedInstitution === inst && s.selectorChipTextActive
+                ]}>{inst}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 12 }}>
         <Text style={{ fontSize: 20, fontWeight: '800', color: '#002144' }}>Job Postings</Text>
         <TouchableOpacity activeOpacity={0.7} onPress={() => setScreen('editor')}>
@@ -473,4 +504,39 @@ const s = StyleSheet.create({
   // FABs
   fab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 110 : 90, right: 20, width: 56, height: 56, borderRadius: 16, backgroundColor: '#003366', alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   resumeFab: { position: 'absolute', bottom: Platform.OS === 'ios' ? 40 : 24, right: 20, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 14, borderRadius: 16, backgroundColor: '#002144', elevation: 6, shadowColor: '#002144', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  superAdminSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectorLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginRight: 8,
+  },
+  selectorScroll: {
+    gap: 8,
+  },
+  selectorChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+  },
+  selectorChipActive: {
+    backgroundColor: '#003366',
+  },
+  selectorChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  selectorChipTextActive: {
+    color: '#FFFFFF',
+  },
 });

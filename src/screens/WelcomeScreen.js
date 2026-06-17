@@ -63,6 +63,16 @@ const WelcomeScreen = ({ navigation }) => {
           <Ionicons name="shield-checkmark-outline" size={16} color="#94A3B8" style={{ marginRight: 6 }} />
           <Text style={styles.adminLoginText}>Admin Login</Text>
         </TouchableOpacity>
+
+        {/* Super Admin Login Link */}
+        <TouchableOpacity 
+          style={styles.superAdminLoginLink} 
+          onPress={() => navigation.navigate('AdminLogin', { role: 'superadmin' })}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="star" size={16} color="#D97706" style={{ marginRight: 6 }} />
+          <Text style={styles.superAdminLoginText}>Super Admin</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -171,6 +181,18 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
+  },
+  superAdminLoginLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  superAdminLoginText: {
+    color: '#D97706',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

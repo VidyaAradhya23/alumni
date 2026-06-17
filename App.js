@@ -38,9 +38,13 @@ import AdminPanelScreen from './src/screens/AdminPanelScreen';
 import AdminProfileScreen from './src/screens/AdminProfileScreen';
 import AdminPlacementDetailsScreen from './src/screens/AdminPlacementDetailsScreen';
 
+// Super Admin Flow
+import SuperAdminDashboardScreen from './src/screens/SuperAdminDashboardScreen';
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminTab = createBottomTabNavigator();
+const SuperAdminTab = createBottomTabNavigator();
 
 // ===== ALUMNI BOTTOM TABS =====
 function MainTabs() {
@@ -162,6 +166,61 @@ function AdminTabs() {
   );
 }
 
+// ===== SUPER ADMIN BOTTOM TABS =====
+function SuperAdminTabs() {
+  return (
+    <SuperAdminTab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: '#003366',
+        tabBarInactiveTintColor: '#94A3B8',
+        tabBarIcon: ({ focused, color }) => {
+          let iconName = 'help-circle-outline';
+          let label = route.name;
+
+          if (route.name === 'SADashboard') { iconName = focused ? 'grid' : 'grid-outline'; label = 'Dashboard'; }
+          else if (route.name === 'SAInstitutions') { iconName = focused ? 'business' : 'business-outline'; label = 'Institutes'; }
+          else if (route.name === 'SAAdmins') { iconName = focused ? 'person-add' : 'person-add-outline'; label = 'Admins'; }
+          else if (route.name === 'SALogs') { iconName = focused ? 'stats-chart' : 'stats-chart-outline'; label = 'Logs'; }
+          else if (route.name === 'SAPanel') { iconName = focused ? 'apps' : 'apps-outline'; label = 'Panel'; }
+
+          return (
+            <View style={{ alignItems: 'center' }}>
+              {focused && (
+                <View style={{
+                  position: 'absolute',
+                  top: -8,
+                  width: 24,
+                  height: 3,
+                  borderRadius: 2,
+                  backgroundColor: '#003366',
+                }} />
+              )}
+              <Ionicons name={iconName} size={22} color={color} />
+              <Text style={{ color, fontSize: 10, fontWeight: '600', marginTop: 2 }}>{label}</Text>
+            </View>
+          );
+        },
+        tabBarStyle: {
+          borderTopWidth: 1,
+          borderTopColor: '#E2E8F0',
+          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 65,
+          backgroundColor: '#FFFFFF',
+        },
+      })}
+    >
+      <SuperAdminTab.Screen name="SADashboard" component={SuperAdminDashboardScreen} />
+      <SuperAdminTab.Screen name="SAInstitutions" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'master_list' }} />
+      <SuperAdminTab.Screen name="SAAdmins" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'administrator' }} />
+      <SuperAdminTab.Screen name="SALogs" component={SuperAdminDashboardScreen} initialParams={{ initialModule: 'logs_stats' }} />
+      <SuperAdminTab.Screen name="SAPanel" component={SuperAdminDashboardScreen} initialParams={{ initialModule: null }} />
+    </SuperAdminTab.Navigator>
+  );
+}
+
 export default function App() {
   return (
     <NavigationContainer>
@@ -190,6 +249,9 @@ export default function App() {
 
         {/* Admin Main App */}
         <Stack.Screen name="AdminMain" component={AdminTabs} />
+
+        {/* Super Admin Main App */}
+        <Stack.Screen name="SuperAdminMain" component={SuperAdminTabs} />
 
         {/* Shared Overlay/Secondary Screens */}
         <Stack.Screen name="Messages" component={MessagesScreen} />

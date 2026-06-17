@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ADMIN_EMAIL = 'admin@rvitm.edu.in';
-const ADMIN_PASSWORD = 'admin123';
+const CREDENTIALS = [
+  { email: 'superadmin@rvitm.edu', password: 'super123', role: 'superadmin', label: 'Super Admin' },
+  { email: 'admin@rvce.edu', password: 'admin123', role: 'admin', label: 'Admin (RVCE)' },
+  { email: 'admin@rvitm.edu', password: 'admin456', role: 'admin', label: 'Admin (RVITM)' },
+  { email: 'admin@rvpu.edu', password: 'admin789', role: 'admin', label: 'Admin (RVPU)' },
+  { email: 'admin@rvis.edu', password: 'admin012', role: 'admin', label: 'Admin (RVIS)' },
+];
 
 const AdminLoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -16,14 +21,21 @@ const AdminLoginScreen = ({ navigation }) => {
       alert('Please enter your email and password');
       return;
     }
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-      alert('Invalid credentials. Please use your admin email and password.');
+    const matched = CREDENTIALS.find(
+      (c) => c.email === email.trim().toLowerCase() && c.password === password
+    );
+    if (!matched) {
+      alert('Invalid credentials. Please use valid admin/superadmin credentials.');
       return;
     }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      navigation.navigate('AdminOTP', { email: email.trim().toLowerCase() });
+      if (matched.role === 'superadmin') {
+        navigation.navigate('SuperAdminMain');
+      } else {
+        navigation.navigate('AdminMain');
+      }
     }, 800);
   };
 
@@ -110,6 +122,16 @@ const AdminLoginScreen = ({ navigation }) => {
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={20} color="#64748B" />
             <Text style={styles.infoText}>Admin accounts are pre-provisioned by the institution. Contact your IT department if you need access.</Text>
+          </View>
+
+          <View style={styles.credentialsBox}>
+            <Text style={styles.credentialsTitle}>Demo Credentials</Text>
+            {CREDENTIALS.map((cred, index) => (
+              <View key={index} style={styles.credentialRow}>
+                <Text style={[styles.credentialLabel, cred.role === 'superadmin' && { color: '#D97706' }]}>{cred.label}</Text>
+                <Text style={styles.credentialValue}>{cred.email} / {cred.password}</Text>
+              </View>
+            ))}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -245,6 +267,33 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 18,
     marginLeft: 10,
+  },
+  credentialsBox: {
+    marginTop: 16,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  credentialsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 10,
+  },
+  credentialRow: {
+    marginBottom: 6,
+  },
+  credentialLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#003366',
+  },
+  credentialValue: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
   },
 });
 

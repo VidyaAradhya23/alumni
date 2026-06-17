@@ -17,9 +17,24 @@ const LoginScreen = ({ navigation }) => {
     }
     setLoading(true);
 
-    if (email.toLowerCase() === 'alumni@rvitm.edu.in' && password === 'alumni123') {
+    const dummyAlumni = [
+      { email: 'alumni@rvce.edu', password: 'alumni123', name: 'RVCE Alumni User', institution: 'RVCE' },
+      { email: 'alumni@rvitm.edu.in', password: 'alumni123', name: 'RVITM Alumni User', institution: 'RVITM' },
+      { email: 'alumni@rvitm.edu', password: 'alumni123', name: 'RVITM Alumni User', institution: 'RVITM' },
+      { email: 'alumni@rvpu.edu', password: 'alumni123', name: 'RVPU Alumni User', institution: 'RVPU' },
+      { email: 'alumni@rvis.edu', password: 'alumni123', name: 'RVIS Alumni User', institution: 'RVIS' },
+    ];
+
+    const matchedAlumni = dummyAlumni.find(a => a.email === email.toLowerCase().trim() && a.password === password);
+
+    if (matchedAlumni) {
       setTimeout(async () => {
-        await AsyncStorage.setItem('userInfo', JSON.stringify({ name: 'Alumni User', email: email.toLowerCase() }));
+        await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+          name: matchedAlumni.name, 
+          email: matchedAlumni.email,
+          institution: matchedAlumni.institution,
+          role: 'Alumni'
+        }));
         setLoading(false);
         navigation.navigate('Main');
       }, 800);
@@ -115,6 +130,26 @@ const LoginScreen = ({ navigation }) => {
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={20} color="#64748B" />
             <Text style={styles.infoText}>Use alumni@rvitm.edu.in / alumni123 for dummy access.</Text>
+          </View>
+
+          <View style={styles.credentialsBox}>
+            <Text style={styles.credentialsTitle}>Demo Credentials</Text>
+            <View style={styles.credentialRow}>
+              <Text style={styles.credentialLabel}>Alumni (RVCE)</Text>
+              <Text style={styles.credentialValue}>alumni@rvce.edu / alumni123</Text>
+            </View>
+            <View style={styles.credentialRow}>
+              <Text style={styles.credentialLabel}>Alumni (RVITM)</Text>
+              <Text style={styles.credentialValue}>alumni@rvitm.edu.in / alumni123</Text>
+            </View>
+            <View style={styles.credentialRow}>
+              <Text style={styles.credentialLabel}>Alumni (RVPU)</Text>
+              <Text style={styles.credentialValue}>alumni@rvpu.edu / alumni123</Text>
+            </View>
+            <View style={styles.credentialRow}>
+              <Text style={styles.credentialLabel}>Alumni (RVIS)</Text>
+              <Text style={styles.credentialValue}>alumni@rvis.edu / alumni123</Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -231,6 +266,33 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 18,
     marginLeft: 10,
+  },
+  credentialsBox: {
+    marginTop: 20,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  credentialsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 10,
+  },
+  credentialRow: {
+    marginBottom: 8,
+  },
+  credentialLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#003366',
+  },
+  credentialValue: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
   },
 });
 

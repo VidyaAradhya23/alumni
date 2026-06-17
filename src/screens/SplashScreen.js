@@ -1,10 +1,35 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = ({ navigation }) => {
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const checkSession = async () => {
+      try {
+        const userInfoStr = await AsyncStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          if (userInfo && userInfo.role) {
+            if (userInfo.role === 'superadmin') {
+              navigation.replace('SuperAdminMain');
+              return;
+            } else if (userInfo.role === 'admin') {
+              navigation.replace('AdminMain');
+              return;
+            } else if (userInfo.role === 'Alumni') {
+              navigation.replace('Main');
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+      }
       navigation.replace('Welcome');
+    };
+
+    const timer = setTimeout(() => {
+      checkSession();
     }, 2000);
     return () => clearTimeout(timer);
   }, [navigation]);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, Dimensions, Alert, StatusBar, Modal, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -90,8 +91,13 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    const performLogout = () => {
+    const performLogout = async () => {
       setSettingsVisible(false);
+      try {
+        await AsyncStorage.removeItem('userInfo');
+      } catch (error) {
+        console.error('Failed to clear user session', error);
+      }
       navigation.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],

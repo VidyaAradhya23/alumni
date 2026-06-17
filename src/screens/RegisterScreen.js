@@ -15,11 +15,11 @@ import {
 import api from '../services/api';
 
 const institutions = [
-  'RVITM', 'RVITM', 'RVPU', 'RVIT', 'RVIM', 'RVIS', 'RVJC', 'RVAC', 'RV Teachers College', 'Other'
+  'RVCE', 'RVITM', 'RVPU', 'RVIT', 'RVIM', 'RVIS', 'RVJC', 'RVAC', 'RV Teachers College', 'Other'
 ];
 
 const institutionDepartments = {
-  'RVITM': [
+  'RVCE': [
     "Aerospace Engineering",
     "Artificial Intelligence and Machine Learning",
     "Biotechnology",

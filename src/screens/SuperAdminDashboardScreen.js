@@ -17,6 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -1645,7 +1646,26 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         </View>
         <TouchableOpacity
           style={styles.profileBtn}
-          onPress={() => Alert.alert('Super Admin', 'Global Controls governance account.')}
+          onPress={() => {
+            Alert.alert('Super Admin', 'Global Controls governance account.', [
+              { text: 'Close', style: 'cancel' },
+              {
+                text: 'Logout',
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    await AsyncStorage.removeItem('userInfo');
+                  } catch (error) {
+                    console.error('Failed to clear user session', error);
+                  }
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Welcome' }],
+                  });
+                }
+              }
+            ]);
+          }}
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>SA</Text>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, Modal, Image, TextInput, Dimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -55,14 +56,21 @@ const AdminProfileScreen = ({ navigation }) => {
   ];
 
   const handleLogout = () => {
+    const performLogout = async () => {
+      try {
+        await AsyncStorage.removeItem('userInfo');
+      } catch (error) {
+        console.error('Failed to clear user session', error);
+      }
+      if (navigation) {
+        const parentNav = navigation.getParent() || navigation;
+        parentNav.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      }
+    };
+
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => {
-        if (navigation) {
-          const parentNav = navigation.getParent() || navigation;
-          parentNav.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-        }
-      }},
+      { text: 'Logout', style: 'destructive', onPress: performLogout },
     ]);
   };
 

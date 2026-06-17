@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CREDENTIALS = [
   { email: 'superadmin@rvitm.edu', password: 'super123', role: 'superadmin', label: 'Super Admin' },
@@ -29,7 +30,16 @@ const AdminLoginScreen = ({ navigation }) => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
+      try {
+        await AsyncStorage.setItem('userInfo', JSON.stringify({
+          name: matched.label,
+          email: matched.email,
+          role: matched.role
+        }));
+      } catch (error) {
+        console.error('Failed to save userInfo to AsyncStorage', error);
+      }
       setLoading(false);
       if (matched.role === 'superadmin') {
         navigation.navigate('SuperAdminMain');

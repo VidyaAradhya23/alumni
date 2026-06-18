@@ -264,6 +264,18 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     }
   }, [isFocused]);
 
+  // Sync activeModule with route params when route.params.initialModule changes
+  useEffect(() => {
+    setActiveModule(route?.params?.initialModule ?? null);
+  }, [route?.params?.initialModule]);
+
+  // Dynamic Welcome Mail Templates
+  useEffect(() => {
+    const instName = selectedInstitution === 'All' ? 'RV Educational Institutions' : selectedInstitution;
+    setWelcomeSubject(`Welcome to ${instName} Admin Portal`);
+    setWelcomeBody(`Dear Admin,\n\nYour administrator account has been created successfully for ${selectedInstitution === 'All' ? 'your campus' : getInstitutionDetails(selectedInstitution).fullName}. Please log in using your registered credentials.\n\nBest regards,\nSuper Admin Team`);
+  }, [selectedInstitution]);
+
   // Dynamic States
   const [admins, setAdmins] = useState(INITIAL_ADMINS);
   const [spamReports, setSpamReports] = useState(INITIAL_SPAM_REPORTS);
@@ -646,6 +658,8 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [uploadedRoster, setUploadedRoster] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({}); // adminId -> bool
   const [alumniDetailModal, setAlumniDetailModal] = useState(null); // alumnus request detail
+  const [editingAdminId, setEditingAdminId] = useState(null); // null if creating, ID if editing
+  const [editingPlacementId, setEditingPlacementId] = useState(null); // null if creating, ID if editing
 
   // Welcome Mail States
   const [welcomeSubject, setWelcomeSubject] = useState('Welcome to RVITM Admin Portal');
@@ -707,7 +721,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     // Filter posts by selected institution
     const filteredPosts = postsList.filter(p => {
       if (selectedInstitution === 'All') return true;
-      return p.institution === selectedInstitution;
+      return p.institution === selectedInstitution || p.institution === 'All';
     });
 
     return (
@@ -752,7 +766,11 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                 <TouchableOpacity
                   key={inst.id}
                   style={styles.instMetricCard}
-                  onPress={() => Alert.alert(inst.name, `Location: ${inst.location}\nEstablished: ${inst.established}\nAlumni: ${inst.totalAlumni}`)}
+                  onPress={() => {
+                    setSelectedInstitution(inst.shortName);
+                    global.selectedInstitution = inst.shortName;
+                    Alert.alert('Campus Selected', `Switched active campus view to ${inst.name}.`);
+                  }}
                 >
                   <View style={styles.instMetricHeader}>
                     <View style={styles.instTitleWrap}>
@@ -877,7 +895,12 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
       <View style={styles.flexContainer}>
         <InstitutionSelector />
         
-        <View style={styles.spamCountBar}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={{ backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E2E8F0', flexGrow: 0 }}
+          contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
+        >
           {counts.map(item => (
             <View key={item.label} style={styles.spamBadgeChip}>
               <Text style={styles.spamBadgeLabel}>{item.label}:</Text>
@@ -886,7 +909,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               </View>
             </View>
           ))}
-        </View>
+        </ScrollView>
 
         <FlatList
           data={list}
@@ -950,12 +973,17 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           id: Date.now().toString(),
           type: 'Email Interaction',
           description: `Super Admin sent welcome email: ${welcomeSubject}`,
-          institution: selectedInstitution === 'All' ? 'RVCE' : selectedInstitution,
+          institution: selectedInstitution,
           category: 'Welcome Mail',
-          date: '17/06/2026',
+          date: new Date().toLocaleDateString('en-GB'),
         };
         setActivities(prev => [newAct, ...prev]);
-        Alert.alert('Welcome Mail Sent', `Welcome email sent successfully to all admins of ${selectedInstitution} institution.`);
+        Alert.alert(
+          'Welcome Mail Sent',
+          `Welcome email sent successfully to all admins of ${
+            selectedInstitution === 'All' ? 'all' : selectedInstitution
+          } institution${selectedInstitution === 'All' ? 's' : ''}.`
+        );
       }, 1000);
     };
 
@@ -1121,23 +1149,67 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         Alert.alert('Error', 'Please fill in all the details.');
         return;
       }
-      const newAdmin = {
-        id: Date.now().toString(),
-        name: adminFormName,
-        email: adminFormEmail.toLowerCase().trim(),
-        password: adminFormPassword,
-        institution: adminFormInst,
-        role: 'Admin',
-        status: 'Active',
-        lastLogin: 'Never logged in',
-        passwordChangedAt: '17/06/2026',
-      };
-      setAdmins(prev => [...prev, newAdmin]);
+      if (editingAdminId) {
+        setAdmins(prev => prev.map(a => a.id === editingAdminId ? {
+          ...a,
+          name: adminFormName,
+          email: adminFormEmail.toLowerCase().trim(),
+          password: adminFormPassword,
+          institution: adminFormInst,
+        } : a));
+        setShowAdminModal(false);
+        setEditingAdminId(null);
+        setAdminFormName('');
+        setAdminFormEmail('');
+        setAdminFormPassword('');
+        Alert.alert('Success', `Admin account updated for ${adminFormName}`);
+      } else {
+        const newAdmin = {
+          id: Date.now().toString(),
+          name: adminFormName,
+          email: adminFormEmail.toLowerCase().trim(),
+          password: adminFormPassword,
+          institution: adminFormInst,
+          role: 'Admin',
+          status: 'Active',
+          lastLogin: 'Never logged in',
+          passwordChangedAt: new Date().toLocaleDateString('en-GB'),
+        };
+        setAdmins(prev => [...prev, newAdmin]);
+        if (welcomeAutoSend) {
+          const newAct = {
+            id: `act_${Date.now()}`,
+            type: 'Email Interaction',
+            description: `Auto-welcome email sent to new admin: ${adminFormName}`,
+            institution: adminFormInst,
+            category: 'Welcome Mail',
+            date: new Date().toLocaleDateString('en-GB'),
+          };
+          setActivities(prev => [newAct, ...prev]);
+        }
+        setShowAdminModal(false);
+        setAdminFormName('');
+        setAdminFormEmail('');
+        setAdminFormPassword('');
+        Alert.alert('Success', `Admin account created for ${adminFormName} under ${adminFormInst}`);
+      }
+    };
+
+    const handleEditAdmin = (admin) => {
+      setEditingAdminId(admin.id);
+      setAdminFormInst(admin.institution);
+      setAdminFormName(admin.name);
+      setAdminFormEmail(admin.email);
+      setAdminFormPassword(admin.password);
+      setShowAdminModal(true);
+    };
+
+    const handleCloseAdminModal = () => {
       setShowAdminModal(false);
+      setEditingAdminId(null);
       setAdminFormName('');
       setAdminFormEmail('');
       setAdminFormPassword('');
-      Alert.alert('Success', `Admin account created for ${adminFormName} under ${adminFormInst}`);
     };
 
     const handleDeleteAdmin = (id, name) => {
@@ -1197,7 +1269,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               </View>
 
               <View style={styles.cardActionRow}>
-                <TouchableOpacity style={styles.btnSecondary} onPress={() => Alert.alert('Edit Admin', 'Edit properties modal placeholder')}>
+                <TouchableOpacity style={styles.btnSecondary} onPress={() => handleEditAdmin(item)}>
                   <Text style={styles.btnSecondaryText}>Edit Profile</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnDanger} onPress={() => handleDeleteAdmin(item.id, item.name)}>
@@ -1208,13 +1280,13 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           )}
         />
 
-        {/* Create Admin Modal */}
+        {/* Create / Edit Admin Modal */}
         <Modal visible={showAdminModal} animationType="slide" transparent>
           <View style={styles.modalBg}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>New Institution Admin</Text>
-                <TouchableOpacity onPress={() => setShowAdminModal(false)}>
+                <Text style={styles.modalTitle}>{editingAdminId ? 'Edit Institution Admin' : 'New Institution Admin'}</Text>
+                <TouchableOpacity onPress={handleCloseAdminModal}>
                   <Ionicons name="close" size={24} color="#0F172A" />
                 </TouchableOpacity>
               </View>
@@ -1273,7 +1345,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                 })()}
 
                 <TouchableOpacity style={[styles.btnPrimary, { marginTop: 24 }]} onPress={handleCreateAdmin}>
-                  <Text style={styles.btnPrimaryText}>Create Admin Account</Text>
+                  <Text style={styles.btnPrimaryText}>{editingAdminId ? 'Save Changes' : 'Create Admin Account'}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </View>
@@ -1812,19 +1884,52 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         Alert.alert('Error', 'Please fill in Company Name and Alumni Count.');
         return;
       }
-      const newPlace = {
-        id: Date.now().toString(),
-        company: placementFormCompany,
-        industry: placementFormInd || 'Corporate Systems',
-        count: parseInt(placementFormCount) || 1,
-        institution: placementFormInst,
-      };
-      setPlacements(prev => [...prev, newPlace].sort((a,b) => b.count - a.count));
+      if (editingPlacementId) {
+        setPlacements(prev => prev.map(p => p.id === editingPlacementId ? {
+          ...p,
+          company: placementFormCompany,
+          industry: placementFormInd || 'Corporate Systems',
+          count: parseInt(placementFormCount) || 1,
+          institution: placementFormInst,
+        } : p).sort((a,b) => b.count - a.count));
+        setShowPlacementModal(false);
+        setEditingPlacementId(null);
+        setPlacementFormCompany('');
+        setPlacementFormInd('');
+        setPlacementFormCount('');
+        Alert.alert('Success', 'Placement record updated.');
+      } else {
+        const newPlace = {
+          id: Date.now().toString(),
+          company: placementFormCompany,
+          industry: placementFormInd || 'Corporate Systems',
+          count: parseInt(placementFormCount) || 1,
+          institution: placementFormInst,
+        };
+        setPlacements(prev => [...prev, newPlace].sort((a,b) => b.count - a.count));
+        setShowPlacementModal(false);
+        setPlacementFormCompany('');
+        setPlacementFormInd('');
+        setPlacementFormCount('');
+        Alert.alert('Success', 'Corporate placement records registered.');
+      }
+    };
+
+    const handleEditPlacement = (placement) => {
+      setEditingPlacementId(placement.id);
+      setPlacementFormInst(placement.institution);
+      setPlacementFormCompany(placement.company);
+      setPlacementFormInd(placement.industry);
+      setPlacementFormCount(placement.count.toString());
+      setShowPlacementModal(true);
+    };
+
+    const handleClosePlacementModal = () => {
       setShowPlacementModal(false);
+      setEditingPlacementId(null);
       setPlacementFormCompany('');
       setPlacementFormInd('');
       setPlacementFormCount('');
-      Alert.alert('Success', 'Corporate placement records registered.');
     };
 
     const handleDelete = (id) => {
@@ -1866,7 +1971,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               </View>
 
               <View style={[styles.cardActionRow, { marginTop: 12 }]}>
-                <TouchableOpacity style={styles.btnSecondary} onPress={() => Alert.alert('Edit', 'Edit placement data placeholder')}>
+                <TouchableOpacity style={styles.btnSecondary} onPress={() => handleEditPlacement(item)}>
                   <Text style={styles.btnSecondaryText}>Edit Metrics</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnDanger} onPress={() => handleDelete(item.id)}>
@@ -1877,13 +1982,13 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           )}
         />
 
-        {/* Add Placement Modal */}
+        {/* Add / Edit Placement Modal */}
         <Modal visible={showPlacementModal} animationType="slide" transparent>
           <View style={styles.modalBg}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Add Corporate Placement</Text>
-                <TouchableOpacity onPress={() => setShowPlacementModal(false)}>
+                <Text style={styles.modalTitle}>{editingPlacementId ? 'Edit Corporate Placement' : 'Add Corporate Placement'}</Text>
+                <TouchableOpacity onPress={handleClosePlacementModal}>
                   <Ionicons name="close" size={24} color="#0F172A" />
                 </TouchableOpacity>
               </View>
@@ -1911,7 +2016,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                 <TextInput style={styles.textInput} value={placementFormCount} onChangeText={setPlacementFormCount} placeholder="Alumni Headcount" keyboardType="numeric" />
 
                 <TouchableOpacity style={[styles.btnPrimary, { marginTop: 24 }]} onPress={handleAddPlacement}>
-                  <Text style={styles.btnPrimaryText}>Add Placement Record</Text>
+                  <Text style={styles.btnPrimaryText}>{editingPlacementId ? 'Save Changes' : 'Add Placement Record'}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </View>

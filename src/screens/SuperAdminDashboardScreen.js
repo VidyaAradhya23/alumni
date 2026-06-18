@@ -30,8 +30,22 @@ const { width } = Dimensions.get('window');
 const INSTITUTIONS = [
   { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
   { id: '2', name: 'RV Institute of Technology & Management', shortName: 'RVITM', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
-  { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Pending Audit', color: '#7C3AED' },
+  { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Active', color: '#7C3AED' },
   { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
+  { id: '5', name: 'RV University', shortName: 'RVU', location: 'Bengaluru, Karnataka', established: 2021, totalAlumni: 1200, registeredUsers: 450, admins: 3, status: 'Active', color: '#B45309' },
+  { id: '6', name: 'RV College of Architecture', shortName: 'RVCA', location: 'Bengaluru, Karnataka', established: 1992, totalAlumni: 2800, registeredUsers: 980, admins: 2, status: 'Active', color: '#4F46E5' },
+  { id: '7', name: 'RV Institute of Management', shortName: 'RVIM', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 3500, registeredUsers: 1240, admins: 3, status: 'Active', color: '#0891B2' },
+  { id: '8', name: 'RV Institute of Legal Studies', shortName: 'RVILS', location: 'Bengaluru, Karnataka', established: 2018, totalAlumni: 950, registeredUsers: 380, admins: 2, status: 'Active', color: '#DC2626' },
+  { id: '9', name: 'DAPM RV Dental College', shortName: 'DAPMRV', location: 'Bengaluru, Karnataka', established: 1992, totalAlumni: 2400, registeredUsers: 870, admins: 2, status: 'Active', color: '#2563EB' },
+  { id: '10', name: 'RV College of Nursing', shortName: 'RVCN', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1500, registeredUsers: 490, admins: 2, status: 'Active', color: '#0D9488' },
+  { id: '11', name: 'RV College of Physiotherapy', shortName: 'RVCP', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1700, registeredUsers: 580, admins: 2, status: 'Active', color: '#BE185D' },
+  { id: '12', name: 'RV Teachers College', shortName: 'RVTC', location: 'Bengaluru, Karnataka', established: 1954, totalAlumni: 3200, registeredUsers: 640, admins: 2, status: 'Active', color: '#8B5CF6' },
+  { id: '13', name: 'RV Teachers Training Institute', shortName: 'RVTTI', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 4000, registeredUsers: 510, admins: 1, status: 'Active', color: '#10B981' },
+  { id: '14', name: 'NMKRV College for Women', shortName: 'NMKRV', location: 'Bengaluru, Karnataka', established: 1973, totalAlumni: 8900, registeredUsers: 2100, admins: 4, status: 'Active', color: '#EC4899' },
+  { id: '15', name: 'SSMRV College', shortName: 'SSMRV', location: 'Bengaluru, Karnataka', established: 1982, totalAlumni: 7200, registeredUsers: 1840, admins: 3, status: 'Active', color: '#3B82F6' },
+  { id: '16', name: 'RV Public School', shortName: 'RVPS', location: 'Bengaluru, Karnataka', established: 1992, totalAlumni: 1900, registeredUsers: 420, admins: 1, status: 'Active', color: '#6B7280' },
+  { id: '17', name: 'RV School', shortName: 'RVS', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 5400, registeredUsers: 750, admins: 2, status: 'Active', color: '#78350F' },
+  { id: '18', name: 'RV Learning Hub', shortName: 'RVLH', location: 'Bengaluru, Karnataka', established: 2020, totalAlumni: 800, registeredUsers: 210, admins: 1, status: 'Active', color: '#111827' }
 ];
 
 const INITIAL_ADMINS = [
@@ -89,8 +103,22 @@ const INITIAL_IMPORTS = [
 const INITIAL_NETWORK_SETTINGS = {
   'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVITM': { institutionName: 'RV Institute of Technology & Management', shortTitle: 'RVITM', website: 'https://rvitm.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
-  'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpu.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
+  'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpucollege.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
   'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: '#F59E0B', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'RVCA': { institutionName: 'RV College of Architecture', shortTitle: 'RVCA', website: 'https://rvca.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#4F46E5', secondaryColor: '#818CF8', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVIM': { institutionName: 'RV Institute of Management', shortTitle: 'RVIM', website: 'https://rvim.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#0891B2', secondaryColor: '#22D3EE', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVILS': { institutionName: 'RV Institute of Legal Studies', shortTitle: 'RVILS', website: 'https://rvils.edu.in', established: '2018', location: 'Bengaluru, Karnataka', primaryColor: '#DC2626', secondaryColor: '#F87171', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'DAPMRV': { institutionName: 'DAPM RV Dental College', shortTitle: 'DAPMRV', website: 'https://rvdentalcollege.org', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#2563EB', secondaryColor: '#60A5FA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVCN': { institutionName: 'RV College of Nursing', shortTitle: 'RVCN', website: 'https://rvnursing.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#0D9488', secondaryColor: '#2DD4BF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVCP': { institutionName: 'RV College of Physiotherapy', shortTitle: 'RVCP', website: 'https://rvphysiotherapy.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#BE185D', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVTC': { institutionName: 'RV Teachers College', shortTitle: 'RVTC', website: 'https://rvtc.edu.in', established: '1954', location: 'Bengaluru, Karnataka', primaryColor: '#8B5CF6', secondaryColor: '#A78BFA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVTTI': { institutionName: 'RV Teachers Training Institute', shortTitle: 'RVTTI', website: 'https://rvtti.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: '#10B981', secondaryColor: '#34D399', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'NMKRV': { institutionName: 'NMKRV College for Women', shortTitle: 'NMKRV', website: 'https://nmkrv.edu.in', established: '1973', location: 'Bengaluru, Karnataka', primaryColor: '#EC4899', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'SSMRV': { institutionName: 'SSMRV College', shortTitle: 'SSMRV', website: 'https://ssmrv.edu.in', established: '1982', location: 'Bengaluru, Karnataka', primaryColor: '#3B82F6', secondaryColor: '#60A5FA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVPS': { institutionName: 'RV Public School', shortTitle: 'RVPS', website: 'https://rvps.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#6B7280', secondaryColor: '#9CA3AF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVS': { institutionName: 'RV School', shortTitle: 'RVS', website: 'https://rvschool.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: '#78350F', secondaryColor: '#D97706', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVLH': { institutionName: 'RV Learning Hub', shortTitle: 'RVLH', website: 'https://rvlearninghub.com', established: '2020', location: 'Bengaluru, Karnataka', primaryColor: '#111827', secondaryColor: '#374151', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
 };
 
 const MASTER_LOCATIONS = ['Bengaluru, Karnataka', 'Mysuru, Karnataka', 'Mumbai, Maharashtra', 'Hyderabad, Telangana', 'Chennai, Tamil Nadu'];
@@ -161,6 +189,66 @@ const MOCK_POSTS = [
     time: '2 days ago',
     institution: 'RVIS',
   },
+  {
+    id: 'p5',
+    user: 'Prof. Sandeep Hegde',
+    role: 'Dean @ RVU',
+    avatar: 'SH',
+    content: 'Exciting workshops on AI Governance and Liberal Education started today at the RV University city campus. Thanks to all global delegates for joining us! 🧠🌐 #RVU #AIGovernance',
+    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&h=400&q=80',
+    likes: 156,
+    commentsCount: 12,
+    time: '3 hours ago',
+    institution: 'RVU',
+  },
+  {
+    id: 'p6',
+    user: 'Ar. Nisha Rao',
+    role: 'Professor @ RVCA',
+    avatar: 'NR',
+    content: 'Our final year architecture students presented their sustainable urban design models today. Exceptional planning and creativity on display! 🏢🌱 #RVCA #Architecture #Design',
+    image: 'https://images.unsplash.com/photo-1503387762-592dedb802d7?auto=format&fit=crop&w=600&h=400&q=80',
+    likes: 135,
+    commentsCount: 14,
+    time: '6 hours ago',
+    institution: 'RVCA',
+  },
+  {
+    id: 'p7',
+    user: 'Dr. Anil Kumar',
+    role: 'Director @ RVIM',
+    avatar: 'AK',
+    content: 'Proud to host the National Management Conclave 2026. Industry leaders shared insights on digital transformation in business ecosystems. 📈🤝 #RVIM #Conclave2026',
+    image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
+    likes: 174,
+    commentsCount: 11,
+    time: '1 day ago',
+    institution: 'RVIM',
+  },
+  {
+    id: 'p8',
+    user: 'Prof. Lalitha Murthy',
+    role: 'Principal @ NMKRV',
+    avatar: 'LM',
+    content: 'NMKRV College organized a mega health and wellness camp for women in Jayanagar today. Kudos to our NSS unit and medical volunteers! 🩺🌸 #NMKRV #WomensHealth',
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=600&h=400&q=80',
+    likes: 198,
+    commentsCount: 16,
+    time: '2 days ago',
+    institution: 'NMKRV',
+  },
+  {
+    id: 'p9',
+    user: 'Dr. S. K. Prasad',
+    role: 'Principal @ SSMRV',
+    avatar: 'SP',
+    content: 'SSMRV College signed an MOU with leading tech firms to provide industry-integrated certifications for B.Com and BCA students. 🎓💻 #SSMRV #MOU #TechSkills',
+    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&h=400&q=80',
+    likes: 142,
+    commentsCount: 8,
+    time: '3 days ago',
+    institution: 'SSMRV',
+  }
 ];
 
 const SuperAdminDashboardScreen = ({ navigation, route }) => {
@@ -254,24 +342,122 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         };
       case 'RVITM':
         return {
-          fullName: 'RV Institute of Tech. & Mgmt.',
-          subtitle: 'Bengaluru, Karnataka • Est. 2002',
+          fullName: 'RV Institute of Technology & Management',
+          subtitle: 'Bengaluru, Karnataka • Est. 2019',
           logo: 'TM',
-          color: '#1A5276',
+          color: '#1E3A5F',
         };
       case 'RVPU':
         return {
           fullName: 'RV PU College',
           subtitle: 'Bengaluru, Karnataka • Est. 1970',
           logo: 'PU',
-          color: '#8E44AD',
+          color: '#7C3AED',
         };
       case 'RVIS':
         return {
           fullName: 'RV International School',
           subtitle: 'Bengaluru, Karnataka • Est. 1999',
           logo: 'IS',
-          color: '#E67E22',
+          color: '#059669',
+        };
+      case 'RVU':
+        return {
+          fullName: 'RV University',
+          subtitle: 'Bengaluru, Karnataka • Est. 2021',
+          logo: 'RV',
+          color: '#B45309',
+        };
+      case 'RVCA':
+        return {
+          fullName: 'RV College of Architecture',
+          subtitle: 'Bengaluru, Karnataka • Est. 1992',
+          logo: 'CA',
+          color: '#4F46E5',
+        };
+      case 'RVIM':
+        return {
+          fullName: 'RV Institute of Management',
+          subtitle: 'Bengaluru, Karnataka • Est. 1999',
+          logo: 'IM',
+          color: '#0891B2',
+        };
+      case 'RVILS':
+        return {
+          fullName: 'RV Institute of Legal Studies',
+          subtitle: 'Bengaluru, Karnataka • Est. 2018',
+          logo: 'LS',
+          color: '#DC2626',
+        };
+      case 'DAPMRV':
+        return {
+          fullName: 'DAPM RV Dental College',
+          subtitle: 'Bengaluru, Karnataka • Est. 1992',
+          logo: 'DC',
+          color: '#2563EB',
+        };
+      case 'RVCN':
+        return {
+          fullName: 'RV College of Nursing',
+          subtitle: 'Bengaluru, Karnataka • Est. 2003',
+          logo: 'CN',
+          color: '#0D9488',
+        };
+      case 'RVCP':
+        return {
+          fullName: 'RV College of Physiotherapy',
+          subtitle: 'Bengaluru, Karnataka • Est. 2003',
+          logo: 'CP',
+          color: '#BE185D',
+        };
+      case 'RVTC':
+        return {
+          fullName: 'RV Teachers College',
+          subtitle: 'Bengaluru, Karnataka • Est. 1954',
+          logo: 'TC',
+          color: '#8B5CF6',
+        };
+      case 'RVTTI':
+        return {
+          fullName: 'RV Teachers Training Institute',
+          subtitle: 'Bengaluru, Karnataka • Est. 1940',
+          logo: 'TT',
+          color: '#10B981',
+        };
+      case 'NMKRV':
+        return {
+          fullName: 'NMKRV College for Women',
+          subtitle: 'Bengaluru, Karnataka • Est. 1973',
+          logo: 'NK',
+          color: '#EC4899',
+        };
+      case 'SSMRV':
+        return {
+          fullName: 'SSMRV College',
+          subtitle: 'Bengaluru, Karnataka • Est. 1982',
+          logo: 'SS',
+          color: '#3B82F6',
+        };
+      case 'RVPS':
+        return {
+          fullName: 'RV Public School',
+          subtitle: 'Bengaluru, Karnataka • Est. 1992',
+          logo: 'PS',
+          color: '#6B7280',
+        };
+      case 'RVS':
+        return {
+          fullName: 'RV School',
+          subtitle: 'Bengaluru, Karnataka • Est. 1940',
+          logo: 'RS',
+          color: '#78350F',
+        };
+      case 'RVLH':
+        return {
+          fullName: 'RV Learning Hub',
+          subtitle: 'Bengaluru, Karnataka • Est. 2020',
+          logo: 'LH',
+          color: '#111827',
         };
       default:
         return {
@@ -291,7 +477,9 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
       global.selectedInstitution = 'RVCE';
     }
 
-    const list = allowAll ? ['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'] : ['RVCE', 'RVITM', 'RVPU', 'RVIS'];
+    const list = allowAll 
+      ? ['All', ...INSTITUTIONS.map(i => i.shortName)] 
+      : INSTITUTIONS.map(i => i.shortName);
     const currentDetails = getInstitutionDetails(selectedInstitution);
 
     return (
@@ -1033,7 +1221,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               <ScrollView contentContainerStyle={{ padding: 20 }}>
                 <Text style={styles.formLabel}>Institution</Text>
                 <View style={styles.pickerWrapper}>
-                  {['RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+                  {INSTITUTIONS.map((i) => i.shortName).map((inst) => (
                     <TouchableOpacity
                       key={inst}
                       style={[styles.pickerChip, adminFormInst === inst && styles.pickerChipActive]}
@@ -1702,7 +1890,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               <ScrollView contentContainerStyle={{ padding: 20 }}>
                 <Text style={styles.formLabel}>Institution</Text>
                 <View style={styles.pickerWrapper}>
-                  {['RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+                  {INSTITUTIONS.map((i) => i.shortName).map((inst) => (
                     <TouchableOpacity
                       key={inst}
                       style={[styles.pickerChip, placementFormInst === inst && styles.pickerChipActive]}
@@ -1804,12 +1992,12 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.5 }]}>Signups</Text>
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.5 }]}>Updates</Text>
                   </View>
-                  {[
-                    { inst: 'RVCE', val1: 12, val2: 20 },
-                    { inst: 'RVITM', val1: 8, val2: 12 },
-                    { inst: 'RVPU', val1: 3, val2: 5 },
-                    { inst: 'RVIS', val1: 1, val2: 2 },
-                  ].map((row, idx) => (
+                  {INSTITUTIONS.map((instObj) => {
+                    const inst = instObj.shortName;
+                    const val1 = Math.floor(instObj.registeredUsers * 0.005) + 1;
+                    const val2 = Math.floor(instObj.registeredUsers * 0.01) + 2;
+                    return { inst, val1, val2 };
+                  }).map((row, idx) => (
                     <View key={idx} style={styles.chartDetailsRow}>
                       <Text style={[styles.chartDetailsCellLabel, { flex: 2 }]}>{row.inst}</Text>
                       <Text style={[styles.chartDetailsCellVal, { flex: 1.5 }]}>{row.val1}</Text>
@@ -1872,12 +2060,12 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.5 }]}>Feed</Text>
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.5 }]}>Jobs</Text>
                   </View>
-                  {[
-                    { inst: 'RVCE', val1: 120, val2: 5000 },
-                    { inst: 'RVITM', val1: 60, val2: 2500 },
-                    { inst: 'RVPU', val1: 15, val2: 400 },
-                    { inst: 'RVIS', val1: 5, val2: 181 },
-                  ].map((row, idx) => (
+                  {INSTITUTIONS.map((instObj) => {
+                    const inst = instObj.shortName;
+                    const val1 = Math.floor(instObj.registeredUsers * 0.05) + 3;
+                    const val2 = Math.floor(instObj.registeredUsers * 2.2) + 40;
+                    return { inst, val1, val2 };
+                  }).map((row, idx) => (
                     <View key={idx} style={styles.chartDetailsRow}>
                       <Text style={[styles.chartDetailsCellLabel, { flex: 2 }]}>{row.inst}</Text>
                       <Text style={[styles.chartDetailsCellVal, { flex: 1.5 }]}>{row.val1}</Text>
@@ -1945,12 +2133,13 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Unreg</Text>
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Contact</Text>
                   </View>
-                  {[
-                    { inst: 'RVCE', val1: 5000, val2: 12000, val3: 10000 },
-                    { inst: 'RVITM', val1: 2500, val2: 6000, val3: 5500 },
-                    { inst: 'RVPU', val1: 1500, val2: 4000, val3: 4200 },
-                    { inst: 'RVIS', val1: 755, val2: 1448, val3: 1056 },
-                  ].map((row, idx) => (
+                  {INSTITUTIONS.map((instObj) => {
+                    const inst = instObj.shortName;
+                    const val1 = instObj.registeredUsers;
+                    const val2 = instObj.totalAlumni - instObj.registeredUsers;
+                    const val3 = Math.floor(instObj.registeredUsers * 0.9) + Math.floor(instObj.totalAlumni * 0.1);
+                    return { inst, val1, val2, val3 };
+                  }).map((row, idx) => (
                     <View key={idx} style={styles.chartDetailsRow}>
                       <Text style={[styles.chartDetailsCellLabel, { flex: 1.5 }]}>{row.inst}</Text>
                       <Text style={[styles.chartDetailsCellVal, { flex: 1.2 }]}>{row.val1}</Text>
@@ -2016,12 +2205,13 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Apps</Text>
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Applied</Text>
                   </View>
-                  {[
-                    { inst: 'RVCE', val1: 0, val2: 1, val3: 1 },
-                    { inst: 'RVITM', val1: 0, val2: 1, val3: 0 },
-                    { inst: 'RVPU', val1: 0, val2: 0, val3: 0 },
-                    { inst: 'RVIS', val1: 0, val2: 0, val3: 0 },
-                  ].map((row, idx) => (
+                  {INSTITUTIONS.map((instObj) => {
+                    const inst = instObj.shortName;
+                    const val1 = 0;
+                    const val2 = instObj.shortName === 'RVCE' || instObj.shortName === 'RVITM' ? 1 : 0;
+                    const val3 = instObj.shortName === 'RVCE' ? 1 : 0;
+                    return { inst, val1, val2, val3 };
+                  }).map((row, idx) => (
                     <View key={idx} style={styles.chartDetailsRow}>
                       <Text style={[styles.chartDetailsCellLabel, { flex: 1.5 }]}>{row.inst}</Text>
                       <Text style={[styles.chartDetailsCellVal, { flex: 1.2 }]}>{row.val1}</Text>
@@ -2084,12 +2274,13 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Open</Text>
                     <Text style={[styles.chartDetailsHeaderCellText, { flex: 1.2 }]}>Click</Text>
                   </View>
-                  {[
-                    { inst: 'RVCE', val1: 15000, val2: 1800, val3: 600 },
-                    { inst: 'RVITM', val1: 5000, val2: 450, val3: 180 },
-                    { inst: 'RVPU', val1: 2000, val2: 150, val3: 50 },
-                    { inst: 'RVIS', val1: 1118, val2: 68, val3: 20 },
-                  ].map((row, idx) => (
+                  {INSTITUTIONS.map((instObj) => {
+                    const inst = instObj.shortName;
+                    const val1 = Math.floor(instObj.totalAlumni * 1.5);
+                    const val2 = Math.floor(val1 * 0.1);
+                    const val3 = Math.floor(val1 * 0.035);
+                    return { inst, val1, val2, val3 };
+                  }).map((row, idx) => (
                     <View key={idx} style={styles.chartDetailsRow}>
                       <Text style={[styles.chartDetailsCellLabel, { flex: 1.5 }]}>{row.inst}</Text>
                       <Text style={[styles.chartDetailsCellVal, { flex: 1.2 }]}>{row.val1}</Text>

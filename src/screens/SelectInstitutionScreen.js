@@ -3,16 +3,25 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Tex
 import { Ionicons } from '@expo/vector-icons';
 
 const institutions = [
-  { id: 'RVITM', name: 'RVITM', fullName: 'RV College of Engineering', icon: 'school' },
-  { id: 'RVITM', name: 'RVITM', fullName: 'RV Inst of Tech & Management', icon: 'code-working' },
+  { id: 'RVCE', name: 'RVCE', fullName: 'RV College of Engineering', icon: 'school' },
+  { id: 'RVITM', name: 'RVITM', fullName: 'RV Institute of Technology & Management', icon: 'code-working' },
   { id: 'RVPU', name: 'RVPU', fullName: 'RV Pre-University College', icon: 'book' },
-  { id: 'RVIT', name: 'RVIT', fullName: 'RV Institute of Technology', icon: 'desktop' },
-  { id: 'RVIM', name: 'RVIM', fullName: 'RV Institute of Management', icon: 'trending-up' },
   { id: 'RVIS', name: 'RVIS', fullName: 'RV International School', icon: 'globe' },
-  { id: 'RVJC', name: 'RVJC', fullName: 'RV Junior College', icon: 'medal' },
-  { id: 'RVAC', name: 'RVAC', fullName: 'RV Aster College', icon: 'color-palette' },
-  { id: 'RVTC', name: 'RV Teachers College', fullName: 'RV Teachers Training College', icon: 'people' },
-  { id: 'OTHER', name: 'Other', fullName: 'Other RVITM Institution', icon: 'grid' },
+  { id: 'RVU', name: 'RVU', fullName: 'RV University', icon: 'ribbon' },
+  { id: 'RVCA', name: 'RVCA', fullName: 'RV College of Architecture', icon: 'color-palette' },
+  { id: 'RVIM', name: 'RVIM', fullName: 'RV Institute of Management', icon: 'trending-up' },
+  { id: 'RVILS', name: 'RVILS', fullName: 'RV Institute of Legal Studies', icon: 'briefcase' },
+  { id: 'DAPMRV', name: 'DAPMRV', fullName: 'DAPM RV Dental College', icon: 'medkit' },
+  { id: 'RVCN', name: 'RVCN', fullName: 'RV College of Nursing', icon: 'pulse' },
+  { id: 'RVCP', name: 'RVCP', fullName: 'RV College of Physiotherapy', icon: 'fitness' },
+  { id: 'RVTC', name: 'RVTC', fullName: 'RV Teachers College', icon: 'people' },
+  { id: 'RVTTI', name: 'RVTTI', fullName: 'RV Teachers Training Institute', icon: 'pencil' },
+  { id: 'NMKRV', name: 'NMKRV', fullName: 'NMKRV College for Women', icon: 'grid' },
+  { id: 'SSMRV', name: 'SSMRV', fullName: 'SSMRV College', icon: 'grid' },
+  { id: 'RVPS', name: 'RVPS', fullName: 'RV Public School', icon: 'school' },
+  { id: 'RVS', name: 'RVS', fullName: 'RV School', icon: 'book' },
+  { id: 'RVLH', name: 'RVLH', fullName: 'RV Learning Hub', icon: 'rocket' },
+  { id: 'OTHER', name: 'Other', fullName: 'Other Institution', icon: 'grid' },
 ];
 
 const SelectInstitutionScreen = ({ navigation }) => {

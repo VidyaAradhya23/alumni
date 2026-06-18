@@ -15,7 +15,7 @@ import {
 import api from '../services/api';
 
 const institutions = [
-  'RVCE', 'RVITM', 'RVPU', 'RVIT', 'RVIM', 'RVIS', 'RVJC', 'RVAC', 'RV Teachers College', 'Other'
+  'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH', 'Other'
 ];
 
 const institutionDepartments = {
@@ -35,9 +35,16 @@ const institutionDepartments = {
   ],
   'RVITM': ["Computer Science & Engineering", "Information Science & Engineering", "Electronics & Communication Engineering", "Mechanical Engineering"],
   'RVPU': ["Science (PCMB)", "Science (PCMC)", "Commerce (CEBA)", "Commerce (SEBA)"],
-  'RVIM': ["MBA", "BBA", "Executive Education"],
-  'RVAC': ["Architecture", "Urban Design"],
-  'RV Teachers College': ["B.Ed", "M.Ed"],
+  'RVIM': ["MBA", "Executive Education"],
+  'RVU': ["School of Computer Science & Engineering", "School of Design", "School of Business", "School of Economics", "School of Liberal Arts & Sciences"],
+  'RVCA': ["Architecture (B.Arch)", "Architecture (M.Arch)", "Urban Design"],
+  'RVILS': ["BA LLB", "BBA LLB", "LLB"],
+  'DAPMRV': ["BDS", "MDS"],
+  'RVCN': ["B.Sc Nursing", "M.Sc Nursing"],
+  'RVCP': ["BPT", "MPT"],
+  'RVTC': ["B.Ed", "M.Ed"],
+  'SSMRV': ["B.Com", "BBA", "BCA", "M.Com"],
+  'NMKRV': ["BA", "B.Sc", "B.Com", "BBA", "MA", "M.Sc"],
   'Other': ["General", "Not Applicable"]
 };
 

@@ -515,7 +515,7 @@ export default function AdminJobsScreen({ navigation, route }) {
                 <>
                   <Text style={s.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[s.pill, selectedInstitution === inst && s.pillActive]}

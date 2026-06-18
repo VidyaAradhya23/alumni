@@ -3,16 +3,25 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, Scro
 import { Ionicons } from '@expo/vector-icons';
 
 const institutions = [
-  { id: 'RVITM', name: 'RVITM', fullName: 'RV College of Engineering' },
-  { id: 'RVITM', name: 'RVITM', fullName: 'RV Inst of Tech & Management' },
+  { id: 'RVCE', name: 'RVCE', fullName: 'RV College of Engineering' },
+  { id: 'RVITM', name: 'RVITM', fullName: 'RV Institute of Technology & Management' },
   { id: 'RVPU', name: 'RVPU', fullName: 'RV Pre-University College' },
-  { id: 'RVIT', name: 'RVIT', fullName: 'RV Institute of Technology' },
-  { id: 'RVIM', name: 'RVIM', fullName: 'RV Institute of Management' },
   { id: 'RVIS', name: 'RVIS', fullName: 'RV International School' },
-  { id: 'RVJC', name: 'RVJC', fullName: 'RV Junior College' },
-  { id: 'RVAC', name: 'RVAC', fullName: 'RV Aster College' },
-  { id: 'RVTC', name: 'RV Teachers Training College' },
-  { id: 'OTHER', name: 'Other', fullName: 'Other RVITM Institution' },
+  { id: 'RVU', name: 'RVU', fullName: 'RV University' },
+  { id: 'RVCA', name: 'RVCA', fullName: 'RV College of Architecture' },
+  { id: 'RVIM', name: 'RVIM', fullName: 'RV Institute of Management' },
+  { id: 'RVILS', name: 'RVILS', fullName: 'RV Institute of Legal Studies' },
+  { id: 'DAPMRV', name: 'DAPMRV', fullName: 'DAPM RV Dental College' },
+  { id: 'RVCN', name: 'RVCN', fullName: 'RV College of Nursing' },
+  { id: 'RVCP', name: 'RVCP', fullName: 'RV College of Physiotherapy' },
+  { id: 'RVTC', name: 'RVTC', fullName: 'RV Teachers College' },
+  { id: 'RVTTI', name: 'RVTTI', fullName: 'RV Teachers Training Institute' },
+  { id: 'NMKRV', name: 'NMKRV', fullName: 'NMKRV College for Women' },
+  { id: 'SSMRV', name: 'SSMRV', fullName: 'SSMRV College' },
+  { id: 'RVPS', name: 'RVPS', fullName: 'RV Public School' },
+  { id: 'RVS', name: 'RVS', fullName: 'RV School' },
+  { id: 'RVLH', name: 'RVLH', fullName: 'RV Learning Hub' },
+  { id: 'OTHER', name: 'Other', fullName: 'Other Institution' },
 ];
 
 const locations = [

@@ -417,7 +417,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
                 <>
                   <Text style={styles.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[styles.pill, selectedInstitution === inst && styles.pillActive]}

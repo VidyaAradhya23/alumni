@@ -242,57 +242,132 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     return { score, text: 'Strong', color: '#10B981' };
   };
 
-  // Institution Dropdown Component
-  const InstitutionDropdown = () => {
+  // Helper function to get rich institution metadata
+  const getInstitutionDetails = (inst) => {
+    switch (inst) {
+      case 'RVCE':
+        return {
+          fullName: 'RV College of Engineering',
+          subtitle: 'Bengaluru, Karnataka • Est. 1963',
+          logo: 'CE',
+          color: '#003366',
+        };
+      case 'RVITM':
+        return {
+          fullName: 'RV Institute of Tech. & Mgmt.',
+          subtitle: 'Bengaluru, Karnataka • Est. 2002',
+          logo: 'TM',
+          color: '#1A5276',
+        };
+      case 'RVPU':
+        return {
+          fullName: 'RV PU College',
+          subtitle: 'Bengaluru, Karnataka • Est. 1970',
+          logo: 'PU',
+          color: '#8E44AD',
+        };
+      case 'RVIS':
+        return {
+          fullName: 'RV International School',
+          subtitle: 'Bengaluru, Karnataka • Est. 1999',
+          logo: 'IS',
+          color: '#E67E22',
+        };
+      default:
+        return {
+          fullName: 'All Campuses',
+          subtitle: 'Aggregated view across all campuses',
+          logo: 'ALL',
+          color: '#0D9488',
+        };
+    }
+  };
+
+  // Premium Institution Selector Dropdown Component
+  const InstitutionSelector = ({ allowAll = true }) => {
+    // Auto-fallback if 'All' is selected in a non-All selector
+    if (!allowAll && selectedInstitution === 'All') {
+      setSelectedInstitution('RVCE');
+      global.selectedInstitution = 'RVCE';
+    }
+
+    const list = allowAll ? ['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'] : ['RVCE', 'RVITM', 'RVPU', 'RVIS'];
+    const currentDetails = getInstitutionDetails(selectedInstitution);
+
     return (
       <View style={styles.dropdownContainer}>
+        <Text style={styles.dropdownLabel}>Active Campus Selection</Text>
         <TouchableOpacity 
           style={styles.dropdownButton} 
-          activeOpacity={0.7}
+          activeOpacity={0.8}
           onPress={() => setShowInstDropdown(true)}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="business-outline" size={20} color="#003366" style={{ marginRight: 8 }} />
-            <Text style={styles.dropdownButtonText}>
-              {selectedInstitution === 'All' ? 'All Institutions' : selectedInstitution}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <View style={[styles.dropdownLogoBg, { backgroundColor: currentDetails.color }]}>
+              <Text style={styles.dropdownLogoText}>{currentDetails.logo}</Text>
+            </View>
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <Text style={styles.dropdownCampusName} numberOfLines={1}>
+                {currentDetails.fullName}
+              </Text>
+              <Text style={styles.dropdownCampusSub} numberOfLines={1}>
+                {currentDetails.subtitle}
+              </Text>
+            </View>
           </View>
-          <Ionicons name="chevron-down" size={18} color="#003366" />
+          <View style={styles.dropdownChevronBg}>
+            <Ionicons name="chevron-down" size={16} color="#003366" />
+          </View>
         </TouchableOpacity>
 
-        <Modal visible={showInstDropdown} transparent animationType="fade">
+        <Modal visible={showInstDropdown} transparent animationType="slide">
           <TouchableOpacity 
             style={styles.dropdownModalOverlay} 
             activeOpacity={1} 
             onPress={() => setShowInstDropdown(false)}
           >
             <View style={styles.dropdownModalContent}>
-              <Text style={styles.dropdownModalTitle}>Select Institution</Text>
-              {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
-                <TouchableOpacity
-                  key={inst}
-                  style={[
-                    styles.dropdownOption,
-                    selectedInstitution === inst && styles.dropdownOptionActive
-                  ]}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setSelectedInstitution(inst);
-                    global.selectedInstitution = inst;
-                    setShowInstDropdown(false);
-                  }}
-                >
-                  <Text style={[
-                    styles.dropdownOptionText,
-                    selectedInstitution === inst && styles.dropdownOptionTextActive
-                  ]}>
-                    {inst === 'All' ? 'All Institutions' : inst}
-                  </Text>
-                  {selectedInstitution === inst && (
-                    <Ionicons name="checkmark" size={18} color="#003366" />
-                  )}
-                </TouchableOpacity>
-              ))}
+              <View style={styles.dropdownModalHeader}>
+                <View style={styles.dropdownModalHandle} />
+                <Text style={styles.dropdownModalTitle}>Select Campus / Institution</Text>
+              </View>
+              
+              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+                {list.map((inst) => {
+                  const details = getInstitutionDetails(inst);
+                  const isSelected = selectedInstitution === inst;
+                  return (
+                    <TouchableOpacity
+                      key={inst}
+                      style={[
+                        styles.dropdownOption,
+                        isSelected && styles.dropdownOptionActive
+                      ]}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setSelectedInstitution(inst);
+                        global.selectedInstitution = inst;
+                        setShowInstDropdown(false);
+                      }}
+                    >
+                      <View style={[styles.dropdownOptionLogo, { backgroundColor: details.color }]}>
+                        <Text style={styles.dropdownOptionLogoText}>{details.logo}</Text>
+                      </View>
+                      <View style={{ marginLeft: 12, flex: 1 }}>
+                        <Text style={[styles.dropdownOptionText, isSelected && styles.dropdownOptionTextActive]}>
+                          {details.fullName}
+                        </Text>
+                        <Text style={styles.dropdownOptionSub}>{details.subtitle}</Text>
+                      </View>
+                      {isSelected && (
+                        <View style={styles.dropdownCheckCircle}>
+                          <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             </View>
           </TouchableOpacity>
         </Modal>
@@ -423,42 +498,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     setVisiblePasswords((prev) => ({ ...prev, [adminId]: !prev[adminId] }));
   };
 
-  // Institutional Dropdown Bar Component
-  const InstitutionSelector = ({ allowAll = true }) => {
-    const list = allowAll ? ['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS'] : ['RVCE', 'RVITM', 'RVPU', 'RVIS'];
-    
-    // Auto-fallback if 'All' is selected in a non-All selector
-    if (!allowAll && selectedInstitution === 'All') {
-      setSelectedInstitution('RVCE');
-    }
-
-    return (
-      <View style={styles.selectorWrapper}>
-        <Text style={styles.selectorLabel}>Select Institution:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selectorList}>
-          {list.map((inst) => (
-            <TouchableOpacity
-              key={inst}
-              style={[
-                styles.selectorChip,
-                selectedInstitution === inst && styles.selectorChipActive,
-              ]}
-              onPress={() => setSelectedInstitution(inst)}
-            >
-              <Text
-                style={[
-                  styles.selectorChipText,
-                  selectedInstitution === inst && styles.selectorChipTextActive,
-                ]}
-              >
-                {inst}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  };
+  // Old InstitutionSelector replaced by premium dropdown above
 
   // Back action helper
   const handleGoBack = () => {
@@ -485,7 +525,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     return (
       <View style={styles.dashboardHomeView}>
         {/* Custom Institution Dropdown at the top */}
-        <InstitutionDropdown />
+        <InstitutionSelector />
 
         {selectedInstitution === 'All' ? (
           <>
@@ -3630,73 +3670,149 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     marginBottom: 16,
   },
+  dropdownLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    paddingLeft: 4,
+  },
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#003366',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#003366',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     elevation: 2,
   },
-  dropdownButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#003366',
+  dropdownLogoBg: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownLogoText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  dropdownCampusName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  dropdownCampusSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  dropdownChevronBg: {
+    backgroundColor: '#F1F5F9',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dropdownModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'flex-end',
   },
   dropdownModalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
     width: '100%',
-    maxWidth: 320,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 20,
+  },
+  dropdownModalHeader: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    marginBottom: 16,
+  },
+  dropdownModalHandle: {
+    width: 36,
+    height: 4.5,
+    borderRadius: 3,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 12,
   },
   dropdownModalTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 16,
     textAlign: 'center',
   },
   dropdownOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 6,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    backgroundColor: '#F8FAFC',
   },
   dropdownOptionActive: {
     backgroundColor: '#F0F9FF',
+    borderColor: '#003366',
+  },
+  dropdownOptionLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownOptionLogoText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   dropdownOptionText: {
-    fontSize: 14.5,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#334155',
   },
   dropdownOptionTextActive: {
     color: '#003366',
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  dropdownOptionSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  dropdownCheckCircle: {
+    backgroundColor: '#003366',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   // News Feed / Posts
   postCard: {

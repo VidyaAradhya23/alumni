@@ -5,11 +5,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
+// Seed Data for Profile Campus Info Tab
+const INSTITUTIONS = [
+  { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
+  { id: '2', name: 'RV Institute of Technology & Management', shortName: 'RVITM', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
+  { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Pending Audit', color: '#7C3AED' },
+  { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
+];
+
+const INITIAL_ADMINS = [
+  { id: '1', name: 'Dr. Ramesh Kumar', email: 'admin@rvce.edu', password: 'admin123', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 09:30 AM', passwordChangedAt: '15/06/2026' },
+  { id: '2', name: 'Prof. Anitha Shetty', email: 'anitha.s@rvce.edu', password: 'anitha@2026', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '16/06/2026 02:15 PM', passwordChangedAt: '10/06/2026' },
+  { id: '3', name: 'Suresh Babu', email: 'admin@rvitm.edu', password: 'admin456', institution: 'RVITM', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 11:00 AM', passwordChangedAt: '12/06/2026' },
+  { id: '4', name: 'Meera Nair', email: 'admin@rvpu.edu', password: 'admin789', institution: 'RVPU', role: 'Admin', status: 'Active', lastLogin: '14/06/2026 04:45 PM', passwordChangedAt: '01/06/2026' },
+  { id: '5', name: 'Vikram Joshi', email: 'admin@rvis.edu', password: 'admin012', institution: 'RVIS', role: 'Admin', status: 'Inactive', lastLogin: '10/06/2026 10:00 AM', passwordChangedAt: '05/05/2026' },
+];
+
+const INITIAL_PLACEMENTS = [
+  { id: '1', company: 'Cisco Systems', industry: 'Computer Networking', count: 78, institution: 'RVCE' },
+  { id: '2', company: 'Accenture', industry: 'IT Services', count: 62, institution: 'RVCE' },
+  { id: '3', company: 'Qualcomm', industry: 'Semiconductors', count: 61, institution: 'RVCE' },
+  { id: '4', company: 'Infosys', industry: 'IT Services', count: 45, institution: 'RVITM' },
+  { id: '5', company: 'Wipro', industry: 'IT Services', count: 38, institution: 'RVITM' },
+  { id: '6', company: 'TCS', industry: 'IT Services', count: 32, institution: 'RVPU' },
+  { id: '7', company: 'IBM', industry: 'IT Services', count: 28, institution: 'RVCE' },
+  { id: '8', company: 'Amazon', industry: 'E-Commerce/Tech', count: 25, institution: 'RVIS' },
+];
+
+const INITIAL_NETWORK_SETTINGS = {
+  'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVITM': { institutionName: 'RV Institute of Technology & Management', shortTitle: 'RVITM', website: 'https://rvitm.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpu.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
+  'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
+};
+
 const AdminProfileScreen = ({ navigation }) => {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState('menu');
   const [activeTab, setActiveTab] = useState('post');
   const [listModalType, setListModalType] = useState(null);
+  const [userRole, setUserRole] = useState('admin');
+  const [activeInst, setActiveInst] = useState('RVCE');
 
   const [profileData, setProfileData] = useState({
     name: 'RVITM Admin',
@@ -28,6 +64,17 @@ const AdminProfileScreen = ({ navigation }) => {
         const info = await AsyncStorage.getItem('userInfo');
         if (info) {
           const parsed = JSON.parse(info);
+          setUserRole(parsed.role || 'admin');
+
+          const defaultInst = parsed.role === 'superadmin' 
+            ? (global.selectedInstitution && global.selectedInstitution !== 'All' ? global.selectedInstitution : 'RVCE')
+            : (parsed.email && parsed.email.toLowerCase().includes('rvce') ? 'RVCE' 
+              : parsed.email && parsed.email.toLowerCase().includes('rvitm') ? 'RVITM' 
+              : parsed.email && parsed.email.toLowerCase().includes('rvpu') ? 'RVPU' 
+              : parsed.email && parsed.email.toLowerCase().includes('rvis') ? 'RVIS' 
+              : 'RVITM');
+          setActiveInst(defaultInst);
+
           if (parsed.role === 'superadmin') {
             setProfileData({
               name: parsed.name || 'Super Admin',
@@ -111,6 +158,167 @@ const AdminProfileScreen = ({ navigation }) => {
     ]);
   };
 
+  const renderInstitutionDetails = () => {
+    const instDetails = INSTITUTIONS.find(i => i.shortName === activeInst);
+    const instAdminsList = INITIAL_ADMINS.filter(a => a.institution === activeInst);
+    const instPlacementsList = INITIAL_PLACEMENTS.filter(p => p.institution === activeInst);
+    const instSettings = INITIAL_NETWORK_SETTINGS[activeInst] || {};
+
+    return (
+      <View style={{ gap: 16 }}>
+        {userRole === 'superadmin' && (
+          <View style={styles.miniSelectorRow}>
+            {['RVCE', 'RVITM', 'RVPU', 'RVIS'].map((inst) => (
+              <TouchableOpacity
+                key={inst}
+                style={[
+                  styles.miniSelectorChip,
+                  activeInst === inst && styles.miniSelectorChipActive
+                ]}
+                onPress={() => setActiveInst(inst)}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.miniSelectorChipText,
+                  activeInst === inst && styles.miniSelectorChipTextActive
+                ]}>
+                  {inst}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* General Info Card */}
+        <View style={styles.detailsCard}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={styles.detailsCardHeaderTitle}>{instDetails?.name || activeInst}</Text>
+            <View style={[styles.statusTag, instDetails?.status === 'Active' ? styles.statusActive : styles.statusPending]}>
+              <Text style={instDetails?.status === 'Active' ? styles.statusActiveText : styles.statusPendingText}>
+                {instDetails?.status || 'Active'}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.detailsDivider} />
+
+          <View style={styles.detailsInfoRow}>
+            <Ionicons name="location-outline" size={16} color="#64748B" style={{ marginRight: 6 }} />
+            <Text style={styles.detailsInfoText}>Location: {instDetails?.location || 'Bengaluru, Karnataka'}</Text>
+          </View>
+          <View style={styles.detailsInfoRow}>
+            <Ionicons name="calendar-outline" size={16} color="#64748B" style={{ marginRight: 6 }} />
+            <Text style={styles.detailsInfoText}>Established: {instDetails?.established || 'N/A'}</Text>
+          </View>
+          {instSettings.website && (
+            <TouchableOpacity 
+              style={styles.detailsLinkRow}
+              onPress={() => Alert.alert('Website Link', `Opening ${instSettings.website}`)}
+            >
+              <Ionicons name="globe-outline" size={16} color="#003366" style={{ marginRight: 6 }} />
+              <Text style={styles.detailsLinkText}>{instSettings.website}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Feature Status Cards */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsSectionHeader}>Feature Settings Overview</Text>
+          <View style={styles.featuresGrid}>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayJobs ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayJobs ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Jobs Board</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayEvents ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayEvents ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Events</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayGroups ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayGroups ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Groups</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayMemories ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayMemories ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Timeline</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayDonations ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayDonations ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Donations</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons 
+                name={instSettings.displayMentorship ? "checkmark-circle" : "close-circle"} 
+                size={18} 
+                color={instSettings.displayMentorship ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.featureItemText}>Mentorship</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Administrators List */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsSectionHeader}>Administrators ({instAdminsList.length})</Text>
+          {instAdminsList.length > 0 ? (
+            instAdminsList.map(a => (
+              <View key={a.id} style={styles.adminListRow}>
+                <View style={styles.adminInfoCol}>
+                  <Text style={styles.adminNameText}>{a.name}</Text>
+                  <Text style={styles.adminEmailText}>{a.email}</Text>
+                </View>
+                <View style={[styles.statusTagMini, a.status === 'Active' ? styles.statusActive : styles.statusInactive]}>
+                  <Text style={styles.statusTagMiniText}>{a.status}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyDetailsText}>No administrators registered.</Text>
+          )}
+        </View>
+
+        {/* Placement Tool Data */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsSectionHeader}>Hiring Partners & Placements</Text>
+          {instPlacementsList.length > 0 ? (
+            instPlacementsList.map(p => (
+              <View key={p.id} style={styles.placementListRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.placementCompanyText}>{p.company}</Text>
+                  <Text style={styles.placementIndustryText}>{p.industry}</Text>
+                </View>
+                <View style={styles.placementCountBadge}>
+                  <Text style={styles.placementCountText}>{p.count} Alumni</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyDetailsText}>No placement data available.</Text>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   // ===== SETTINGS MODAL =====
   // Handled inline in the main render statement below.
 
@@ -184,6 +392,7 @@ const AdminProfileScreen = ({ navigation }) => {
             { key: 'post', icon: 'grid', label: 'Posts' },
             { key: 'reshare', icon: 'repeat', label: 'Reshares' },
             { key: 'tags', icon: 'pricetag', label: 'Tags' },
+            { key: 'institution', icon: 'business', label: 'Campus' },
           ].map(tab => (
             <TouchableOpacity
               key={tab.key}
@@ -233,6 +442,12 @@ const AdminProfileScreen = ({ navigation }) => {
                 <Text style={styles.cardFooterText}>{res.date}</Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {activeTab === 'institution' && (
+          <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+            {renderInstitutionDetails()}
           </View>
         )}
 
@@ -594,6 +809,201 @@ const styles = StyleSheet.create({
   editInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, height: 46, paddingHorizontal: 14, fontSize: 14, color: '#0F172A' },
   saveBtn: { backgroundColor: '#003366', height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
   saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  // Mini Institution Selector for Super Admin inside Profile
+  miniSelectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
+  miniSelectorChip: {
+    flex: 1,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  miniSelectorChipActive: {
+    backgroundColor: '#003366',
+    borderColor: '#003366',
+  },
+  miniSelectorChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  miniSelectorChipTextActive: {
+    color: '#FFFFFF',
+  },
+
+  // Institution details tab styling
+  detailsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  detailsCardHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    flex: 1,
+  },
+  statusTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusActive: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusPending: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusActiveText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  statusPendingText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  detailsDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 12,
+  },
+  detailsInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailsInfoText: {
+    fontSize: 13.5,
+    color: '#475569',
+  },
+  detailsLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  detailsLinkText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#003366',
+    textDecorationLine: 'underline',
+  },
+  detailsSectionHeader: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    width: '47%',
+  },
+  featureItemText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+    marginLeft: 6,
+  },
+  adminListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  adminInfoCol: {
+    flex: 1,
+  },
+  adminNameText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  adminEmailText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  statusTagMini: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusTagMiniText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  statusInactive: {
+    backgroundColor: '#F1F5F9',
+  },
+  placementListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  placementCompanyText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  placementIndustryText: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  placementCountBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  placementCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#003366',
+  },
+  emptyDetailsText: {
+    fontSize: 13,
+    color: '#94A3B8',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
 });
 
 export default AdminProfileScreen;

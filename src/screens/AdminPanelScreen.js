@@ -221,7 +221,7 @@ export default function AdminPanelScreen({ navigation }) {
   const renderSpamReports = () => (
     <View style={styles.moduleContainer}>
       <Text style={styles.moduleHeading}>Spam & Abuse Complaints</Text>
-      <Text style={styles.moduleSubheading}>Review accounts reported by alumni in Institution Institution</Text>
+      <Text style={styles.moduleSubheading}>Review accounts reported by alumni</Text>
       <FlatList
         data={spamReports}
         keyExtractor={(item) => item.id}
@@ -894,7 +894,7 @@ export default function AdminPanelScreen({ navigation }) {
         )}
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{activeModule ? panelItems.find(p => p.moduleName === activeModule).title : 'Admin Panel'}</Text>
-          <Text style={styles.headerSub}>Institution Institution</Text>
+          <Text style={styles.headerSub}>Admin Portal</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Messages')}>

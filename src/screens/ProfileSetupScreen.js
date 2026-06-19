@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const institutions = [
   { id: 'RVCE', name: 'RVCE', fullName: 'RV College of Engineering' },
-  { id: 'Institution', name: 'Institution', fullName: 'The Institution' },
+  { id: 'Institution', name: 'Institution', fullName: 'Institute of Technology' },
   { id: 'RVPU', name: 'RVPU', fullName: 'RV Pre-University College' },
   { id: 'RVIS', name: 'RVIS', fullName: 'RV International School' },
   { id: 'RVU', name: 'RVU', fullName: 'RV University' },

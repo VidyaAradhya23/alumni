@@ -20,6 +20,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ==========================================
 // DUMMY DATABASE / SEED DATA
@@ -27,7 +28,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const INSTITUTIONS = [
   { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
-  { id: '2', name: 'The Institution', shortName: 'Institution', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
+  { id: '2', name: 'Institute of Technology', shortName: 'Institution', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
   { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Active', color: '#7C3AED' },
   { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
   { id: '5', name: 'RV University', shortName: 'RVU', location: 'Bengaluru, Karnataka', established: 2021, totalAlumni: 1200, registeredUsers: 450, admins: 3, status: 'Active', color: '#B45309' },
@@ -100,7 +101,7 @@ const INITIAL_IMPORTS = [
 
 const INITIAL_NETWORK_SETTINGS = {
   'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'Institution': { institutionName: 'The Institution', shortTitle: 'Institution', website: 'https://institution.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'Institution': { institutionName: 'Institute of Technology', shortTitle: 'Institution', website: 'https://institution.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpucollege.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
   'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: '#F59E0B', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
@@ -256,6 +257,27 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [selectedInstitution, setSelectedInstitution] = useState(global.selectedInstitution || 'All');
   const isFocused = useIsFocused();
 
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to logout?')) {
+        AsyncStorage.removeItem('userInfo');
+        navigation.reset({ index: 0, routes: [{ name: 'AdminLogin' }] });
+      }
+    } else {
+      Alert.alert('Logout', 'Are you sure you want to logout?', [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('userInfo');
+            navigation.reset({ index: 0, routes: [{ name: 'AdminLogin' }] });
+          }
+        }
+      ]);
+    }
+  };
+
   // Sync selected institution with global value when screen is focused
   useEffect(() => {
     if (isFocused && global.selectedInstitution) {
@@ -353,7 +375,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         };
       case 'Institution':
         return {
-          fullName: 'The Institution',
+          fullName: 'Institute of Technology',
           subtitle: 'Bengaluru, Karnataka • Est. 2019',
           logo: 'TM',
           color: '#1E3A5F',
@@ -2649,6 +2671,12 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               <Ionicons name="notifications-outline" size={24} color="#003366" />
               <View style={styles.dotAdminStyle} />
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={handleLogout}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#dc2626" />
+            </TouchableOpacity>
           </View>
         </View>
       ) : (
@@ -2693,6 +2721,12 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
             >
               <Ionicons name="notifications-outline" size={24} color="#003366" />
               <View style={styles.dotAdminStyle} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtnAdminStyle}
+              onPress={handleLogout}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#dc2626" />
             </TouchableOpacity>
           </View>
         </View>

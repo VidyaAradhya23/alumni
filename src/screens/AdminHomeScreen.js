@@ -333,7 +333,7 @@ export default function AdminHomeScreen({ navigation }) {
                     {ev.title}
                   </Text>
                   <Text style={styles.eventRowSub} numberOfLines={1}>
-                    Institution Institution {ev.type}
+                    Upcoming {ev.type}
                   </Text>
                   <TouchableOpacity 
                     style={styles.eventRowBtn}

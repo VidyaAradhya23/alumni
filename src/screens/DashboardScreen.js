@@ -57,6 +57,27 @@ const DashboardScreen = ({ navigation }) => {
     setCommentText('');
   };
 
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to logout?')) {
+        AsyncStorage.removeItem('userInfo');
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    } else {
+      Alert.alert('Logout', 'Are you sure you want to logout?', [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('userInfo');
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          }
+        }
+      ]);
+    }
+  };
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       const userInfoString = await AsyncStorage.getItem('userInfo');
@@ -277,6 +298,12 @@ const DashboardScreen = ({ navigation }) => {
           >
             <Ionicons name="notifications-outline" size={24} color="#003366" />
             <View style={styles.dot} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={24} color="#dc2626" />
           </TouchableOpacity>
         </View>
       </View>

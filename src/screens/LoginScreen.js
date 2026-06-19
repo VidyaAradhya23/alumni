@@ -5,8 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('alumni@rvitm.edu.in');
-  const [password, setPassword] = useState('alumni123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -129,7 +129,7 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-            <Text style={styles.infoText}>Use alumni@rvitm.edu.in / alumni123 for dummy access.</Text>
+            <Text style={styles.infoText}>Use any of the demo credentials listed below for quick access.</Text>
           </View>
 
           <View style={styles.credentialsBox}>

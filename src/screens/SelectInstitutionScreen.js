@@ -39,7 +39,7 @@ const SelectInstitutionScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>RVITM</Text>
+          <Text style={styles.logoText}>RV</Text>
         </View>
         <Text style={styles.title}>RV Educational</Text>
         <Text style={styles.title}>Institutions</Text>

@@ -8,10 +8,10 @@ const LandingScreen = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.badge}>Welcome back</Text>
           <Text style={styles.title}>
-            RVITM <Text style={styles.highlight}>Alumni</Text>
+            Alumni <Text style={styles.highlight}>Portal</Text>
           </Text>
           <Text style={styles.subtitle}>
-            Connect, Collaborate, and Grow Together with the exclusive global network of R.V. College of Engineering alumni.
+            Connect, Collaborate, and Grow Together with the exclusive global network of your institution's alumni.
           </Text>
         </View>
 

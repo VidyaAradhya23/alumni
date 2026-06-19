@@ -14,7 +14,7 @@ const WelcomeScreen = ({ navigation }) => {
       <View style={styles.content}>
         {/* Large Logo */}
         <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>RVITM</Text>
+          <Text style={styles.logoText}>Alumni</Text>
         </View>
         
         <Text style={styles.title}>Welcome to System</Text>
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
     color: '#002144',
   },

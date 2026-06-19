@@ -40,11 +40,11 @@ const SplashScreen = ({ navigation }) => {
         <View style={styles.logoContainer}>
           {/* Logo Placeholder */}
           <View style={styles.logo}>
-            <Text style={styles.logoText}>RVITM</Text>
+            <Text style={styles.logoText}>Alumni</Text>
           </View>
         </View>
-        <Text style={styles.title}>RVITM</Text>
-        <Text style={styles.subtitle}>Alumni Portal</Text>
+        <Text style={styles.title}>Alumni</Text>
+        <Text style={styles.subtitle}>Portal Network</Text>
         
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#003366" />
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   title: {

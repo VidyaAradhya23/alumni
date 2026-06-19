@@ -48,7 +48,7 @@ const INITIAL_PLACEMENTS = [
 
 const INITIAL_MENTOR_APPLICATIONS = [
   { id: '1', name: 'Ananth R', role: 'Mentor', expertise: 'Machine Learning / MLOps', company: 'Google', status: 'Pending' },
-  { id: '2', name: 'Kavya Hegde', role: 'Mentee', expertise: 'Cloud Architecture & AWS', company: 'RVITM Student', status: 'Pending' },
+  { id: '2', name: 'Kavya Hegde', role: 'Mentee', expertise: 'Cloud Architecture & AWS', company: 'Institution Student', status: 'Pending' },
 ];
 
 const INITIAL_ACTIVITIES = [
@@ -89,9 +89,9 @@ export default function AdminPanelScreen({ navigation }) {
   const [locationFilter, setLocationFilter] = useState('');
 
   // Welcome Mail States
-  const [mailSubject, setMailSubject] = useState('Welcome to the RVITM Alumni Community!');
+  const [mailSubject, setMailSubject] = useState('Welcome to the Institution Alumni Community!');
   const [mailBody, setMailBody] = useState(
-    'Hi {alumni_name},\n\nWelcome to the official alumni platform of RVITM! We are thrilled to have you join us. Stay connected with fellow batchmates, share job opportunities, and engage in mentorship programs.\n\nWarm regards,\nRVITM Alumni Association'
+    'Hi {alumni_name},\n\nWelcome to the official alumni platform of Institution! We are thrilled to have you join us. Stay connected with fellow batchmates, share job opportunities, and engage in mentorship programs.\n\nWarm regards,\nInstitution Alumni Association'
   );
   const [autoSend, setAutoSend] = useState(true);
 
@@ -197,7 +197,7 @@ export default function AdminPanelScreen({ navigation }) {
         if (prev >= 100) {
           clearInterval(interval);
           setIsExporting(false);
-          Alert.alert('Export Complete', 'RVITM_Alumni_MasterList.csv has been successfully compiled and downloaded.');
+          Alert.alert('Export Complete', 'Institution_Alumni_MasterList.csv has been successfully compiled and downloaded.');
           return 100;
         }
         return prev + 25;
@@ -221,7 +221,7 @@ export default function AdminPanelScreen({ navigation }) {
   const renderSpamReports = () => (
     <View style={styles.moduleContainer}>
       <Text style={styles.moduleHeading}>Spam & Abuse Complaints</Text>
-      <Text style={styles.moduleSubheading}>Review accounts reported by alumni in RVITM Institution</Text>
+      <Text style={styles.moduleSubheading}>Review accounts reported by alumni in Institution Institution</Text>
       <FlatList
         data={spamReports}
         keyExtractor={(item) => item.id}
@@ -270,7 +270,7 @@ export default function AdminPanelScreen({ navigation }) {
   const renderWelcomeMail = () => (
     <ScrollView style={styles.moduleContainer} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <Text style={styles.moduleHeading}>Welcome Email Automation</Text>
-      <Text style={styles.moduleSubheading}>Automatically welcome and onboard new verified alumni of RVITM</Text>
+      <Text style={styles.moduleSubheading}>Automatically welcome and onboard new verified alumni of Institution</Text>
       
       <View style={styles.formSection}>
         <Text style={styles.inputLabel}>Email Subject</Text>
@@ -321,7 +321,7 @@ export default function AdminPanelScreen({ navigation }) {
             {mailBody
               .replace('{alumni_name}', 'Karthik Nagaraju')
               .replace('{graduation_year}', '2018')
-              .replace('{institution}', 'RVITM')}
+              .replace('{institution}', 'Institution')}
           </Text>
         </View>
       </View>
@@ -342,7 +342,7 @@ export default function AdminPanelScreen({ navigation }) {
   const renderMasterList = () => (
     <View style={styles.moduleContainer}>
       <Text style={styles.moduleHeading}>Master Alumni Directory</Text>
-      <Text style={styles.moduleSubheading}>Filter and connect with RVITM verified alumni</Text>
+      <Text style={styles.moduleSubheading}>Filter and connect with Institution verified alumni</Text>
       
       {/* Search Bar */}
       <View style={styles.searchBarContainer}>
@@ -792,12 +792,12 @@ export default function AdminPanelScreen({ navigation }) {
   const renderDataExports = () => (
     <View style={styles.moduleContainer}>
       <Text style={styles.moduleHeading}>Report & Directory Exports</Text>
-      <Text style={styles.moduleSubheading}>Download secure data relating to your institution only (RVITM)</Text>
+      <Text style={styles.moduleSubheading}>Download secure data relating to your institution only (Institution)</Text>
 
       <View style={styles.exportOptionsList}>
         <View style={styles.exportRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.exportItemTitle}>Alumni Master Directory (RVITM)</Text>
+            <Text style={styles.exportItemTitle}>Alumni Master Directory (Institution)</Text>
             <Text style={styles.exportItemDesc}>Contains list of all verified registered alumni members (BE, M.Tech, MBA)</Text>
           </View>
           <TouchableOpacity style={styles.exportDownloadBtn} onPress={triggerExport} disabled={isExporting}>
@@ -848,7 +848,7 @@ export default function AdminPanelScreen({ navigation }) {
                 <Ionicons name="shield-checkmark" size={28} color="#003366" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.welcomeTitle}>Welcome, RVITM Admin</Text>
+                <Text style={styles.welcomeTitle}>Welcome, Institution Admin</Text>
                 <Text style={styles.welcomeSub}>Institution Management Console</Text>
               </View>
             </View>
@@ -894,7 +894,7 @@ export default function AdminPanelScreen({ navigation }) {
         )}
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{activeModule ? panelItems.find(p => p.moduleName === activeModule).title : 'Admin Panel'}</Text>
-          <Text style={styles.headerSub}>RVITM Institution</Text>
+          <Text style={styles.headerSub}>Institution Institution</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Messages')}>

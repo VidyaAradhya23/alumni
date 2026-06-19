@@ -31,7 +31,7 @@ const EngageScreen = ({ navigation }) => {
       image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 124,
       time: '2h',
-      content: 'Truly honored to be back on campus for the RVITM Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #RVITM #AlumniMeet',
+      content: 'Truly honored to be back on campus for the Institution Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #Institution #AlumniMeet',
     },
     {
       id: '2',
@@ -41,7 +41,7 @@ const EngageScreen = ({ navigation }) => {
       image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 89,
       time: '5h',
-      content: 'Our Silicon Valley RVITM chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
+      content: 'Our Silicon Valley Institution chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
     },
   ]);
 

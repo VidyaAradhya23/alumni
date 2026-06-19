@@ -12,11 +12,11 @@ const ProfileScreen = ({ navigation }) => {
   
   // Profile Data State
   const [profileData, setProfileData] = useState({
-    username: 'abhishek_rvitm',
+    username: 'abhishek_institution',
     name: 'Abhishek Jaiswal',
     branch: 'Computer Science & Engineering',
     batch: '2023',
-    bio: 'RVITM Class of 23 🎓\nSenior Software Engineer @ Tech Solutions\nBuilding scalable systems 🚀\nrvitm.edu.in/alumni/abhishek',
+    bio: 'Institution Class of 23 🎓\nSenior Software Engineer @ Tech Solutions\nBuilding scalable systems 🚀\ninstitution.edu.in/alumni/abhishek',
     posts: '6',
     followers: '1.2k',
     following: '850',
@@ -70,8 +70,8 @@ const ProfileScreen = ({ navigation }) => {
   ];
 
   const mockReshares = [
-    { id: 'r1', user: 'Dr. Satish Kumar', content: 'Truly honored to be back on campus for the RVITM Alumni Gala. The network growth is incredible!', date: 'Reshared yesterday' },
-    { id: 'r2', user: 'Ananya Joshi', content: 'Our Silicon Valley RVITM chapter is hosting a meetup next month. Join us!', date: 'Reshared 4 days ago' },
+    { id: 'r1', user: 'Dr. Satish Kumar', content: 'Truly honored to be back on campus for the Institution Alumni Gala. The network growth is incredible!', date: 'Reshared yesterday' },
+    { id: 'r2', user: 'Ananya Joshi', content: 'Our Silicon Valley Institution chapter is hosting a meetup next month. Join us!', date: 'Reshared 4 days ago' },
   ];
 
   const handleSettings = () => {

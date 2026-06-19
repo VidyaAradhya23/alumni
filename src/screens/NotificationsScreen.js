@@ -58,7 +58,7 @@ const initialNotifications = [
     id: '5',
     type: 'announcement',
     title: 'Official Announcement',
-    message: 'RVITM campus tour for the Batch of 1998 scheduled for July.',
+    message: 'Institution campus tour for the Batch of 1998 scheduled for July.',
     time: '5d ago',
     icon: 'megaphone-outline',
     color: '#FFEDD5',

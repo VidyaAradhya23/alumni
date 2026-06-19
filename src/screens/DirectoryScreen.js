@@ -26,8 +26,8 @@ const connectionRequests = [
 const directoryAlumni = [
   { id: 'da1', name: 'Priya Sharma', branch: 'CSE \'20', title: 'Product Manager at Microsoft', institution: 'RVCE', initials: 'PS', color: '#003366' },
   { id: 'da2', name: 'Rahul Verma', branch: 'ECE \'19', title: 'Software Engineer at Apple', institution: 'RVCE', initials: 'RV', color: '#1E40AF' },
-  { id: 'da3', name: 'Sneha Patel', branch: 'ISE \'21', title: 'Frontend Engineer at Meta', institution: 'RVITM', initials: 'SP', color: '#7C3AED' },
-  { id: 'da4', name: 'Arjun Reddy', branch: 'ME \'18', title: 'Mechanical Lead at Tesla', institution: 'RVITM', initials: 'AR', color: '#0E7490' },
+  { id: 'da3', name: 'Sneha Patel', branch: 'ISE \'21', title: 'Frontend Engineer at Meta', institution: 'Institution', initials: 'SP', color: '#7C3AED' },
+  { id: 'da4', name: 'Arjun Reddy', branch: 'ME \'18', title: 'Mechanical Lead at Tesla', institution: 'Institution', initials: 'AR', color: '#0E7490' },
   { id: 'da5', name: 'Kavitha Nair', branch: 'EEE \'22', title: 'Systems Lead at Qualcomm', institution: 'RVPU', initials: 'KN', color: '#B45309' },
   { id: 'da6', name: 'Deepak Kumar', branch: 'CSE \'17', title: 'Data Scientist at Amazon', institution: 'RVPU', initials: 'DK', color: '#059669' },
   { id: 'da7', name: 'Sarthak Banka', branch: 'CSE \'23', title: 'Fullstack Engineer at Coinbase', institution: 'RVIS', initials: 'SB', color: '#E11D48' },
@@ -430,7 +430,7 @@ const DirectoryScreen = ({ navigation }) => {
                   <Text style={styles.wizardLabel}>Community Name</Text>
                   <TextInput
                     style={styles.wizardInput}
-                    placeholder="e.g. RVITM CSE 2023 Alumni"
+                    placeholder="e.g. Institution CSE 2023 Alumni"
                     placeholderTextColor="#94A3B8"
                     value={communityName}
                     onChangeText={setCommunityName}

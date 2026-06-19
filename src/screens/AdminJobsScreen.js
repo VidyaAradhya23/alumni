@@ -42,7 +42,7 @@ const DUMMY_JOBS = [
     applied: 22,
     shared: 8,
     description: 'Amazon is hiring a Backend Developer to work on our cloud infrastructure services.',
-    institution: 'RVITM',
+    institution: 'Institution',
   },
   {
     id: '3',
@@ -222,7 +222,7 @@ export default function AdminJobsScreen({ navigation, route }) {
       workMode: fMode || 'Full-Time', experience: fExp.trim() || 'Not specified',
       location: fLoc.trim() || 'Not specified', views: 0, applied: 0, shared: 0,
       description: fDesc.trim() || 'No description provided.',
-      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
+      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'Institution',
     }, ...jobs]);
     clearForm();
     setScreen('list');
@@ -515,7 +515,7 @@ export default function AdminJobsScreen({ navigation, route }) {
                 <>
                   <Text style={s.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
+                    {['All', 'RVCE', 'Institution', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[s.pill, selectedInstitution === inst && s.pillActive]}

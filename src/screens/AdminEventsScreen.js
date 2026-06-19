@@ -26,7 +26,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
       id: 'e1',
       title: 'Alumni Gala Night 2026',
       date: 'Dec 18, 2026',
-      location: 'RVITM Campus Auditorium, Bengaluru',
+      location: 'Institution Campus Auditorium, Bengaluru',
       description: 'Join us for an unforgettable evening celebrating the achievements of our alumni community. Network with fellow graduates, enjoy cultural performances, and participate in the annual awards ceremony.',
       views: 342,
       likes: 87,
@@ -44,7 +44,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
       title: 'Startup Panel Discussion',
       date: 'Jan 15, 2027',
       location: 'Virtual / Zoom',
-      description: 'Hear from RVITM alumni who have founded successful startups. Topics include fundraising, scaling, and building a team. Open Q&A session at the end.',
+      description: 'Hear from Institution alumni who have founded successful startups. Topics include fundraising, scaling, and building a team. Open Q&A session at the end.',
       views: 218,
       likes: 56,
       liked: true,
@@ -53,13 +53,13 @@ const AdminEventsScreen = ({ navigation, route }) => {
         { id: 'c3', user: 'Arjun R.', text: 'Great lineup of speakers!', time: '1d ago' },
       ],
       reshares: 12,
-      institution: 'RVITM',
+      institution: 'Institution',
     },
     {
       id: 'e3',
       title: 'Career Mentorship Workshop',
       date: 'Feb 8, 2027',
-      location: 'RVITM Seminar Hall B',
+      location: 'Institution Seminar Hall B',
       description: 'A hands-on workshop where senior alumni mentor current students and recent graduates on career planning, resume building, and interview preparation.',
       views: 156,
       likes: 43,
@@ -125,7 +125,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
       comments: [],
       reshares: 0,
       attachment: eventAttachment,
-      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
+      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'Institution',
     };
     setEventList([newEvent, ...eventList]);
     setEventTitle('');
@@ -540,7 +540,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
                 <>
                   <Text style={styles.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
+                    {['All', 'RVCE', 'Institution', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[styles.pill, selectedInstitution === inst && styles.pillActive]}

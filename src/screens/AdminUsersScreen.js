@@ -18,8 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 const FRIENDS_DATA = [
   { id: '1', name: 'Priya Sharma', branch: 'CSE', department: 'Computer Science', batch: '2020', location: 'Bengaluru', course: 'B.E.', avatar: 'PS', institution: 'RVCE' },
   { id: '2', name: 'Rahul Verma', branch: 'ECE', department: 'Electronics', batch: '2019', location: 'Hyderabad', course: 'B.E.', avatar: 'RV', institution: 'RVCE' },
-  { id: '3', name: 'Sneha Patel', branch: 'ISE', department: 'Information Science', batch: '2021', location: 'Remote', course: 'B.E.', avatar: 'SP', institution: 'RVITM' },
-  { id: '4', name: 'Arjun Reddy', branch: 'ME', department: 'Mechanical', batch: '2018', location: 'Bengaluru', course: 'B.E.', avatar: 'AR', institution: 'RVITM' },
+  { id: '3', name: 'Sneha Patel', branch: 'ISE', department: 'Information Science', batch: '2021', location: 'Remote', course: 'B.E.', avatar: 'SP', institution: 'Institution' },
+  { id: '4', name: 'Arjun Reddy', branch: 'ME', department: 'Mechanical', batch: '2018', location: 'Bengaluru', course: 'B.E.', avatar: 'AR', institution: 'Institution' },
   { id: '5', name: 'Kavitha Nair', branch: 'EEE', department: 'Electrical', batch: '2022', location: 'Mumbai', course: 'M.Tech', avatar: 'KN', institution: 'RVPU' },
   { id: '6', name: 'Deepak Kumar', branch: 'CSE', department: 'Computer Science', batch: '2017', location: 'Bengaluru', course: 'MCA', avatar: 'DK', institution: 'RVPU' },
   { id: '7', name: 'Sarthak Banka', branch: 'CSE', department: 'Computer Science', batch: '2023', location: 'Bengaluru', course: 'B.E.', avatar: 'SB', institution: 'RVIS' },
@@ -27,9 +27,9 @@ const FRIENDS_DATA = [
 ];
 
 const COMMUNITIES_DATA = [
-  { id: '1', name: 'RVITM Tech Community', members: '1.2K', icon: 'code-slash-outline', joined: true, institution: 'RVITM' },
+  { id: '1', name: 'Institution Tech Community', members: '1.2K', icon: 'code-slash-outline', joined: true, institution: 'Institution' },
   { id: '2', name: 'Alumni Entrepreneurs Club', members: '856', icon: 'rocket-outline', joined: false, institution: 'RVCE' },
-  { id: '3', name: 'RVITM Placement Network', members: '2.1K', icon: 'briefcase-outline', joined: true, institution: 'RVITM' },
+  { id: '3', name: 'Institution Placement Network', members: '2.1K', icon: 'briefcase-outline', joined: true, institution: 'Institution' },
   { id: '4', name: 'Sports Alumni Association', members: '432', icon: 'football-outline', joined: false, institution: 'RVIS' },
 ];
 
@@ -417,7 +417,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
                 <>
                   <Text style={styles.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
+                    {['All', 'RVCE', 'Institution', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[styles.pill, selectedInstitution === inst && styles.pillActive]}

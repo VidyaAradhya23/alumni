@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const institutions = [
   { id: 'RVCE', name: 'RVCE', fullName: 'RV College of Engineering', icon: 'school' },
-  { id: 'RVITM', name: 'RVITM', fullName: 'RV Institute of Technology & Management', icon: 'code-working' },
+  { id: 'Institution', name: 'Institution', fullName: 'The Institution', icon: 'code-working' },
   { id: 'RVPU', name: 'RVPU', fullName: 'RV Pre-University College', icon: 'book' },
   { id: 'RVIS', name: 'RVIS', fullName: 'RV International School', icon: 'globe' },
   { id: 'RVU', name: 'RVU', fullName: 'RV University', icon: 'ribbon' },

@@ -3,7 +3,25 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, Platform, Text } from 'react-native';
+import { View, Platform, Text, Alert } from 'react-native';
+
+// Polyfill Alert for web to prevent crashes and ensure button interactivity
+if (Platform.OS === 'web') {
+  Alert.alert = (title, message, buttons) => {
+    if (buttons && buttons.length) {
+      const result = window.confirm([title, message].filter(Boolean).join('\n'));
+      if (result) {
+        const confirmOption = buttons.find(b => b.style !== 'cancel' && b.text !== 'Cancel') || buttons[0];
+        if (confirmOption && confirmOption.onPress) confirmOption.onPress();
+      } else {
+        const cancelOption = buttons.find(b => b.style === 'cancel' || b.text === 'Cancel');
+        if (cancelOption && cancelOption.onPress) cancelOption.onPress();
+      }
+    } else {
+      window.alert([title, message].filter(Boolean).join('\n'));
+    }
+  };
+}
 
 // Onboarding Screens
 import SplashScreen from './src/screens/SplashScreen';

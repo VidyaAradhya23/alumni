@@ -27,7 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const INSTITUTIONS = [
   { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
-  { id: '2', name: 'RV Institute of Technology & Management', shortName: 'RVITM', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
+  { id: '2', name: 'The Institution', shortName: 'Institution', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
   { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Active', color: '#7C3AED' },
   { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
   { id: '5', name: 'RV University', shortName: 'RVU', location: 'Bengaluru, Karnataka', established: 2021, totalAlumni: 1200, registeredUsers: 450, admins: 3, status: 'Active', color: '#B45309' },
@@ -49,7 +49,7 @@ const INSTITUTIONS = [
 const INITIAL_ADMINS = [
   { id: '1', name: 'Dr. Ramesh Kumar', email: 'admin@rvce.edu', password: 'admin123', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 09:30 AM', passwordChangedAt: '15/06/2026' },
   { id: '2', name: 'Prof. Anitha Shetty', email: 'anitha.s@rvce.edu', password: 'anitha@2026', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '16/06/2026 02:15 PM', passwordChangedAt: '10/06/2026' },
-  { id: '3', name: 'Suresh Babu', email: 'admin@rvitm.edu', password: 'admin456', institution: 'RVITM', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 11:00 AM', passwordChangedAt: '12/06/2026' },
+  { id: '3', name: 'Suresh Babu', email: 'admin@institution.edu', password: 'admin456', institution: 'Institution', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 11:00 AM', passwordChangedAt: '12/06/2026' },
   { id: '4', name: 'Meera Nair', email: 'admin@rvpu.edu', password: 'admin789', institution: 'RVPU', role: 'Admin', status: 'Active', lastLogin: '14/06/2026 04:45 PM', passwordChangedAt: '01/06/2026' },
   { id: '5', name: 'Vikram Joshi', email: 'admin@rvis.edu', password: 'admin012', institution: 'RVIS', role: 'Admin', status: 'Inactive', lastLogin: '10/06/2026 10:00 AM', passwordChangedAt: '05/05/2026' },
 ];
@@ -57,15 +57,15 @@ const INITIAL_ADMINS = [
 const INITIAL_SPAM_REPORTS = [
   { id: '1', name: 'Nithin Ganimaneni', institution: 'RVCE', branch: 'BE, CSE', year: '2022', reason: 'Spamming job referrals with affiliate links', reportedBy: 'Karthik Nagaraju', date: '10/06/2026' },
   { id: '2', name: 'G.Y Rohith', institution: 'RVCE', branch: 'BE, ECE', year: '2016', reason: 'Posting commercial ads in alumni timeline', reportedBy: 'Uday A S', date: '09/06/2026' },
-  { id: '3', name: 'Priya Desai', institution: 'RVITM', branch: 'BE, ISE', year: '2020', reason: 'Sending bulk unsolicited messages', reportedBy: 'Admin', date: '11/06/2026' },
+  { id: '3', name: 'Priya Desai', institution: 'Institution', branch: 'BE, ISE', year: '2020', reason: 'Sending bulk unsolicited messages', reportedBy: 'Admin', date: '11/06/2026' },
   { id: '4', name: 'Rahul Menon', institution: 'RVPU', branch: 'Science', year: '2019', reason: 'Fake profile with misleading information', reportedBy: 'Meera Nair', date: '08/06/2026' },
-  { id: '5', name: 'Sneha Patil', institution: 'RVITM', branch: 'MBA', year: '2021', reason: 'Promoting external MLM schemes', reportedBy: 'Suresh Babu', date: '07/06/2026' },
+  { id: '5', name: 'Sneha Patil', institution: 'Institution', branch: 'MBA', year: '2021', reason: 'Promoting external MLM schemes', reportedBy: 'Suresh Babu', date: '07/06/2026' },
 ];
 
 const INITIAL_MEMBERSHIP_REQUESTS = [
   { id: '1', name: 'Srinivas Murthy', institution: 'RVCE', branch: 'BE, Mechanical', year: '2020', email: 'srinivas.m@example.com', phone: '+91 98456 12345', proof: 'Degree Certificate ID: 948210', status: 'pending', adminAction: null, details: { company: 'Tata Motors', designation: 'Senior Engineer', graduationYear: 2020, linkedIn: 'linkedin.com/in/srinivas-m' } },
   { id: '2', name: 'Priya Sharma', institution: 'RVCE', branch: 'MBA', year: '2021', email: 'priya.sharma@example.com', phone: '+91 87654 32100', proof: 'Alumni ID Card No: RV-9481', status: 'approved', adminAction: 'Approved by Dr. Ramesh Kumar', details: { company: 'Deloitte', designation: 'Consultant', graduationYear: 2021, linkedIn: 'linkedin.com/in/priya-sharma' } },
-  { id: '3', name: 'Amit Kulkarni', institution: 'RVITM', branch: 'BE, CSE', year: '2019', email: 'amit.k@example.com', phone: '+91 99887 76655', proof: 'Marksheet Upload: MS_2019_CSE', status: 'rejected', adminAction: 'Rejected by Suresh Babu - Incomplete documents', details: { company: 'Infosys', designation: 'Tech Lead', graduationYear: 2019, linkedIn: 'linkedin.com/in/amit-k' } },
+  { id: '3', name: 'Amit Kulkarni', institution: 'Institution', branch: 'BE, CSE', year: '2019', email: 'amit.k@example.com', phone: '+91 99887 76655', proof: 'Marksheet Upload: MS_2019_CSE', status: 'rejected', adminAction: 'Rejected by Suresh Babu - Incomplete documents', details: { company: 'Infosys', designation: 'Tech Lead', graduationYear: 2019, linkedIn: 'linkedin.com/in/amit-k' } },
   { id: '4', name: 'Deepa Rao', institution: 'RVPU', branch: 'Commerce', year: '2018', email: 'deepa.r@example.com', phone: '+91 77889 90011', proof: 'Transfer Certificate No: PU-7823', status: 'pending', adminAction: null, details: { company: 'KPMG', designation: 'Audit Associate', graduationYear: 2018, linkedIn: 'linkedin.com/in/deepa-rao' } },
   { id: '5', name: 'Kiran Hegde', institution: 'RVIS', branch: 'PCMB', year: '2017', email: 'kiran.h@example.com', phone: '+91 88776 65544', proof: 'School Leaving Certificate', status: 'approved', adminAction: 'Approved by Vikram Joshi', details: { company: 'Amazon', designation: 'SDE-2', graduationYear: 2017, linkedIn: 'linkedin.com/in/kiran-hegde' } },
 ];
@@ -74,8 +74,8 @@ const INITIAL_PLACEMENTS = [
   { id: '1', company: 'Cisco Systems', industry: 'Computer Networking', count: 78, institution: 'RVCE' },
   { id: '2', company: 'Accenture', industry: 'IT Services', count: 62, institution: 'RVCE' },
   { id: '3', company: 'Qualcomm', industry: 'Semiconductors', count: 61, institution: 'RVCE' },
-  { id: '4', company: 'Infosys', industry: 'IT Services', count: 45, institution: 'RVITM' },
-  { id: '5', company: 'Wipro', industry: 'IT Services', count: 38, institution: 'RVITM' },
+  { id: '4', company: 'Infosys', industry: 'IT Services', count: 45, institution: 'Institution' },
+  { id: '5', company: 'Wipro', industry: 'IT Services', count: 38, institution: 'Institution' },
   { id: '6', company: 'TCS', industry: 'IT Services', count: 32, institution: 'RVPU' },
   { id: '7', company: 'IBM', industry: 'IT Services', count: 28, institution: 'RVCE' },
   { id: '8', company: 'Amazon', industry: 'E-Commerce/Tech', count: 25, institution: 'RVIS' },
@@ -84,23 +84,23 @@ const INITIAL_PLACEMENTS = [
 const INITIAL_ACTIVITIES = [
   { id: '1', type: 'Email Interaction', description: 'Welcome email sent to new admin Anitha Shetty', institution: 'RVCE', category: 'Welcome Mail', date: '17/06/2026' },
   { id: '2', type: 'Admin Action', description: 'Approved membership for Priya Sharma', institution: 'RVCE', category: 'Membership', date: '16/06/2026' },
-  { id: '3', type: 'Placement Update', description: 'Added Infosys placement data - 45 alumni', institution: 'RVITM', category: 'Placement Tool', date: '15/06/2026' },
+  { id: '3', type: 'Placement Update', description: 'Added Infosys placement data - 45 alumni', institution: 'Institution', category: 'Placement Tool', date: '15/06/2026' },
   { id: '4', type: 'Spam Action', description: 'Suspended account of Rahul Menon for fake profile', institution: 'RVPU', category: 'Spam/Report', date: '14/06/2026' },
   { id: '5', type: 'Bulk Import', description: 'Imported 250 alumni records from CSV', institution: 'RVCE', category: 'Bulk Import', date: '13/06/2026' },
-  { id: '6', type: 'Data Export', description: 'Exported batch 2020-2023 alumni data', institution: 'RVITM', category: 'Data Export', date: '12/06/2026' },
+  { id: '6', type: 'Data Export', description: 'Exported batch 2020-2023 alumni data', institution: 'Institution', category: 'Data Export', date: '12/06/2026' },
   { id: '7', type: 'Network Settings', description: 'Updated branding colors and logo', institution: 'RVIS', category: 'Network Settings', date: '11/06/2026' },
   { id: '8', type: 'Email Campaign', description: 'Sent reunion invitation to 1200 alumni', institution: 'RVCE', category: 'Events', date: '10/06/2026' },
 ];
 
 const INITIAL_IMPORTS = [
   { id: '1', fileName: 'rvce_alumni_2020.csv', institution: 'RVCE', records: 250, successful: 245, failed: 5, date: '13/06/2026', status: 'Completed' },
-  { id: '2', fileName: 'rvitm_batch2019.xlsx', institution: 'RVITM', records: 180, successful: 180, failed: 0, date: '10/06/2026', status: 'Completed' },
+  { id: '2', fileName: 'institution_batch2019.xlsx', institution: 'Institution', records: 180, successful: 180, failed: 0, date: '10/06/2026', status: 'Completed' },
   { id: '3', fileName: 'rvpu_science_stream.csv', institution: 'RVPU', records: 120, successful: 98, failed: 22, date: '05/06/2026', status: 'Partial' },
 ];
 
 const INITIAL_NETWORK_SETTINGS = {
   'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'RVITM': { institutionName: 'RV Institute of Technology & Management', shortTitle: 'RVITM', website: 'https://rvitm.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'Institution': { institutionName: 'The Institution', shortTitle: 'Institution', website: 'https://institution.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpucollege.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
   'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: '#F59E0B', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
@@ -154,14 +154,14 @@ const MOCK_POSTS = [
   {
     id: 'p2',
     user: 'Suresh Babu',
-    role: 'Placement Coordinator @ RVITM',
+    role: 'Placement Coordinator @ Institution',
     avatar: 'SB',
-    content: 'Fantastic start to the placement season at RVITM! Over 45 alumni placed in Infosys this week. More recruiters visiting campus next week. Keep it up! 💼🚀 #Placements #RVITM',
+    content: 'Fantastic start to the placement season at Institution! Over 45 alumni placed in Infosys this week. More recruiters visiting campus next week. Keep it up! 💼🚀 #Placements #Institution',
     image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&h=400&q=80',
     likes: 182,
     commentsCount: 9,
     time: '5 hours ago',
-    institution: 'RVITM',
+    institution: 'Institution',
   },
   {
     id: 'p3',
@@ -351,9 +351,9 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           logo: 'CE',
           color: '#003366',
         };
-      case 'RVITM':
+      case 'Institution':
         return {
-          fullName: 'RV Institute of Technology & Management',
+          fullName: 'The Institution',
           subtitle: 'Bengaluru, Karnataka • Est. 2019',
           logo: 'TM',
           color: '#1E3A5F',
@@ -661,7 +661,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [editingPlacementId, setEditingPlacementId] = useState(null); // null if creating, ID if editing
 
   // Welcome Mail States
-  const [welcomeSubject, setWelcomeSubject] = useState('Welcome to RVITM Admin Portal');
+  const [welcomeSubject, setWelcomeSubject] = useState('Welcome to Institution Admin Portal');
   const [welcomeBody, setWelcomeBody] = useState('Dear Admin,\n\nYour administrator account has been created successfully. Please log in using your registered credentials.\n\nBest regards,\nSuper Admin Team');
   const [welcomeAutoSend, setWelcomeAutoSend] = useState(true);
 
@@ -2312,7 +2312,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                   {INSTITUTIONS.map((instObj) => {
                     const inst = instObj.shortName;
                     const val1 = 0;
-                    const val2 = instObj.shortName === 'RVCE' || instObj.shortName === 'RVITM' ? 1 : 0;
+                    const val2 = instObj.shortName === 'RVCE' || instObj.shortName === 'Institution' ? 1 : 0;
                     const val3 = instObj.shortName === 'RVCE' ? 1 : 0;
                     return { inst, val1, val2, val3 };
                   }).map((row, idx) => (

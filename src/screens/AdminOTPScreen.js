@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, Keyb
 import { Ionicons } from '@expo/vector-icons';
 
 const AdminOTPScreen = ({ navigation, route }) => {
-  const adminEmail = route?.params?.email || 'admin@rvitm.edu.in';
+  const adminEmail = route?.params?.email || 'admin@institution.edu.in';
   const [otp, setOtp] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);

@@ -8,7 +8,7 @@ const RoleSelectionScreen = ({ navigation }) => {
   const roles = [
     { id: 'Alumni', icon: 'school', description: 'Access the global alumni network and resources' },
     { id: 'Admin', icon: 'settings', description: 'Institution-level management and moderation' },
-    { id: 'Super Admin', icon: 'shield', description: 'Global RVITM governance and control' },
+    { id: 'Super Admin', icon: 'shield', description: 'Global Institution governance and control' },
   ];
 
   return (

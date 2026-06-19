@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const hashtags = ['#RVITM', '#AlumniMeet', '#Mentorship', '#TechTalk', '#Careers', '#ClassOf2024'];
+const hashtags = ['#Institution', '#AlumniMeet', '#Mentorship', '#TechTalk', '#Careers', '#ClassOf2024'];
 
 const PostCreationScreen = ({ navigation }) => {
   const [content, setContent] = useState('');
@@ -138,7 +138,7 @@ const PostCreationScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.toolBtn} onPress={handleToggleAudience}>
               <Ionicons name="people" size={24} color="#003366" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.toolBtn} onPress={() => handleAddHashtag('#RVITM')}>
+            <TouchableOpacity style={styles.toolBtn} onPress={() => handleAddHashtag('#Institution')}>
               <Ionicons name="hash" size={24} color="#003366" />
             </TouchableOpacity>
           </View>

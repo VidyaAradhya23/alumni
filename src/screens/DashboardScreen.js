@@ -78,7 +78,7 @@ const DashboardScreen = ({ navigation }) => {
       role: 'Staff Engineer @ Google',
       avatar: 'SK',
       content:
-        'Truly honored to be back on campus for the RVITM Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #RVITM #AlumniMeet',
+        'Truly honored to be back on campus for the Institution Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #Institution #AlumniMeet',
       image:
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 124,
@@ -91,7 +91,7 @@ const DashboardScreen = ({ navigation }) => {
       role: 'SDE-2 @ Microsoft',
       avatar: 'AJ',
       content:
-        'Our Silicon Valley RVITM chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
+        'Our Silicon Valley Institution chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
       image:
         'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 89,
@@ -148,7 +148,7 @@ const DashboardScreen = ({ navigation }) => {
   const handleShare = async (post) => {
     try {
       await Share.share({
-        message: `Check out this post from ${post.user} on RVITM Alumni App:\n"${post.content}"`,
+        message: `Check out this post from ${post.user} on Institution Alumni App:\n"${post.content}"`,
       });
     } catch (_error) {
       Alert.alert('Error', 'Could not share this post');

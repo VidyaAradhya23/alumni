@@ -12,8 +12,13 @@ import {
   Modal,
   FlatList
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+WebBrowser.maybeCompleteAuthSession();
 const institutions = [
   'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH', 'Other'
 ];
@@ -94,6 +99,40 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleOAuthLogin = (provider) => {
     alert(`OAuth signup for ${provider} requires Client IDs setup.`);
+  };
+
+  const handleLinkedInLogin = async () => {
+    setLoading(true);
+    try {
+      const redirectUrl = Linking.createURL('oauth-callback');
+      const stateObj = { redirectUrl };
+      const state = encodeURIComponent(JSON.stringify(stateObj));
+      
+      const backendAuthUrl = 'http://localhost:5000/api/auth/linkedin/callback';
+      const clientId = 'your_linkedin_client_id'; 
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendAuthUrl)}&state=${state}&scope=openid%20profile%20email`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+      if (result.type === 'success' && result.url) {
+        const parsed = Linking.parse(result.url);
+        const { token, user } = parsed.queryParams;
+
+        if (token && user) {
+          const userInfo = JSON.parse(decodeURIComponent(user));
+          userInfo.token = token;
+          await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+          navigation.navigate('Main');
+        } else {
+          alert('LinkedIn login failed: Invalid response from server');
+        }
+      }
+    } catch (error) {
+      console.error('LinkedIn Login Error:', error);
+      alert('LinkedIn Login Error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openPicker = (type) => {
@@ -226,6 +265,21 @@ const RegisterScreen = ({ navigation }) => {
               disabled={loading}
             >
               <Text style={styles.primaryButtonText}>{loading ? 'Creating Account...' : 'Create Account'}</Text>
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
+              <Text style={{ marginHorizontal: 10, color: 'rgba(255, 255, 255, 0.7)' }}>OR</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.linkedinButton, loading && { opacity: 0.7 }]} 
+              onPress={handleLinkedInLogin}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons name="linkedin" size={24} color="#FFFFFF" style={styles.linkedinIcon} />
+              <Text style={styles.linkedinButtonText}>Sign up with LinkedIn</Text>
             </TouchableOpacity>
           </View>
 
@@ -377,6 +431,22 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  linkedinButton: {
+    backgroundColor: '#0A66C2',
+    height: 52,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkedinIcon: {
+    marginRight: 8,
+  },
+  linkedinButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
   dividerText: {
     marginHorizontal: 12,

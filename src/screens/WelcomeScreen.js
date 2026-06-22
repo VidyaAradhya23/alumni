@@ -1,10 +1,46 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const WelcomeScreen = ({ navigation }) => {
-  const handleOAuthLogin = (provider) => {
-    alert(`OAuth login for ${provider} requires Client IDs setup.`);
+  const handleOAuthLogin = async (provider) => {
+    if (provider === 'linkedin') {
+      try {
+        const redirectUrl = Linking.createURL('oauth-callback');
+        const stateObj = { redirectUrl };
+        const state = encodeURIComponent(JSON.stringify(stateObj));
+        
+        const backendAuthUrl = 'http://localhost:5000/api/auth/linkedin/callback';
+        const clientId = 'your_linkedin_client_id'; 
+        const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendAuthUrl)}&state=${state}&scope=openid%20profile%20email`;
+
+        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+        if (result.type === 'success' && result.url) {
+          const parsed = Linking.parse(result.url);
+          const { token, user } = parsed.queryParams;
+
+          if (token && user) {
+            const userInfo = JSON.parse(decodeURIComponent(user));
+            userInfo.token = token;
+            await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+            navigation.navigate('Main');
+          } else {
+            alert('LinkedIn login failed: Invalid response from server');
+          }
+        }
+      } catch (error) {
+        console.error('LinkedIn Login Error:', error);
+        alert('LinkedIn Login Error: ' + error.message);
+      }
+    } else {
+      alert(`OAuth login for ${provider} requires Client IDs setup.`);
+    }
   };
 
   return (

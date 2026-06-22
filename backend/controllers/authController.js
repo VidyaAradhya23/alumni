@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -164,5 +165,110 @@ exports.getUsers = async (req, res) => {
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Auth via LinkedIn OpenID Connect
+// @route   GET /api/auth/linkedin/callback
+exports.linkedinAuthCallback = async (req, res) => {
+    const { code, state } = req.query;
+
+    if (!code) {
+        return res.status(400).send('Authorization code missing from LinkedIn redirect');
+    }
+
+    try {
+        // Parse state to get the redirect url if provided by frontend
+        let redirectUrl = 'http://localhost:19006'; // default
+        if (state) {
+            try {
+                const stateObj = JSON.parse(decodeURIComponent(state));
+                if (stateObj.redirectUrl) {
+                    redirectUrl = stateObj.redirectUrl;
+                }
+            } catch (err) {
+                console.error('Failed to parse state param', err);
+            }
+        }
+
+        // 1. Exchange code for access token
+        const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', null, {
+            params: {
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: process.env.LINKEDIN_REDIRECT_URI,
+                client_id: process.env.LINKEDIN_CLIENT_ID,
+                client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+            },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+
+        const accessToken = tokenResponse.data.access_token;
+
+        // 2. Fetch user profile from LinkedIn
+        const userResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            }
+        });
+
+        const { sub, name, given_name, family_name, picture, email } = userResponse.data;
+
+        if (!email) {
+            return res.status(400).send('Email missing from LinkedIn profile');
+        }
+
+        // 3. Find or Create User
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Update auth provider if they logged in with local previously
+            if (!user.providerId) {
+                user.authProvider = 'linkedin';
+                user.providerId = sub;
+                if (picture && !user.profilePicture) user.profilePicture = picture;
+                await user.save();
+            }
+        } else {
+            // Create new verified user
+            user = await User.create({
+                name: name || `${given_name} ${family_name}`,
+                email,
+                authProvider: 'linkedin',
+                providerId: sub,
+                profilePicture: picture,
+                branch: 'Not Set',
+                batchYear: 'Not Set',
+                verified: true
+            });
+        }
+
+        // 4. Generate JWT
+        const token = generateToken(user._id);
+
+        const userData = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            institution: user.institution,
+            branch: user.branch,
+            batchYear: user.batchYear,
+            bio: user.bio,
+            location: user.location,
+            company: user.company,
+            designation: user.designation,
+            profilePicture: user.profilePicture,
+            token
+        };
+
+        // 5. Redirect back to mobile deep link with token
+        const finalRedirectUrl = `${redirectUrl}?token=${token}&user=${encodeURIComponent(JSON.stringify(userData))}`;
+        res.redirect(finalRedirectUrl);
+
+    } catch (error) {
+        console.error('LinkedIn OAuth Error:', error.response?.data || error.message);
+        res.status(500).send('LinkedIn OAuth Error: ' + (error.response?.data?.message || error.message));
     }
 };

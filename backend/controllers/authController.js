@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-
+const { sendWelcomeEmail } = require('../utils/sendEmail');
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
@@ -26,6 +26,9 @@ exports.registerUser = async (req, res) => {
             branch,
             batchYear
         });
+
+        // Fire and forget welcome email
+        sendWelcomeEmail(user.email, user.name);
 
         res.status(201).json({
             _id: user._id,
@@ -243,6 +246,9 @@ exports.linkedinAuthCallback = async (req, res) => {
                 batchYear: 'Not Set',
                 verified: true
             });
+
+            // Fire and forget welcome email
+            sendWelcomeEmail(user.email, user.name);
         }
 
         // 4. Generate JWT

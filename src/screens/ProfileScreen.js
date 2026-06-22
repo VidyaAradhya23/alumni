@@ -175,7 +175,9 @@ const ProfileScreen = ({ navigation }) => {
 
           {/* Bio */}
           <View style={styles.bioContainer}>
-            <Text style={styles.nameText}>{profileData.name}</Text>
+            <Text style={styles.nameText}>
+              {profileData.name} <Text style={{fontSize: 14, color: '#3B82F6', fontWeight: 'bold'}}>• Alumni</Text>
+            </Text>
             <Text style={styles.occupationText}>{profileData.branch} Class of {profileData.batch}</Text>
             <Text style={styles.bioText}>{profileData.bio}</Text>
           </View>

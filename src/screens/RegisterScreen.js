@@ -13,7 +13,7 @@ import {
   FlatList
 } from 'react-native';
 import api from '../services/api';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const institutions = [
   'RVCE', 'Institution', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH', 'Other'
 ];
@@ -75,8 +75,15 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await api.post('/auth/register', formData);
-      alert('Account created successfully! Please sign in.');
+      // Simulate API call for registration
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const pendingUsersRaw = await AsyncStorage.getItem('pendingUsers') || '[]';
+      const pendingUsers = JSON.parse(pendingUsersRaw);
+      pendingUsers.push(email.toLowerCase().trim());
+      await AsyncStorage.setItem('pendingUsers', JSON.stringify(pendingUsers));
+
+      alert('Account created successfully! Waiting for admin approval.');
       navigation.navigate('Login');
     } catch (error) {
       alert(error.response?.data?.message || 'Registration failed');

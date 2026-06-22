@@ -273,7 +273,14 @@ export default function AdminPanelScreen({ navigation }) {
       <Text style={styles.moduleSubheading}>Automatically welcome and onboard new verified alumni of Institution</Text>
       
       <View style={styles.formSection}>
-        <Text style={styles.inputLabel}>Email Subject</Text>
+        <Text style={styles.inputLabel}>Sender Email (From)</Text>
+        <TextInput
+          style={[styles.textInput, { backgroundColor: '#F1F5F9', color: '#64748B' }]}
+          value="harshithads.rsst@rvei.edu.in"
+          editable={false}
+        />
+
+        <Text style={[styles.inputLabel, { marginTop: 16 }]}>Email Subject</Text>
         <TextInput
           style={styles.textInput}
           value={mailSubject}

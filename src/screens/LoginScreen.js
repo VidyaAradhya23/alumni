@@ -25,6 +25,15 @@ const LoginScreen = ({ navigation }) => {
       { email: 'alumni@rvis.edu', password: 'alumni123', name: 'RVIS Alumni User', institution: 'RVIS' },
     ];
 
+    const pendingUsersRaw = await AsyncStorage.getItem('pendingUsers') || '[]';
+    const pendingUsers = JSON.parse(pendingUsersRaw);
+
+    if (pendingUsers.includes(email.toLowerCase().trim())) {
+      alert('Your account is waiting for admin approval.');
+      setLoading(false);
+      return;
+    }
+
     const matchedAlumni = dummyAlumni.find(a => a.email === email.toLowerCase().trim() && a.password === password);
 
     if (matchedAlumni) {

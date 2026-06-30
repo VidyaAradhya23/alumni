@@ -315,12 +315,21 @@ const EngageScreen = ({ navigation }) => {
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
               <View style={styles.postAvatar}><Text style={styles.postAvatarText}>{post.avatar}</Text></View>
-              <View style={styles.postInfo}>
+              <View style={[styles.postInfo, { flex: 1 }]}>
                 <Text style={styles.postUserName}>{post.user}</Text>
                 <Text style={styles.postSubtitle}>{post.subtitle}</Text>
               </View>
               <TouchableOpacity style={styles.followBtn}>
                 <Text style={styles.followBtnText}>+ Follow</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
+                Alert.alert('Report Options', 'Select an action for this content', [
+                  { text: 'Report Post', style: 'destructive', onPress: () => Alert.alert('Reported', 'This post has been reported.') },
+                  { text: 'Block User', style: 'destructive', onPress: () => Alert.alert('Blocked', 'You will no longer see posts from this user.') },
+                  { text: 'Cancel', style: 'cancel' }
+                ]);
+              }}>
+                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
               </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>
@@ -371,12 +380,21 @@ const EngageScreen = ({ navigation }) => {
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
               <View style={styles.postAvatar}><Text style={styles.postAvatarText}>{post.avatar}</Text></View>
-              <View style={styles.postInfo}>
+              <View style={[styles.postInfo, { flex: 1 }]}>
                 <Text style={styles.postUserName}>{post.user}</Text>
                 <Text style={styles.postSubtitle}>{post.subtitle}</Text>
               </View>
               <TouchableOpacity style={styles.followBtn}>
                 <Text style={styles.followBtnText}>+ Follow</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
+                Alert.alert('Report Options', 'Select an action for this content', [
+                  { text: 'Report Post', style: 'destructive', onPress: () => Alert.alert('Reported', 'This post has been reported.') },
+                  { text: 'Block User', style: 'destructive', onPress: () => Alert.alert('Blocked', 'You will no longer see posts from this user.') },
+                  { text: 'Cancel', style: 'cancel' }
+                ]);
+              }}>
+                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
               </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>

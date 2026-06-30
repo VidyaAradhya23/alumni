@@ -293,6 +293,10 @@ const RegisterScreen = ({ navigation }) => {
               <Text style={styles.signupText}>Sign In</Text>
             </TouchableOpacity>
           </View>
+          
+          <Text style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)', fontSize: 12, marginTop: 20, marginBottom: 40, paddingHorizontal: 20 }}>
+            By registering, you agree to our Terms of Service and Privacy Policy.
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
       </View>

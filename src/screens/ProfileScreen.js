@@ -553,6 +553,41 @@ const ProfileScreen = ({ navigation }) => {
                     <Ionicons name={twoFactor ? "toggle" : "toggle-outline"} size={40} color={twoFactor ? "#003366" : "#CBD5E1"} />
                   </TouchableOpacity>
                 </View>
+
+                <Text style={[styles.settingsSectionTitle, { marginTop: 30, color: '#DC2626' }]}>Danger Zone</Text>
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: '#FEF2F2',
+                    borderWidth: 1,
+                    borderColor: '#FECACA',
+                    padding: 16,
+                    borderRadius: 12,
+                    marginTop: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onPress={() => {
+                    Alert.alert(
+                      'Delete Account',
+                      'Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be removed.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                          text: 'Delete Permanently', 
+                          style: 'destructive',
+                          onPress: () => {
+                            setSettingsVisible(false);
+                            navigation.replace('Welcome');
+                          }
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#DC2626" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#DC2626', fontWeight: '600', fontSize: 16 }}>Delete Account</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>

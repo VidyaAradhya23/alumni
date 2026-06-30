@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const RoleSelectionScreen = ({ navigation }) => {
@@ -11,8 +11,12 @@ const RoleSelectionScreen = ({ navigation }) => {
     { id: 'Super Admin', icon: 'shield', description: 'Global Institution governance and control' },
   ];
 
+  const isWeb = Platform.OS === 'web';
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 500, flex: 1 } : { flex: 1 };
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={webContainerStyle}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -68,6 +72,7 @@ const RoleSelectionScreen = ({ navigation }) => {
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
+      </View>
       </View>
     </SafeAreaView>
   );

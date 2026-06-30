@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -43,9 +43,13 @@ const WelcomeScreen = ({ navigation }) => {
     }
   };
 
+  const isWeb = Platform.OS === 'web';
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 500, flex: 1 } : { flex: 1 };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      <View style={webContainerStyle}>
       
       <View style={styles.content}>
         {/* Large Logo */}
@@ -109,6 +113,7 @@ const WelcomeScreen = ({ navigation }) => {
           <Ionicons name="star" size={16} color="#D97706" style={{ marginRight: 6 }} />
           <Text style={styles.superAdminLoginText}>Super Admin</Text>
         </TouchableOpacity>
+      </View>
       </View>
     </SafeAreaView>
   );

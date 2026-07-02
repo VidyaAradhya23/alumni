@@ -404,6 +404,8 @@ const EngageScreen = ({ navigation }) => {
                   { text: 'Cancel', style: 'cancel' }
                 ]);
               }}>
+                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
+              </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>
               <Text style={styles.postContentText}>{post.content}</Text>
@@ -497,6 +499,8 @@ const EngageScreen = ({ navigation }) => {
                   { text: 'Cancel', style: 'cancel' }
                 ]);
               }}>
+                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
+              </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>
               <Text style={styles.postContentText}>{post.content}</Text>

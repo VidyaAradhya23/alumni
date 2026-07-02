@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList, useWindowDimensions, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const slides = [
@@ -27,6 +28,9 @@ const slides = [
 ];
 
 const OnboardingScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
@@ -73,7 +77,7 @@ const OnboardingScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSkip}>
           <Text style={styles.skipText}>Skip</Text>
@@ -120,10 +124,10 @@ const OnboardingScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     alignItems: 'flex-end',
@@ -131,7 +135,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   skipText: {
-    color: '#64748B',
+    color: theme.textSecondary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -147,10 +151,10 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     textAlign: 'center',
     letterSpacing: -0.5,
   },
@@ -176,17 +180,17 @@ const styles = StyleSheet.create({
   },
   subtitlePrefix: {
     fontSize: 16,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
   highlight: {
     fontSize: 16,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   description: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.textSecondary,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 24,
@@ -211,17 +215,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#CBD5E1',
   },
   activeDot: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     width: 24,
   },
   button: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

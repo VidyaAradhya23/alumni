@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const AdminOTPScreen = ({ navigation, route }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const adminEmail = route?.params?.email || 'admin@institution.edu.in';
   const [otp, setOtp] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(30);
@@ -68,7 +72,7 @@ const AdminOTPScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}
@@ -144,10 +148,10 @@ const AdminOTPScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   content: {
     flex: 1,
@@ -180,18 +184,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 22,
     textAlign: 'center',
   },
   emailHighlight: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   otpContainer: {
@@ -204,16 +208,16 @@ const styles = StyleSheet.create({
     width: 60,
     height: 64,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 14,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: '800',
-    color: '#003366',
-    backgroundColor: '#F8FAFC',
+    color: theme.primary,
+    backgroundColor: theme.background,
   },
   filledInput: {
-    borderColor: '#003366',
+    borderColor: theme.primary,
     backgroundColor: '#F0F9FF',
   },
   timerContainer: {
@@ -221,41 +225,41 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   timerText: {
-    color: '#64748B',
+    color: theme.textSecondary,
     fontSize: 14,
     fontWeight: '500',
   },
   timerValue: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   resendText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 15,
     textDecorationLine: 'underline',
   },
   button: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   disabledButton: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   btnContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },

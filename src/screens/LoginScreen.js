@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import api from '../services/api';
+import { supabase } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -60,45 +65,42 @@ const LoginScreen = ({ navigation }) => {
     }
     setLoading(true);
 
-    const dummyAlumni = [
-      { email: 'alumni@rvce.edu', password: 'alumni123', name: 'RVCE Alumni User', institution: 'RVCE' },
-      { email: 'alumni@rvitm.edu.in', password: 'alumni123', name: 'RVITM Alumni User', institution: 'RVITM' },
-      { email: 'alumni@rvitm.edu', password: 'alumni123', name: 'RVITM Alumni User', institution: 'RVITM' },
-      { email: 'alumni@rvpu.edu', password: 'alumni123', name: 'RVPU Alumni User', institution: 'RVPU' },
-      { email: 'alumni@rvis.edu', password: 'alumni123', name: 'RVIS Alumni User', institution: 'RVIS' },
-    ];
-
-    const pendingUsersRaw = await AsyncStorage.getItem('pendingUsers') || '[]';
-    const pendingUsers = JSON.parse(pendingUsersRaw);
-
-    if (pendingUsers.includes(email.toLowerCase().trim())) {
-      alert('Your account is waiting for admin approval.');
-      setLoading(false);
-      return;
-    }
-
-    const matchedAlumni = dummyAlumni.find(a => a.email === email.toLowerCase().trim() && a.password === password);
-
-    if (matchedAlumni) {
-      setTimeout(async () => {
-        await AsyncStorage.setItem('userInfo', JSON.stringify({ 
-          name: matchedAlumni.name, 
-          email: matchedAlumni.email,
-          institution: matchedAlumni.institution,
-          role: 'Alumni'
-        }));
-        setLoading(false);
-        navigation.navigate('Main');
-      }, 800);
-      return;
-    }
-
     try {
-      const response = await api.post('/auth/login', { email, password });
-      await AsyncStorage.setItem('userInfo', JSON.stringify(response.data));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Check if user is approved
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('is_approved')
+        .eq('id', data.user.id)
+        .single();
+
+      if (userError || !userData?.is_approved) {
+        // Log them back out if not approved
+        await supabase.auth.signOut();
+        alert('Your account is pending admin approval. You cannot log in yet.');
+        setLoading(false);
+        return;
+      }
+
+      // Successful login
+      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+        name: data.user.user_metadata?.name || 'Alumni User', 
+        email: data.user.email,
+        institution: data.user.user_metadata?.institution || 'Institution',
+        role: 'Alumni'
+      }));
+      
       navigation.navigate('Main');
     } catch (error) {
-      alert(error.response?.data?.message || 'Login failed');
+      alert(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -109,7 +111,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={webContainerStyle}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -166,7 +168,7 @@ const LoginScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }}>
-              <Text style={{ color: '#003366', fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
+              <Text style={{ color: theme.primary, fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -180,27 +182,12 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.primaryButtonText}>Login</Text>
               )}
             </TouchableOpacity>
-
-            <View style={styles.dividerContainer}>
-              <View style={styles.line} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.line} />
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.linkedinButton, loading && styles.disabledButton]} 
-              onPress={handleLinkedInLogin}
-              disabled={loading}
-            >
-              <MaterialCommunityIcons name="linkedin" size={24} color="#FFFFFF" style={styles.linkedinIcon} />
-              <Text style={styles.linkedinButtonText}>Sign in with LinkedIn</Text>
-            </TouchableOpacity>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, marginBottom: 20 }}>
-            <Text style={{ color: '#94A3B8' }}>{"Don't have an account? "}</Text>
+            <Text style={{ color: theme.textMuted }}>{"Don't have an account? "}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-              <Text style={{ color: '#003366', fontWeight: 'bold' }}>Sign Up</Text>
+              <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Sign Up</Text>
             </TouchableOpacity>
           </View>
 
@@ -235,10 +222,10 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   keyboardView: {
     flex: 1,
@@ -262,7 +249,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   form: {
     marginBottom: 40,
@@ -273,9 +260,9 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 52,
@@ -283,10 +270,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#002144',
+    color: theme.primary,
   },
   primaryButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 12,
     alignItems: 'center',
@@ -294,10 +281,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   disabledButton: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -314,7 +301,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   linkedinButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -326,11 +313,11 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   dividerText: {
     marginHorizontal: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontSize: 14,
   },
   socialContainer: {
@@ -346,21 +333,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 18,
     marginLeft: 10,
   },
@@ -384,11 +371,11 @@ const styles = StyleSheet.create({
   credentialLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   credentialValue: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
 });

@@ -12,11 +12,13 @@ import {
   Modal,
   FlatList
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../theme/ThemeContext';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 const institutions = [
@@ -59,6 +61,9 @@ const currentYear = new Date().getFullYear();
 const batchYears = Array.from({ length: currentYear - 1963 + 1 }, (_, i) => (currentYear - i).toString());
 
 const RegisterScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,6 +72,7 @@ const RegisterScreen = ({ navigation }) => {
     branch: '',
     batchYear: ''
   });
+  const [agreeEULA, setAgreeEULA] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
@@ -77,21 +83,34 @@ const RegisterScreen = ({ navigation }) => {
       alert('Please fill in all fields');
       return;
     }
+    if (!agreeEULA) {
+      alert('You must agree to the Terms of Service and End User License Agreement (EULA) to continue.');
+      return;
+    }
 
     setLoading(true);
     try {
-      // Simulate API call for registration
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const pendingUsersRaw = await AsyncStorage.getItem('pendingUsers') || '[]';
-      const pendingUsers = JSON.parse(pendingUsersRaw);
-      pendingUsers.push(email.toLowerCase().trim());
-      await AsyncStorage.setItem('pendingUsers', JSON.stringify(pendingUsers));
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            institution,
+            department: branch,
+            batchYear
+          }
+        }
+      });
 
-      alert('Account created successfully! Waiting for admin approval.');
+      if (error) {
+        throw error;
+      }
+
+      alert('Account created successfully! Check your email for verification.');
       navigation.navigate('Login');
     } catch (error) {
-      alert(error.response?.data?.message || 'Registration failed');
+      alert(error.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -210,7 +229,7 @@ const RegisterScreen = ({ navigation }) => {
                 style={styles.selector} 
                 onPress={() => openPicker('institution')}
               >
-                <Text style={[styles.selectorText, !formData.institution && { color: '#94A3B8' }]}>
+                <Text style={[styles.selectorText, !formData.institution && { color: theme.textMuted }]}>
                   {formData.institution || 'Select Institution'}
                 </Text>
                 <Text style={styles.arrow}>▼</Text>
@@ -230,7 +249,7 @@ const RegisterScreen = ({ navigation }) => {
                     openPicker('branch');
                   }}
                 >
-                  <Text style={[styles.selectorText, !formData.branch && { color: '#94A3B8' }]}>
+                  <Text style={[styles.selectorText, !formData.branch && { color: theme.textMuted }]}>
                     {formData.branch || 'Select Dept'}
                   </Text>
                   <Text style={styles.arrow}>▼</Text>
@@ -243,7 +262,7 @@ const RegisterScreen = ({ navigation }) => {
                   style={styles.selector} 
                   onPress={() => openPicker('batch')}
                 >
-                  <Text style={[styles.selectorText, !formData.batchYear && { color: '#94A3B8' }]}>
+                  <Text style={[styles.selectorText, !formData.batchYear && { color: theme.textMuted }]}>
                     {formData.batchYear || 'Year'}
                   </Text>
                   <Text style={styles.arrow}>▼</Text>
@@ -264,26 +283,24 @@ const RegisterScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}
+              onPress={() => setAgreeEULA(!agreeEULA)}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 1, borderColor: '#FFD700', justifyContent: 'center', alignItems: 'center', marginRight: 10, backgroundColor: agreeEULA ? '#FFD700' : 'transparent' }}>
+                {agreeEULA && <Ionicons name="checkmark" size={16} color={theme.primary} />}
+              </View>
+              <Text style={{ color: 'rgba(255, 255, 255, 0.9)', flex: 1, fontSize: 13, lineHeight: 18 }}>
+                I agree to the Terms of Service and EULA. I understand there is zero tolerance for abusive users and objectionable content.
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
               style={[styles.primaryButton, loading && { opacity: 0.7 }]} 
               onPress={handleRegister}
               disabled={loading}
             >
               <Text style={styles.primaryButtonText}>{loading ? 'Creating Account...' : 'Create Account'}</Text>
-            </TouchableOpacity>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
-              <Text style={{ marginHorizontal: 10, color: 'rgba(255, 255, 255, 0.7)' }}>OR</Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.linkedinButton, loading && { opacity: 0.7 }]} 
-              onPress={handleLinkedInLogin}
-              disabled={loading}
-            >
-              <MaterialCommunityIcons name="linkedin" size={24} color="#FFFFFF" style={styles.linkedinIcon} />
-              <Text style={styles.linkedinButtonText}>Sign up with LinkedIn</Text>
             </TouchableOpacity>
           </View>
 
@@ -295,7 +312,7 @@ const RegisterScreen = ({ navigation }) => {
           </View>
           
           <Text style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)', fontSize: 12, marginTop: 20, marginBottom: 40, paddingHorizontal: 20 }}>
-            By registering, you agree to our Terms of Service and Privacy Policy.
+            By registering, you confirm your agreement to our End User License Agreement.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -340,10 +357,10 @@ const RegisterScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#002144',
+    backgroundColor: theme.primary,
   },
   content: {
     flex: 1,
@@ -364,7 +381,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: theme.card,
     marginBottom: 8,
   },
   subtitle: {
@@ -384,7 +401,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: theme.card,
     marginBottom: 8,
   },
   input: {
@@ -394,7 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: theme.card,
   },
   selector: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -408,7 +425,7 @@ const styles = StyleSheet.create({
   },
   selectorText: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: theme.card,
   },
   arrow: {
     color: '#FFD700',
@@ -427,7 +444,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   primaryButtonText: {
-    color: '#002144',
+    color: theme.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -453,7 +470,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   linkedinButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -497,7 +514,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '70%',
@@ -512,10 +529,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
   },
   closeButton: {
-    color: '#002144',
+    color: theme.primary,
     fontWeight: '600',
   },
   modalItem: {
@@ -525,7 +542,7 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     fontSize: 16,
-    color: '#334155',
+    color: theme.inputBackground,
   }
 });
 

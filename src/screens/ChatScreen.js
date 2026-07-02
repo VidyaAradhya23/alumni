@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const ChatScreen = ({ route, navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { user } = route?.params || {};
   
   // Default fallback if someone opens this without a user
@@ -52,7 +56,7 @@ const ChatScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -116,19 +120,19 @@ const ChatScreen = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   backButton: {
     padding: 4,
@@ -140,11 +144,11 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   headerRole: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   infoButton: {
     padding: 4,
@@ -171,13 +175,13 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -188,13 +192,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   messageBubbleMe: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     borderBottomRightRadius: 4,
   },
   messageBubbleThem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -202,10 +206,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageTextMe: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   messageTextThem: {
-    color: '#0F172A',
+    color: theme.text,
   },
   messageTime: {
     fontSize: 10,
@@ -216,16 +220,16 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
   },
   messageTimeThem: {
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   inputArea: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: theme.border,
   },
   attachBtn: {
     padding: 8,
@@ -240,20 +244,20 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     maxHeight: 100,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
   },
   sendBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
     marginBottom: 2,
   },
   sendBtnActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   }
 });
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ThemeProvider } from './src/theme/ThemeContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -68,13 +69,15 @@ const SuperAdminTab = createBottomTabNavigator();
 
 // ===== ALUMNI BOTTOM TABS =====
 function MainTabs() {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#003366',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
         tabBarIcon: ({ focused, color, size }) => {
           return (
             <View style={{ alignItems: 'center' }}>
@@ -85,7 +88,7 @@ function MainTabs() {
                   width: 24,
                   height: 3,
                   borderRadius: 2,
-                  backgroundColor: '#003366',
+                  backgroundColor: theme.primary,
                 }} />
               )}
               {route.name === 'Home' && (
@@ -109,11 +112,11 @@ function MainTabs() {
         },
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
+          borderTopColor: theme.border,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
           height: Platform.OS === 'ios' ? 88 : 65,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.card,
         },
         tabBarLabelStyle: {
           fontSize: 10,
@@ -133,13 +136,15 @@ function MainTabs() {
 
 // ===== ADMIN BOTTOM TABS =====
 function AdminTabs() {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <AdminTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#003366',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
         tabBarIcon: ({ focused, color }) => {
           let iconName = 'help-circle-outline';
           let label = route.name;
@@ -159,7 +164,7 @@ function AdminTabs() {
                   width: 24,
                   height: 3,
                   borderRadius: 2,
-                  backgroundColor: '#003366',
+                  backgroundColor: theme.primary,
                 }} />
               )}
               <Ionicons name={iconName} size={22} color={color} />
@@ -169,11 +174,11 @@ function AdminTabs() {
         },
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
+          borderTopColor: theme.border,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
           height: Platform.OS === 'ios' ? 88 : 65,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.card,
         },
       })}
     >
@@ -188,13 +193,15 @@ function AdminTabs() {
 
 // ===== SUPER ADMIN BOTTOM TABS =====
 function SuperAdminTabs() {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <SuperAdminTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#003366',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
         tabBarIcon: ({ focused, color }) => {
           let iconName = 'help-circle-outline';
           let label = route.name;
@@ -214,7 +221,7 @@ function SuperAdminTabs() {
                   width: 24,
                   height: 3,
                   borderRadius: 2,
-                  backgroundColor: '#003366',
+                  backgroundColor: theme.primary,
                 }} />
               )}
               <Ionicons name={iconName} size={22} color={color} />
@@ -224,11 +231,11 @@ function SuperAdminTabs() {
         },
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
+          borderTopColor: theme.border,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
           height: Platform.OS === 'ios' ? 88 : 65,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.card,
         },
       })}
     >
@@ -241,14 +248,15 @@ function SuperAdminTabs() {
   );
 }
 
-export default function App() {
+function RootNavigator() {
+  const { theme } = useTheme();
   return (
     <NavigationContainer>
       <Stack.Navigator 
         initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#FFFFFF' },
+          contentStyle: { backgroundColor: theme.background },
           animation: 'slide_from_right',
         }}
       >
@@ -285,5 +293,13 @@ export default function App() {
         <Stack.Screen name="AdminPlacementDetails" component={AdminPlacementDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <RootNavigator />
+    </ThemeProvider>
   );
 }

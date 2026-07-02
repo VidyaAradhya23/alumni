@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const RoleSelectionScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [selected, setSelected] = useState(null);
 
   const roles = [
@@ -41,7 +45,7 @@ const RoleSelectionScreen = ({ navigation }) => {
                 <Ionicons 
                   name={role.icon} 
                   size={32} 
-                  color={selected === role.id ? '#FFFFFF' : '#003366'} 
+                  color={selected === role.id ? theme.card : theme.primary} 
                 />
               </View>
               <View style={styles.roleTextContainer}>
@@ -78,10 +82,10 @@ const RoleSelectionScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   content: {
     padding: 24,
@@ -96,12 +100,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   rolesContainer: {
     gap: 16,
@@ -110,21 +114,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   selectedCard: {
     backgroundColor: '#F0F9FF',
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderWidth: 2,
   },
   iconContainer: {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -134,7 +138,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   selectedIconContainer: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   roleTextContainer: {
     flex: 1,
@@ -143,30 +147,30 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
   },
   selectedRoleTitle: {
-    color: '#003366',
+    color: theme.primary,
   },
   roleDescription: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   footer: {
     padding: 24,
   },
   button: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
   },
   disabledButton: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 18,
     fontWeight: 'bold',
   },

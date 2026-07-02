@@ -15,6 +15,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const DUMMY_JOBS = [
@@ -213,7 +214,10 @@ export default function AdminJobsScreen({ navigation, route }) {
     }
   }, [isFocused, isSuperAdmin]);
 
-  const clearForm = () => { setFRole(''); setFCompany(''); setFMode(''); setFExp(''); setFLoc(''); setFDesc(''); };
+  const clearForm = () => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+ setFRole(''); setFCompany(''); setFMode(''); setFExp(''); setFLoc(''); setFDesc(''); };
 
   const postJob = () => {
     if (!fRole.trim() || !fCompany.trim()) { Alert.alert('Missing', 'Fill in Role and Company.'); return; }
@@ -315,7 +319,7 @@ export default function AdminJobsScreen({ navigation, route }) {
   if (screen === 'detail' && detail) {
     return (
       <SafeAreaView style={s.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
         {header}
         {subHeader('Job Details', () => { setDetail(null); setScreen('list'); })}
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
@@ -351,7 +355,7 @@ export default function AdminJobsScreen({ navigation, route }) {
   if (screen === 'resume') {
     return (
       <SafeAreaView style={s.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
         {header}
         {subHeader('Resume Book', () => setScreen('list'))}
         <View style={s.banner}>
@@ -377,7 +381,7 @@ export default function AdminJobsScreen({ navigation, route }) {
   if (screen === 'editor') {
     return (
       <SafeAreaView style={s.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
         {header}
         {subHeader('Create Job Post', () => { clearForm(); setScreen('list'); })}
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
@@ -425,7 +429,7 @@ export default function AdminJobsScreen({ navigation, route }) {
   return (
     <SafeAreaView style={s.safe}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
       {header}
       
       {/* Filter Summary Bar */}

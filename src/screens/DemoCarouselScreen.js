@@ -1,8 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, useWindowDimensions, ScrollView, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const DemoCarouselScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const [activeSlide, setActiveSlide] = useState(0);
   const scrollViewRef = useRef(null);
@@ -50,7 +54,7 @@ const DemoCarouselScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -121,10 +125,10 @@ const DemoCarouselScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     flexDirection: 'row',
@@ -144,7 +148,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   slide: {
     paddingHorizontal: 24,
@@ -172,14 +176,14 @@ const styles = StyleSheet.create({
   slideTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     textAlign: 'center',
     marginBottom: 12,
     letterSpacing: -0.5,
   },
   slideDescription: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -197,27 +201,27 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   activeDot: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     width: 24,
   },
   primaryButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },

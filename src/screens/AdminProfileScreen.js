@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, Modal, Image, TextInput, useWindowDimensions, Alert, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Seed Data for Profile Campus Info Tab
 const INSTITUTIONS = [
-  { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
+  { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: theme.primary },
   { id: '2', name: 'RV Institute of Technology and Management', shortName: 'RVITM', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
   { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Active', color: '#7C3AED' },
   { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
@@ -17,7 +18,7 @@ const INSTITUTIONS = [
   { id: '10', name: 'RV College of Nursing', shortName: 'RVCN', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1500, registeredUsers: 490, admins: 2, status: 'Active', color: '#0D9488' },
   { id: '11', name: 'RV College of Physiotherapy', shortName: 'RVCP', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1700, registeredUsers: 580, admins: 2, status: 'Active', color: '#BE185D' },
   { id: '12', name: 'RV Teachers College', shortName: 'RVTC', location: 'Bengaluru, Karnataka', established: 1954, totalAlumni: 3200, registeredUsers: 640, admins: 2, status: 'Active', color: '#8B5CF6' },
-  { id: '13', name: 'RV Teachers Training Institute', shortName: 'RVTTI', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 4000, registeredUsers: 510, admins: 1, status: 'Active', color: '#10B981' },
+  { id: '13', name: 'RV Teachers Training Institute', shortName: 'RVTTI', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 4000, registeredUsers: 510, admins: 1, status: 'Active', color: theme.success },
   { id: '14', name: 'NMKRV College for Women', shortName: 'NMKRV', location: 'Bengaluru, Karnataka', established: 1973, totalAlumni: 8900, registeredUsers: 2100, admins: 4, status: 'Active', color: '#EC4899' },
   { id: '15', name: 'SSMRV College', shortName: 'SSMRV', location: 'Bengaluru, Karnataka', established: 1982, totalAlumni: 7200, registeredUsers: 1840, admins: 3, status: 'Active', color: '#3B82F6' },
   { id: '16', name: 'RV Public School', shortName: 'RVPS', location: 'Bengaluru, Karnataka', established: 1992, totalAlumni: 1900, registeredUsers: 420, admins: 1, status: 'Active', color: '#6B7280' },
@@ -45,11 +46,11 @@ const INITIAL_PLACEMENTS = [
 ];
 
 const INITIAL_NETWORK_SETTINGS = {
-  'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: theme.primary, secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVITM': { institutionName: 'RV Institute of Technology and Management', shortTitle: 'RVITM', website: 'https://rvitm.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpucollege.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
   'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: '#F59E0B', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: theme.warning, alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVCA': { institutionName: 'RV College of Architecture', shortTitle: 'RVCA', website: 'https://rvca.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#4F46E5', secondaryColor: '#818CF8', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVIM': { institutionName: 'RV Institute of Management', shortTitle: 'RVIM', website: 'https://rvim.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#0891B2', secondaryColor: '#22D3EE', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVILS': { institutionName: 'RV Institute of Legal Studies', shortTitle: 'RVILS', website: 'https://rvils.edu.in', established: '2018', location: 'Bengaluru, Karnataka', primaryColor: '#DC2626', secondaryColor: '#F87171', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
@@ -57,7 +58,7 @@ const INITIAL_NETWORK_SETTINGS = {
   'RVCN': { institutionName: 'RV College of Nursing', shortTitle: 'RVCN', website: 'https://rvnursing.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#0D9488', secondaryColor: '#2DD4BF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVCP': { institutionName: 'RV College of Physiotherapy', shortTitle: 'RVCP', website: 'https://rvphysiotherapy.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#BE185D', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVTC': { institutionName: 'RV Teachers College', shortTitle: 'RVTC', website: 'https://rvtc.edu.in', established: '1954', location: 'Bengaluru, Karnataka', primaryColor: '#8B5CF6', secondaryColor: '#A78BFA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'RVTTI': { institutionName: 'RV Teachers Training Institute', shortTitle: 'RVTTI', website: 'https://rvtti.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: '#10B981', secondaryColor: '#34D399', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVTTI': { institutionName: 'RV Teachers Training Institute', shortTitle: 'RVTTI', website: 'https://rvtti.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: theme.success, secondaryColor: '#34D399', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'NMKRV': { institutionName: 'NMKRV College for Women', shortTitle: 'NMKRV', website: 'https://nmkrv.edu.in', established: '1973', location: 'Bengaluru, Karnataka', primaryColor: '#EC4899', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'SSMRV': { institutionName: 'SSMRV College', shortTitle: 'SSMRV', website: 'https://ssmrv.edu.in', established: '1982', location: 'Bengaluru, Karnataka', primaryColor: '#3B82F6', secondaryColor: '#60A5FA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVPS': { institutionName: 'RV Public School', shortTitle: 'RVPS', website: 'https://rvps.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#6B7280', secondaryColor: '#9CA3AF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
@@ -66,6 +67,9 @@ const INITIAL_NETWORK_SETTINGS = {
 };
 
 const AdminProfileScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'campus' | 'admin'
   const [userInfo, setUserInfo] = useState(null);
@@ -364,7 +368,7 @@ const AdminProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -448,7 +452,7 @@ const AdminProfileScreen = ({ navigation }) => {
               onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.7}
             >
-              <Ionicons name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`} size={20} color={activeTab === tab.key ? '#003366' : '#94A3B8'} />
+              <Ionicons name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`} size={20} color={activeTab === tab.key ? theme.primary : theme.textMuted} />
               <Text style={[styles.tabLabel, activeTab === tab.key && styles.activeTabLabel]}>{tab.label}</Text>
             </TouchableOpacity>
           ))}
@@ -617,7 +621,7 @@ const AdminProfileScreen = ({ navigation }) => {
                     <TouchableOpacity style={[styles.settingsRow, { borderBottomWidth: 0 }]} onPress={handleLogout}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Ionicons name="log-out-outline" size={20} color="#EF4444" style={{ marginRight: 12 }} />
-                        <Text style={[styles.settingsRowLabel, { color: '#EF4444' }]}>Logout</Text>
+                        <Text style={[styles.settingsRowLabel, { color: theme.danger }]}>Logout</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -641,7 +645,7 @@ const AdminProfileScreen = ({ navigation }) => {
                     <TextInput style={styles.editInput} placeholder="••••••••" placeholderTextColor="#94A3B8" secureTextEntry />
                     <Text style={styles.editLabel}>New Password</Text>
                     <TextInput style={styles.editInput} placeholder="••••••••" placeholderTextColor="#94A3B8" secureTextEntry />
-                    <TouchableOpacity style={[styles.saveBtn, { backgroundColor: '#0F172A' }]} onPress={() => Alert.alert('Updated', 'Password changed.')}>
+                    <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.text }]} onPress={() => Alert.alert('Updated', 'Password changed.')}>
                       <Text style={styles.saveBtnText}>Change Password</Text>
                     </TouchableOpacity>
                   </View>
@@ -767,96 +771,96 @@ const AdminProfileScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+const getStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.card },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  headerUsername: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginLeft: 10, marginRight: 4 },
+  headerUsername: { fontSize: 18, fontWeight: '800', color: theme.text, marginLeft: 10, marginRight: 4 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   headerIcon: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   profileInfoContainer: { paddingHorizontal: 20, paddingTop: 16 },
   mainInfoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#003366' },
+  avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: theme.primary },
   statsContainer: { flexDirection: 'row', flex: 1, justifyContent: 'space-around', marginLeft: 16 },
   statBox: { alignItems: 'center' },
-  statNumber: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
-  statLabel: { fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 },
+  statNumber: { fontSize: 18, fontWeight: '800', color: theme.text },
+  statLabel: { fontSize: 11, color: theme.textSecondary, fontWeight: '600', marginTop: 2 },
   bioContainer: { marginTop: 14, marginBottom: 14 },
-  nameText: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
-  occupationText: { fontSize: 13, color: '#64748B', fontWeight: '600', marginTop: 2 },
+  nameText: { fontSize: 15, fontWeight: '800', color: theme.text },
+  occupationText: { fontSize: 13, color: theme.textSecondary, fontWeight: '600', marginTop: 2 },
   bioText: { fontSize: 13, color: '#475569', lineHeight: 19, marginTop: 6 },
   buttonRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   actionButton: { flex: 1, backgroundColor: '#F1F5F9', height: 36, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  actionButtonText: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  actionButtonText: { fontSize: 13, fontWeight: '700', color: theme.text },
   smallIconBtn: { width: 36, height: 36, borderRadius: 8, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
-  tabContainer: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  tabContainer: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: theme.border },
   tabButton: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  activeTabButton: { borderBottomColor: '#003366' },
-  tabLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '600', marginTop: 4 },
-  activeTabLabel: { color: '#003366' },
+  activeTabButton: { borderBottomColor: theme.primary },
+  tabLabel: { fontSize: 11, color: theme.textMuted, fontWeight: '600', marginTop: 4 },
+  activeTabLabel: { color: theme.primary },
   postsGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   gridItem: { padding: 1 },
   gridImage: { width: '100%', height: '100%', backgroundColor: '#F1F5F9' },
   tagOverlay: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)', padding: 4, borderRadius: 12 },
   tabContentList: { padding: 16 },
-  listCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  listCard: { backgroundColor: theme.card, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: theme.text },
   cardBodyText: { fontSize: 13, color: '#475569', fontStyle: 'italic', lineHeight: 18, marginBottom: 8 },
-  cardFooterText: { fontSize: 11, color: '#94A3B8', fontWeight: '500' },
+  cardFooterText: { fontSize: 11, color: theme.textMuted, fontWeight: '500' },
   // Activity Tab (inside modal settings now)
   activityContainer: { paddingVertical: 10 },
-  activityCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
+  activityCard: { backgroundColor: theme.card, borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: theme.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
   activityCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  activityCardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginLeft: 8 },
-  activityBigNumber: { fontSize: 32, fontWeight: '800', color: '#002144', marginBottom: 4 },
+  activityCardTitle: { fontSize: 15, fontWeight: '700', color: theme.text, marginLeft: 8 },
+  activityBigNumber: { fontSize: 32, fontWeight: '800', color: theme.primary, marginBottom: 4 },
   activitySubText: { fontSize: 13, color: '#16A34A', fontWeight: '600', marginBottom: 16 },
   activityChartRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80 },
   activityChartCol: { alignItems: 'center', flex: 1 },
   activityBarBg: { height: 50, width: 12, backgroundColor: '#F1F5F9', borderRadius: 6, justifyContent: 'flex-end', overflow: 'hidden' },
-  activityBarFill: { backgroundColor: '#003366', borderRadius: 6, width: '100%' },
-  activityDayLabel: { fontSize: 10, color: '#94A3B8', fontWeight: '600', marginTop: 6 },
+  activityBarFill: { backgroundColor: theme.primary, borderRadius: 6, width: '100%' },
+  activityDayLabel: { fontSize: 10, color: theme.textMuted, fontWeight: '600', marginTop: 6 },
   interactionRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
   interactionItem: { alignItems: 'center' },
-  interactionValue: { fontSize: 18, fontWeight: '800', color: '#002144' },
-  interactionLabel: { fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 },
+  interactionValue: { fontSize: 18, fontWeight: '800', color: theme.primary },
+  interactionLabel: { fontSize: 11, color: theme.textSecondary, fontWeight: '600', marginTop: 2 },
   profileActivityRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
   profileActivityItem: { alignItems: 'center' },
-  profileActivityValue: { fontSize: 18, fontWeight: '800', color: '#002144', marginTop: 6 },
-  profileActivityLabel: { fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 },
+  profileActivityValue: { fontSize: 18, fontWeight: '800', color: theme.primary, marginTop: 6 },
+  profileActivityLabel: { fontSize: 11, color: theme.textSecondary, fontWeight: '600', marginTop: 2 },
   engagementList: {},
   engagementItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   engagementLabel: { fontSize: 14, color: '#475569', fontWeight: '600' },
-  engagementValue: { fontSize: 14, fontWeight: '800', color: '#002144' },
+  engagementValue: { fontSize: 14, fontWeight: '800', color: theme.primary },
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  modalContent: { backgroundColor: theme.card, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  modalTabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
+  modalTabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: theme.border },
   modalTab: { flex: 1, alignItems: 'center', paddingVertical: 14, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  activeModalTab: { borderBottomColor: '#0F172A' },
-  modalTabText: { fontSize: 14, fontWeight: '600', color: '#94A3B8' },
-  activeModalTabText: { color: '#0F172A' },
+  activeModalTab: { borderBottomColor: theme.text },
+  modalTabText: { fontSize: 14, fontWeight: '600', color: theme.textMuted },
+  activeModalTabText: { color: theme.text },
   modalSearchContainer: { paddingHorizontal: 16, paddingVertical: 12 },
   modalSearchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 12, height: 36 },
-  modalSearchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0F172A' },
+  modalSearchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: theme.text },
   connectionItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   connectionAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  connectionAvatarText: { fontSize: 16, fontWeight: '700', color: '#64748B' },
+  connectionAvatarText: { fontSize: 16, fontWeight: '700', color: theme.textSecondary },
   connectionInfo: { flex: 1 },
-  connectionName: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
-  connectionUsername: { fontSize: 13, color: '#64748B' },
-  connectionBtn: { paddingHorizontal: 16, paddingVertical: 6, backgroundColor: '#E2E8F0', borderRadius: 6 },
-  connectionBtnText: { fontSize: 13, fontWeight: '600', color: '#0F172A' },
-  followingBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
-  followingBtnText: { color: '#0F172A' },
+  connectionName: { fontSize: 15, fontWeight: '600', color: theme.text },
+  connectionUsername: { fontSize: 13, color: theme.textSecondary },
+  connectionBtn: { paddingHorizontal: 16, paddingVertical: 6, backgroundColor: theme.border, borderRadius: 6 },
+  connectionBtnText: { fontSize: 13, fontWeight: '600', color: theme.text },
+  followingBtn: { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border },
+  followingBtnText: { color: theme.text },
   settingsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  settingsRowLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  settingsRowLabel: { fontSize: 15, fontWeight: '700', color: theme.text },
   editLabel: { fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 6, paddingLeft: 2, marginTop: 12 },
-  editInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, height: 46, paddingHorizontal: 14, fontSize: 14, color: '#0F172A' },
-  saveBtn: { backgroundColor: '#003366', height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
-  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  editInput: { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border, borderRadius: 10, height: 46, paddingHorizontal: 14, fontSize: 14, color: theme.text },
+  saveBtn: { backgroundColor: theme.primary, height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+  saveBtnText: { color: theme.card, fontSize: 15, fontWeight: '700' },
   // Mini Institution Selector for Super Admin inside Profile
   miniSelectorRow: {
     flexDirection: 'row',
@@ -880,11 +884,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   miniSelectorChipActive: {
-    backgroundColor: '#003366',
-    borderColor: '#003366',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   miniSelectorChipText: {
     fontSize: 12,
@@ -892,16 +896,16 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   miniSelectorChipTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
 
   // Institution details tab styling
   detailsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -912,7 +916,7 @@ const styles = StyleSheet.create({
   detailsCardHeaderTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     flex: 1,
   },
   statusTag: {
@@ -958,13 +962,13 @@ const styles = StyleSheet.create({
   detailsLinkText: {
     fontSize: 13.5,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
     textDecorationLine: 'underline',
   },
   detailsSectionHeader: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -977,12 +981,12 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     width: '47%',
   },
   featureItemText: {
@@ -1005,11 +1009,11 @@ const styles = StyleSheet.create({
   adminNameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   adminEmailText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   statusTagMini: {
@@ -1035,11 +1039,11 @@ const styles = StyleSheet.create({
   placementCompanyText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   placementIndustryText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   placementCountBadge: {
     backgroundColor: '#EFF6FF',
@@ -1052,11 +1056,11 @@ const styles = StyleSheet.create({
   placementCountText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   emptyDetailsText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     paddingVertical: 12,
   },

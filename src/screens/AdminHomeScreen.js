@@ -17,6 +17,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const SELECTED_STUDENTS = [
@@ -105,6 +106,9 @@ export default function AdminHomeScreen({ navigation }) {
   const [commentText, setCommentText] = useState('');
 
   const openModal = (type, post) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
     setSelectedPost(post);
     setActiveModal(type);
   };
@@ -175,7 +179,7 @@ export default function AdminHomeScreen({ navigation }) {
             <Ionicons
               name={likedPosts[post.id] ? 'heart' : 'heart-outline'}
               size={26}
-              color={likedPosts[post.id] ? '#EF4444' : '#0F172A'}
+              color={likedPosts[post.id] ? theme.danger : theme.text}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6} onPress={() => openModal('comments', post)}>
@@ -192,7 +196,7 @@ export default function AdminHomeScreen({ navigation }) {
           <Ionicons
             name={bookmarkedPosts[post.id] ? 'bookmark' : 'bookmark-outline'}
             size={24}
-            color={bookmarkedPosts[post.id] ? '#003366' : '#0F172A'}
+            color={bookmarkedPosts[post.id] ? theme.primary : theme.text}
           />
         </TouchableOpacity>
       </View>
@@ -223,7 +227,7 @@ export default function AdminHomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -468,10 +472,10 @@ export default function AdminHomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   scrollContent: {
     paddingBottom: 20,
@@ -481,21 +485,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   headerAvatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   headerAvatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -509,12 +513,12 @@ const styles = StyleSheet.create({
     height: 38,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     paddingVertical: 0,
   },
   headerIcons: {
@@ -536,9 +540,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: theme.card,
   },
   welcomeContainer: {
     paddingHorizontal: 16,
@@ -548,19 +552,19 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   welcomeSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
     fontWeight: '500',
   },
   postCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   postHeader: {
     flexDirection: 'row',
@@ -572,18 +576,18 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -593,11 +597,11 @@ const styles = StyleSheet.create({
   postUserName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   postUserRole: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   followBtn: {
@@ -608,10 +612,10 @@ const styles = StyleSheet.create({
   followBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   postImage: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   postActions: {
     flexDirection: 'row',
@@ -635,11 +639,11 @@ const styles = StyleSheet.create({
   likesText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   postContent: {
     fontSize: 13.5,
-    color: '#334155',
+    color: theme.inputBackground,
     lineHeight: 19,
     marginTop: 4,
   },
@@ -648,21 +652,21 @@ const styles = StyleSheet.create({
   },
   viewCommentsText: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   timeText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 6,
   },
   sectionContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     paddingVertical: 16,
     marginBottom: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: theme.border,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -674,12 +678,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   seeAllText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
   },
   suggestionsScroll: {
     paddingHorizontal: 16,
@@ -687,14 +691,14 @@ const styles = StyleSheet.create({
   },
   suggestionCard: {
     width: 130,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: theme.border,
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -704,20 +708,20 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
   suggestionAvatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 18,
     fontWeight: '700',
   },
   suggestionName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 2,
     textAlign: 'center',
   },
@@ -730,18 +734,18 @@ const styles = StyleSheet.create({
   },
   suggestSubText: {
     fontSize: 10.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginBottom: 8,
     textAlign: 'center',
   },
   suggestionFollowBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 18,
     paddingVertical: 6,
     borderRadius: 8,
   },
   suggestionFollowText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -752,10 +756,10 @@ const styles = StyleSheet.create({
   eventRowCard: {
     flexDirection: 'row',
     height: 110,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 10,
     marginRight: 4,
   },
@@ -774,11 +778,11 @@ const styles = StyleSheet.create({
   eventRowTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   eventRowSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   eventRowBtn: {
     backgroundColor: '#1E293B',
@@ -788,7 +792,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   eventRowBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 9.5,
     fontWeight: '700',
   },
@@ -798,14 +802,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     height: '60%',
     paddingBottom: 20,
   },
   bottomSheetMini: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingBottom: 30,
@@ -820,29 +824,29 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   commentRow: {
     flexDirection: 'row',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: theme.background,
     alignItems: 'center',
   },
   commentUser: {
     fontWeight: '700',
     fontSize: 13,
-    color: '#0F172A',
+    color: theme.text,
     marginRight: 8,
   },
   commentText: {
     flex: 1,
     fontSize: 13,
-    color: '#334155',
+    color: theme.inputBackground,
   },
   commentTime: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginLeft: 8,
   },
   commentInputRow: {
@@ -859,10 +863,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 40,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
   },
   commentPostBtn: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
     marginLeft: 12,
   },
@@ -874,7 +878,7 @@ const styles = StyleSheet.create({
   sheetActionText: {
     fontSize: 16,
     marginLeft: 12,
-    color: '#0F172A',
+    color: theme.text,
   },
   shareGrid: {
     flexDirection: 'row',
@@ -890,13 +894,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
   },
   shareAvatarText: {
-    color: '#0F172A',
+    color: theme.text,
     fontWeight: '700',
     fontSize: 16,
   },
@@ -918,6 +922,6 @@ const styles = StyleSheet.create({
   systemShareText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
 });

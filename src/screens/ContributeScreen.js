@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, ScrollView, TextInput , Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const ContributeScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [activeTab, setActiveTab] = useState('mentorship'); // 'mentorship' | 'support'
   const [mentorshipTab, setMentorshipTab] = useState('mentee'); // 'mentee' | 'mentor'
 
@@ -197,7 +201,7 @@ const ContributeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header exactly like Dashboard/Jobs flow */}
       <View style={styles.header}>
@@ -319,10 +323,10 @@ const ContributeScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   
   // Header matched with JobsScreen/DashboardScreen
@@ -331,21 +335,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   headerAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   headerAvatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -362,7 +366,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
   },
   headerIcons: {
     flexDirection: 'row',
@@ -383,17 +387,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: theme.card,
   },
   
   // Main Tabs
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: theme.border,
+    backgroundColor: theme.card,
   },
   tab: {
     flex: 1,
@@ -403,15 +407,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#0F172A',
+    borderBottomColor: theme.text,
   },
   tabText: {
     fontSize: 14.5,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   activeTabText: {
-    color: '#0F172A',
+    color: theme.text,
     fontWeight: '700',
   },
 
@@ -437,9 +441,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   activeSubTab: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -450,24 +454,24 @@ const styles = StyleSheet.create({
   subTabText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   subTabSubText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 2,
   },
   activeSubTabText: {
-    color: '#003366',
+    color: theme.primary,
   },
 
   // Card (Mentee/Mentor Register intro)
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -477,35 +481,35 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
   },
   cardDesc: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 22,
     marginBottom: 20,
   },
   registerBtn: {
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.text,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   registerBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
 
   // Form
   formContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   backBtn: {
     flexDirection: 'row',
@@ -515,7 +519,7 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginLeft: 8,
   },
   formHeader: {
@@ -527,22 +531,22 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   formTitleLight: {
     fontWeight: '400',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   titleUnderline: {
     height: 3,
     width: 24,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     marginTop: 4,
   },
   sampleLink: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
   },
 
   inputGroup: {
@@ -556,13 +560,13 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14.5,
-    color: '#0F172A',
-    backgroundColor: '#F8FAFC',
+    color: theme.text,
+    backgroundColor: theme.background,
   },
   textArea: {
     height: 100,
@@ -570,18 +574,18 @@ const styles = StyleSheet.create({
   },
   inputHelp: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 6,
   },
   addKeywordBtn: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
     marginTop: 6,
   },
 
   registerSubmitBtn: {
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.text,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -589,23 +593,23 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   registerSubmitBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
 
   // Support Community
   supportContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   supportHeading: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 16,
   },
   supportText: {
@@ -615,9 +619,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   bankCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -628,28 +632,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   bankLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
     width: '100%',
     marginBottom: 4,
   },
   bankValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   noteHeading: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 8,
   },
   emailText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
   },
   bulletList: {
@@ -664,7 +668,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.text,
     marginTop: 8,
     marginRight: 10,
   },

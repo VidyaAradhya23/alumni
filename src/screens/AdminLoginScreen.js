@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -12,6 +13,9 @@ const CREDENTIALS = [
 ];
 
 const AdminLoginScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +58,7 @@ const AdminLoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={webContainerStyle}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -160,10 +164,10 @@ const AdminLoginScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   keyboardView: {
     flex: 1,
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
   adminBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -195,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   adminBadgeText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 12,
     fontWeight: '700',
     marginLeft: 6,
@@ -203,12 +207,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 20,
   },
   form: {
@@ -227,9 +231,9 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 52,
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#002144',
+    color: theme.primary,
   },
   forgotBtn: {
     alignSelf: 'flex-end',
@@ -245,47 +249,47 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   forgotText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
     fontSize: 13,
   },
   primaryButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   disabledButton: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   btnContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 18,
     marginLeft: 10,
   },
@@ -309,11 +313,11 @@ const styles = StyleSheet.create({
   credentialLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   credentialValue: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
 });

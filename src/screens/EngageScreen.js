@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, useWindowDimensions, Image, StatusBar, Modal, TextInput, FlatList, Alert , Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EngageScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const [currentView, setCurrentView] = useState('feed');
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
@@ -22,34 +28,62 @@ const EngageScreen = ({ navigation }) => {
     description: '',
   });
 
-  const [postsList, setPostsList] = useState([
-    {
-      id: '1',
-      user: 'Dr. Satish Kumar',
-      subtitle: 'Staff Engineer @ Google',
-      avatar: 'SK',
-      image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80',
-      likes: 124,
-      time: '2h',
-      content: 'Truly honored to be back on campus for the Institution Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #Institution #AlumniMeet',
-    },
-    {
-      id: '2',
-      user: 'Ananya Joshi',
-      subtitle: 'SDE-2 @ Microsoft',
-      avatar: 'AJ',
-      image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
-      likes: 89,
-      time: '5h',
-      content: 'Our Silicon Valley Institution chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
-    },
-  ]);
+  const [postsList, setPostsList] = useState([]);
+  const [blockedUsers, setBlockedUsers] = useState(new Set());
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          content,
+          image_url,
+          created_at,
+          users (
+            name,
+            institution,
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const formatted = data
+        .filter(p => !blockedUsers.has(p.user_id))
+        .map(p => ({
+        id: p.id,
+        user: p.users?.name || 'Unknown User',
+        subtitle: p.users?.institution || 'Institution',
+        avatar: p.users?.name ? p.users.name.substring(0,2).toUpperCase() : 'UU',
+        image: p.image_url,
+        likes: 0,
+        time: new Date(p.created_at).toLocaleDateString(),
+        content: p.content
+      }));
+      setPostsList(formatted);
+    } catch (err) {
+      console.error('Error fetching posts:', err.message);
+    }
+  };
 
   useEffect(() => {
+    const init = async () => {
+      const userStr = await AsyncStorage.getItem('userInfo');
+      if (userStr) {
+        setCurrentUser(JSON.parse(userStr));
+      }
+      await fetchPosts();
+    };
+
     const unsubscribe = navigation.addListener('focus', () => {
       setCurrentView('feed');
       setActionSheetVisible(true);
+      init();
     });
+    init();
     return unsubscribe;
   }, [navigation]);
 
@@ -58,25 +92,36 @@ const EngageScreen = ({ navigation }) => {
     navigation.navigate('Home');
   };
 
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (!postText.trim()) {
       Alert.alert('Required', 'Please enter some thoughts to share.');
       return;
     }
-    const newPost = {
-      id: Date.now().toString(),
-      user: 'Abhishek Jaiswal',
-      subtitle: `Senior Software Engineer • ${jobPreference}`,
-      avatar: 'AJ',
-      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&h=400&q=80',
-      likes: 0,
-      time: 'Just now',
-      content: postText,
-    };
-    setPostsList([newPost, ...postsList]);
-    setPostText('');
-    setCurrentView('feed');
-    Alert.alert('Success', 'Your post has been shared successfully!');
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to post.');
+        return;
+      }
+
+      const { error } = await supabase.from('posts').insert([
+        { 
+          user_id: user.id, 
+          content: postText,
+          image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&h=400&q=80' // default demo image
+        }
+      ]);
+
+      if (error) throw error;
+
+      setPostText('');
+      setCurrentView('feed');
+      fetchPosts();
+      Alert.alert('Success', 'Your post has been shared successfully!');
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    }
   };
 
   const suggestions = [
@@ -101,7 +146,7 @@ const EngageScreen = ({ navigation }) => {
   if (currentView === 'writePost') {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={styles.writePostHeader}>
           <TouchableOpacity onPress={() => setCurrentView('feed')}>
             <Ionicons name="close" size={24} color="#002144" />
@@ -192,7 +237,7 @@ const EngageScreen = ({ navigation }) => {
   if (currentView === 'createEvent') {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={styles.subScreenHeader}>
           <TouchableOpacity onPress={() => setCurrentView('feed')}>
             <Ionicons name="close" size={24} color="#002144" />
@@ -211,7 +256,7 @@ const EngageScreen = ({ navigation }) => {
             </View>
             <View style={styles.colorDots}>
               <View style={[styles.colorDot, { backgroundColor: '#CBD5E1' }]} />
-              <View style={[styles.colorDot, { backgroundColor: '#003366' }]} />
+              <View style={[styles.colorDot, { backgroundColor: theme.primary }]} />
               <View style={[styles.colorDot, { backgroundColor: '#CBD5E1' }]} />
               <View style={[styles.colorDot, { backgroundColor: '#CBD5E1' }]} />
             </View>
@@ -245,7 +290,7 @@ const EngageScreen = ({ navigation }) => {
           </View>
 
           <Text style={styles.fieldLabel}>Set reminder</Text>
-          <View style={styles.fieldInput}><Text style={{ color: '#002144', fontSize: 15 }}>{eventForm.reminder}</Text></View>
+          <View style={styles.fieldInput}><Text style={{ color: theme.primary, fontSize: 15 }}>{eventForm.reminder}</Text></View>
 
           <Text style={styles.fieldLabel}>Add description</Text>
           <View style={styles.descriptionWrapper}>
@@ -268,7 +313,7 @@ const EngageScreen = ({ navigation }) => {
   if (currentView === 'joinEvent') {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={styles.subScreenHeader}>
           <TouchableOpacity onPress={() => setCurrentView('feed')}>
             <Ionicons name="arrow-back" size={24} color="#002144" />
@@ -307,11 +352,11 @@ const EngageScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* First Post */}
-        {postsList.slice(0, 1).map(post => (
+        {postsList.filter(p => !blockedUsers.has(p.user_id)).slice(0, 1).map(post => (
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
               <View style={styles.postAvatar}><Text style={styles.postAvatarText}>{post.avatar}</Text></View>
@@ -322,15 +367,43 @@ const EngageScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.followBtn}>
                 <Text style={styles.followBtnText}>+ Follow</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
+                            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
                 Alert.alert('Report Options', 'Select an action for this content', [
-                  { text: 'Report Post', style: 'destructive', onPress: () => Alert.alert('Reported', 'This post has been reported.') },
-                  { text: 'Block User', style: 'destructive', onPress: () => Alert.alert('Blocked', 'You will no longer see posts from this user.') },
+                  { 
+                    text: 'Report Post', 
+                    style: 'destructive', 
+                    onPress: async () => {
+                      if (!currentUser?.id) { Alert.alert('Error', 'Please login first'); return; }
+                      const { error } = await supabase.from('reports').insert([{
+                        reporter_id: currentUser.id,
+                        reported_item_id: post.id,
+                        item_type: 'post',
+                        reason: 'User flagged content as inappropriate'
+                      }]);
+                      if (!error) Alert.alert('Reported', 'This post has been reported to admins for review.');
+                      else Alert.alert('Error', 'Failed to report post.');
+                    }
+                  },
+                  { 
+                    text: 'Block User', 
+                    style: 'destructive', 
+                    onPress: async () => {
+                      if (!currentUser?.id) { Alert.alert('Error', 'Please login first'); return; }
+                      const { error } = await supabase.from('blocked_users').insert([{
+                        blocker_id: currentUser.id,
+                        blocked_id: post.user_id
+                      }]);
+                      if (!error) {
+                        setBlockedUsers(prev => new Set([...prev, post.user_id]));
+                        Alert.alert('Blocked', 'You will no longer see posts from this user.');
+                      } else {
+                        Alert.alert('Error', 'Failed to block user.');
+                      }
+                    }
+                  },
                   { text: 'Cancel', style: 'cancel' }
                 ]);
               }}>
-                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
-              </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>
               <Text style={styles.postContentText}>{post.content}</Text>
@@ -376,7 +449,7 @@ const EngageScreen = ({ navigation }) => {
         </View>
 
         {/* Remaining Posts */}
-        {postsList.slice(1).map(post => (
+        {postsList.filter(p => !blockedUsers.has(p.user_id)).slice(1).map(post => (
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
               <View style={styles.postAvatar}><Text style={styles.postAvatarText}>{post.avatar}</Text></View>
@@ -387,15 +460,43 @@ const EngageScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.followBtn}>
                 <Text style={styles.followBtnText}>+ Follow</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
+                            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
                 Alert.alert('Report Options', 'Select an action for this content', [
-                  { text: 'Report Post', style: 'destructive', onPress: () => Alert.alert('Reported', 'This post has been reported.') },
-                  { text: 'Block User', style: 'destructive', onPress: () => Alert.alert('Blocked', 'You will no longer see posts from this user.') },
+                  { 
+                    text: 'Report Post', 
+                    style: 'destructive', 
+                    onPress: async () => {
+                      if (!currentUser?.id) { Alert.alert('Error', 'Please login first'); return; }
+                      const { error } = await supabase.from('reports').insert([{
+                        reporter_id: currentUser.id,
+                        reported_item_id: post.id,
+                        item_type: 'post',
+                        reason: 'User flagged content as inappropriate'
+                      }]);
+                      if (!error) Alert.alert('Reported', 'This post has been reported to admins for review.');
+                      else Alert.alert('Error', 'Failed to report post.');
+                    }
+                  },
+                  { 
+                    text: 'Block User', 
+                    style: 'destructive', 
+                    onPress: async () => {
+                      if (!currentUser?.id) { Alert.alert('Error', 'Please login first'); return; }
+                      const { error } = await supabase.from('blocked_users').insert([{
+                        blocker_id: currentUser.id,
+                        blocked_id: post.user_id
+                      }]);
+                      if (!error) {
+                        setBlockedUsers(prev => new Set([...prev, post.user_id]));
+                        Alert.alert('Blocked', 'You will no longer see posts from this user.');
+                      } else {
+                        Alert.alert('Error', 'Failed to block user.');
+                      }
+                    }
+                  },
                   { text: 'Cancel', style: 'cancel' }
                 ]);
               }}>
-                <Ionicons name="ellipsis-vertical" size={20} color="#94A3B8" />
-              </TouchableOpacity>
             </View>
             <View style={styles.postContentContainer}>
               <Text style={styles.postContentText}>{post.content}</Text>
@@ -531,100 +632,100 @@ const EngageScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+const getStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.background },
   scrollContent: { paddingBottom: 100 },
 
   // Post Card
-  postCard: { backgroundColor: '#FFFFFF', marginBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  postCard: { backgroundColor: theme.card, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: theme.border },
   postHeader: { flexDirection: 'row', alignItems: 'center', padding: 14 },
-  postAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  postAvatarText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
+  postAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  postAvatarText: { color: theme.card, fontSize: 14, fontWeight: 'bold' },
   postInfo: { flex: 1 },
-  postUserName: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  postSubtitle: { fontSize: 12, color: '#64748B', marginTop: 1 },
+  postUserName: { fontSize: 15, fontWeight: '700', color: theme.text },
+  postSubtitle: { fontSize: 12, color: theme.textSecondary, marginTop: 1 },
   followBtn: { paddingHorizontal: 12, paddingVertical: 6 },
-  followBtnText: { color: '#003366', fontWeight: '700', fontSize: 13 },
+  followBtnText: { color: theme.primary, fontWeight: '700', fontSize: 13 },
   postImage: { backgroundColor: '#F1F5F9' },
   postActions: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 },
   leftActions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
 
   // Suggestions
-  suggestionsSection: { backgroundColor: '#FFFFFF', paddingVertical: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  suggestionsSection: { backgroundColor: theme.card, paddingVertical: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: theme.border },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 14 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  seeAll: { fontSize: 13, color: '#003366', fontWeight: '600' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: theme.text },
+  seeAll: { fontSize: 13, color: theme.primary, fontWeight: '600' },
   suggestionsScroll: { paddingHorizontal: 20, gap: 12 },
-  suggestionCard: { width: 120, backgroundColor: '#F8FAFC', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  suggestionAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#64748B', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  suggestionAvatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  suggestionName: { fontSize: 13, fontWeight: '600', color: '#0F172A', marginBottom: 8 },
-  followSmallBtn: { backgroundColor: '#003366', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 6 },
-  followSmallText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  suggestionCard: { width: 120, backgroundColor: theme.background, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: theme.border },
+  suggestionAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: theme.textSecondary, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  suggestionAvatarText: { color: theme.card, fontSize: 16, fontWeight: '700' },
+  suggestionName: { fontSize: 13, fontWeight: '600', color: theme.text, marginBottom: 8 },
+  followSmallBtn: { backgroundColor: theme.primary, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 6 },
+  followSmallText: { color: theme.card, fontSize: 12, fontWeight: '700' },
   followedBtn: { backgroundColor: '#F1F5F9' },
-  followedText: { color: '#64748B' },
+  followedText: { color: theme.textSecondary },
 
   // FAB
-  fab: { position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-  aiFloatingBtn: { position: 'absolute', bottom: 24, left: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', gap: 6, elevation: 3 },
-  aiFloatingText: { fontSize: 12, fontWeight: '600', color: '#003366' },
+  fab: { position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  aiFloatingBtn: { position: 'absolute', bottom: 24, left: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: theme.card, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: theme.border, gap: 6, elevation: 3 },
+  aiFloatingText: { fontSize: 12, fontWeight: '600', color: theme.primary },
 
   // Action Sheet
   actionSheetOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' },
-  actionSheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 },
+  actionSheet: { backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 },
   actionSheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1', alignSelf: 'center', marginTop: 12, marginBottom: 16 },
   actionItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  actionItemText: { fontSize: 16, fontWeight: '600', color: '#0F172A' },
+  actionItemText: { fontSize: 16, fontWeight: '600', color: theme.text },
 
   // Write Post
-  writePostHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  writePostHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border },
   writePostHeaderCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   writePostHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  smallAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center' },
-  smallAvatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  anyoneText: { fontSize: 14, fontWeight: '700', color: '#002144' },
-  postButton: { backgroundColor: '#003366', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
-  postButtonText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  smallAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' },
+  smallAvatarText: { color: theme.card, fontSize: 12, fontWeight: '700' },
+  anyoneText: { fontSize: 14, fontWeight: '700', color: theme.primary },
+  postButton: { backgroundColor: theme.primary, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
+  postButtonText: { color: theme.card, fontWeight: '700', fontSize: 14 },
   writePostBody: { flex: 1, padding: 20 },
-  writePostInput: { fontSize: 16, color: '#002144', lineHeight: 24, flex: 1 },
-  writePostFooter: { padding: 20, borderTopWidth: 1, borderTopColor: '#E2E8F0' },
-  aiButton: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#003366', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
-  aiButtonText: { fontSize: 13, fontWeight: '600', color: '#003366' },
+  writePostInput: { fontSize: 16, color: theme.primary, lineHeight: 24, flex: 1 },
+  writePostFooter: { padding: 20, borderTopWidth: 1, borderTopColor: theme.border },
+  aiButton: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: theme.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  aiButtonText: { fontSize: 13, fontWeight: '600', color: theme.primary },
 
   // Create Event
-  subScreenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  subScreenTitle: { fontSize: 18, fontWeight: '800', color: '#002144' },
+  subScreenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border },
+  subScreenTitle: { fontSize: 18, fontWeight: '800', color: theme.primary },
   createEventBody: { padding: 20, paddingBottom: 40 },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 8, marginTop: 16 },
-  fieldInput: { backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 16, height: 48, justifyContent: 'center', fontSize: 15, color: '#002144' },
+  fieldInput: { backgroundColor: theme.background, borderRadius: 12, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 16, height: 48, justifyContent: 'center', fontSize: 15, color: theme.primary },
   dateTimeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  dateField: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 16, height: 48, flex: 1, marginRight: 12 },
+  dateField: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: theme.background, borderRadius: 12, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 16, height: 48, flex: 1, marginRight: 12 },
   colorDots: { flexDirection: 'row', gap: 6 },
   colorDot: { width: 16, height: 16, borderRadius: 8 },
-  dateTimeText: { fontSize: 15, color: '#002144', fontWeight: '500' },
+  dateTimeText: { fontSize: 15, color: theme.primary, fontWeight: '500' },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
-  timeField: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 16, height: 48, flex: 1 },
-  hostRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  hostAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center' },
-  hostAvatarText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  hostName: { fontSize: 15, fontWeight: '600', color: '#002144' },
+  timeField: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: theme.background, borderRadius: 12, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 16, height: 48, flex: 1 },
+  hostRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: theme.border },
+  hostAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' },
+  hostAvatarText: { color: theme.card, fontSize: 13, fontWeight: '700' },
+  hostName: { fontSize: 15, fontWeight: '600', color: theme.primary },
   notifyRow: { flexDirection: 'row', gap: 10 },
-  notifyOption: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#FFFFFF' },
-  notifyActive: { backgroundColor: '#003366', borderColor: '#003366' },
+  notifyOption: { borderWidth: 1, borderColor: theme.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: theme.card },
+  notifyActive: { backgroundColor: theme.primary, borderColor: theme.primary },
   notifyText: { fontSize: 13, fontWeight: '600', color: '#475569' },
-  notifyActiveText: { color: '#FFFFFF' },
-  createEventButton: { backgroundColor: '#003366', height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
-  createEventButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  notifyActiveText: { color: theme.card },
+  createEventButton: { backgroundColor: theme.primary, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+  createEventButtonText: { color: theme.card, fontSize: 16, fontWeight: '700' },
 
   // Join Event
-  joinEventCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  joinEventCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.card, borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
   joinEventImage: { width: 70, height: 70, borderRadius: 8, backgroundColor: '#F1F5F9', marginRight: 12 },
   joinEventInfo: { flex: 1 },
-  joinEventTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  joinEventDate: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  joinEventLocation: { fontSize: 12, color: '#94A3B8', marginTop: 1 },
-  joinBtn: { backgroundColor: '#003366', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  joinBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  joinEventTitle: { fontSize: 15, fontWeight: '700', color: theme.text },
+  joinEventDate: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
+  joinEventLocation: { fontSize: 12, color: theme.textMuted, marginTop: 1 },
+  joinBtn: { backgroundColor: theme.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  joinBtnText: { color: theme.card, fontSize: 12, fontWeight: '700' },
 
   // Custom alignment styles
   writePostFooterIcons: { flexDirection: 'row', alignItems: 'center', gap: 16 },
@@ -632,34 +733,34 @@ const styles = StyleSheet.create({
   descriptionWrapper: { position: 'relative', justifyContent: 'flex-end' },
   descPencilIcon: { position: 'absolute', bottom: 16, right: 16 },
   actionSheetTitleRow: { paddingVertical: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  actionSheetTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'center' },
+  actionSheetTitle: { fontSize: 18, fontWeight: '800', color: theme.text, textAlign: 'center' },
 
   // New Modals Styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 },
+  modalContent: { backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', marginBottom: 10 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#002144' },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: theme.primary },
   modalItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingHorizontal: 8 },
-  modalItemText: { fontSize: 16, fontWeight: '600', color: '#0F172A' },
-  selectedModalItem: { backgroundColor: '#F8FAFC' },
-  selectedModalItemText: { color: '#003366', fontWeight: '700' },
+  modalItemText: { fontSize: 16, fontWeight: '600', color: theme.text },
+  selectedModalItem: { backgroundColor: theme.background },
+  selectedModalItemText: { color: theme.primary, fontWeight: '700' },
 
-  reshareSheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40, minHeight: 420 },
-  reshareTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginTop: 16, marginBottom: 16 },
+  reshareSheet: { backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40, minHeight: 420 },
+  reshareTitle: { fontSize: 18, fontWeight: '800', color: theme.text, textAlign: 'center', marginTop: 16, marginBottom: 16 },
   reshareSearchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 10, paddingHorizontal: 12, height: 38, marginBottom: 16 },
-  reshareSearchInput: { flex: 1, fontSize: 14, color: '#0F172A', paddingVertical: 0 },
-  reshareSectionHeader: { fontSize: 14, fontWeight: '700', color: '#64748B', marginTop: 12, marginBottom: 10 },
+  reshareSearchInput: { flex: 1, fontSize: 14, color: theme.text, paddingVertical: 0 },
+  reshareSectionHeader: { fontSize: 14, fontWeight: '700', color: theme.textSecondary, marginTop: 12, marginBottom: 10 },
   reshareRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   resharePostPreview: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 },
-  reshareUser: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  reshareContent: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  reshareBtn: { backgroundColor: '#003366', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16 },
-  reshareBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  reshareUser: { fontSize: 14, fontWeight: '700', color: theme.text },
+  reshareContent: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
+  reshareBtn: { backgroundColor: theme.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16 },
+  reshareBtnText: { color: theme.card, fontSize: 12, fontWeight: '700' },
   dmScroll: { gap: 12, paddingVertical: 4 },
   dmCard: { alignItems: 'center', width: 70 },
   dmName: { fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 4 },
   postContentContainer: { paddingHorizontal: 14, paddingVertical: 10 },
-  postContentText: { fontSize: 14, color: '#0F172A', lineHeight: 20 },
+  postContentText: { fontSize: 14, color: theme.text, lineHeight: 20 },
 });
 
 export default EngageScreen;

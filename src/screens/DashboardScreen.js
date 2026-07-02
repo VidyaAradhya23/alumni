@@ -18,9 +18,13 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const DashboardScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const contentWidth = Platform.OS === 'web' ? Math.min(width, 800) : width;
   const isWeb = Platform.OS === 'web';
@@ -213,7 +217,7 @@ const DashboardScreen = ({ navigation }) => {
             <Ionicons
               name={likedPosts[post.id] ? 'heart' : 'heart-outline'}
               size={26}
-              color={likedPosts[post.id] ? '#EF4444' : '#0F172A'}
+              color={likedPosts[post.id] ? theme.danger : theme.text}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6} onPress={() => openModal('comments', post)}>
@@ -234,7 +238,7 @@ const DashboardScreen = ({ navigation }) => {
           <Ionicons
             name={bookmarkedPosts[post.id] ? 'bookmark' : 'bookmark-outline'}
             size={24}
-            color={bookmarkedPosts[post.id] ? '#003366' : '#0F172A'}
+            color={bookmarkedPosts[post.id] ? theme.primary : theme.text}
           />
         </TouchableOpacity>
       </View>
@@ -262,7 +266,7 @@ const DashboardScreen = ({ navigation }) => {
   // ─── Render ────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
 
       <View style={webContainerStyle}>
         {/* ── Header ─────────────────────────────────────── */}
@@ -309,7 +313,7 @@ const DashboardScreen = ({ navigation }) => {
 
       {/* ── Welcome Message ────────────────────────────── */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: '#002144' }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: theme.primary }}>
           Welcome to {userInstitution}
         </Text>
       </View>
@@ -509,11 +513,11 @@ const DashboardScreen = ({ navigation }) => {
 };
 
 // ─── Styles ──────────────────────────────────────────────
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   /* ── Container ──────────────────────────────────────── */
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   scrollContent: {
     paddingBottom: 20,
@@ -525,21 +529,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   headerAvatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   headerAvatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -553,12 +557,12 @@ const styles = StyleSheet.create({
     height: 38,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     paddingVertical: 0,
   },
   headerIcons: {
@@ -580,17 +584,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: theme.card,
   },
 
   /* ── Post Card ──────────────────────────────────────── */
   postCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   postHeader: {
     flexDirection: 'row',
@@ -602,18 +606,18 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -623,11 +627,11 @@ const styles = StyleSheet.create({
   postUserName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   postUserRole: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   followBtn: {
@@ -638,10 +642,10 @@ const styles = StyleSheet.create({
   followBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   postImage: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   postActions: {
     flexDirection: 'row',
@@ -665,11 +669,11 @@ const styles = StyleSheet.create({
   likesText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   postContent: {
     fontSize: 13.5,
-    color: '#334155',
+    color: theme.inputBackground,
     lineHeight: 19,
     marginTop: 4,
   },
@@ -678,23 +682,23 @@ const styles = StyleSheet.create({
   },
   viewCommentsText: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   timeText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 6,
   },
 
   /* ── Section (Suggestions / Events) ─────────────────── */
   sectionContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     paddingVertical: 16,
     marginBottom: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: theme.border,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -706,12 +710,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   seeAllText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
   },
 
   /* ── Suggestions ────────────────────────────────────── */
@@ -721,14 +725,14 @@ const styles = StyleSheet.create({
   },
   suggestionCard: {
     width: 110,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: theme.border,
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -738,39 +742,39 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
   suggestionAvatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
   suggestionName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 10,
     textAlign: 'center',
   },
   suggestionFollowBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 18,
     paddingVertical: 6,
     borderRadius: 8,
   },
   suggestionFollowBtnActive: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   suggestionFollowText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 12,
     fontWeight: '700',
   },
   suggestionFollowTextActive: {
-    color: '#64748B',
+    color: theme.textSecondary,
   },
 
   /* ── Events & Jobs ──────────────────────────────────── */
@@ -781,10 +785,10 @@ const styles = StyleSheet.create({
   eventRowCard: {
     flexDirection: 'row',
     height: 110,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 10,
     marginRight: 4,
     position: 'relative',
@@ -804,12 +808,12 @@ const styles = StyleSheet.create({
   eventRowTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     paddingRight: 16,
   },
   eventRowSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   eventRowBtn: {
     backgroundColor: '#1E293B',
@@ -819,7 +823,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   eventRowBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 9.5,
     fontWeight: '700',
   },
@@ -835,7 +839,7 @@ const styles = StyleSheet.create({
   },
   suggestSubText: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginBottom: 8,
   },
 
@@ -846,14 +850,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     height: '60%',
     paddingBottom: 20,
   },
   bottomSheetMini: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingBottom: 30,
@@ -868,28 +872,28 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   commentRow: {
     flexDirection: 'row',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: theme.background,
   },
   commentUser: {
     fontWeight: '700',
     fontSize: 13,
-    color: '#0F172A',
+    color: theme.text,
     marginRight: 8,
   },
   commentText: {
     flex: 1,
     fontSize: 13,
-    color: '#334155',
+    color: theme.inputBackground,
   },
   commentTime: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginLeft: 8,
   },
   commentInputRow: {
@@ -908,7 +912,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   commentPostBtn: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
     marginLeft: 12,
   },
@@ -920,7 +924,7 @@ const styles = StyleSheet.create({
   sheetActionText: {
     fontSize: 16,
     marginLeft: 12,
-    color: '#0F172A',
+    color: theme.text,
   },
   shareGrid: {
     flexDirection: 'row',
@@ -936,13 +940,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
   },
   shareAvatarText: {
-    color: '#0F172A',
+    color: theme.text,
     fontWeight: '700',
     fontSize: 16,
   },
@@ -964,7 +968,7 @@ const styles = StyleSheet.create({
   systemShareText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   }
 });
 

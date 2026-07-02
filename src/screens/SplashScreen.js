@@ -1,8 +1,12 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -60,10 +64,10 @@ const SplashScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   content: {
     flex: 1,
@@ -77,26 +81,26 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
     borderColor: '#F1F5F9',
   },
   logoText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 20,
     fontWeight: 'bold',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
     letterSpacing: 2,
   },
   subtitle: {
     fontSize: 18,
-    color: '#003366',
+    color: theme.primary,
     marginTop: 4,
     fontWeight: '500',
   },
@@ -111,10 +115,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   tourBtnText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: 'bold',
     fontSize: 14,
   }

@@ -19,6 +19,7 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -27,7 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // ==========================================
 
 const INSTITUTIONS = [
-  { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: '#003366' },
+  { id: '1', name: 'RV College of Engineering', shortName: 'RVCE', location: 'Bengaluru, Karnataka', established: 1963, totalAlumni: 9755, registeredUsers: 3420, admins: 5, status: 'Active', color: theme.primary },
   { id: '2', name: 'Institute of Technology', shortName: 'Institution', location: 'Bengaluru, Karnataka', established: 2019, totalAlumni: 4230, registeredUsers: 1580, admins: 3, status: 'Active', color: '#1E3A5F' },
   { id: '3', name: 'RV PU College', shortName: 'RVPU', location: 'Bengaluru, Karnataka', established: 1970, totalAlumni: 6800, registeredUsers: 890, admins: 2, status: 'Active', color: '#7C3AED' },
   { id: '4', name: 'RV International School', shortName: 'RVIS', location: 'Bengaluru, Karnataka', established: 1999, totalAlumni: 2100, registeredUsers: 560, admins: 2, status: 'Active', color: '#059669' },
@@ -39,7 +40,7 @@ const INSTITUTIONS = [
   { id: '10', name: 'RV College of Nursing', shortName: 'RVCN', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1500, registeredUsers: 490, admins: 2, status: 'Active', color: '#0D9488' },
   { id: '11', name: 'RV College of Physiotherapy', shortName: 'RVCP', location: 'Bengaluru, Karnataka', established: 2003, totalAlumni: 1700, registeredUsers: 580, admins: 2, status: 'Active', color: '#BE185D' },
   { id: '12', name: 'RV Teachers College', shortName: 'RVTC', location: 'Bengaluru, Karnataka', established: 1954, totalAlumni: 3200, registeredUsers: 640, admins: 2, status: 'Active', color: '#8B5CF6' },
-  { id: '13', name: 'RV Teachers Training Institute', shortName: 'RVTTI', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 4000, registeredUsers: 510, admins: 1, status: 'Active', color: '#10B981' },
+  { id: '13', name: 'RV Teachers Training Institute', shortName: 'RVTTI', location: 'Bengaluru, Karnataka', established: 1940, totalAlumni: 4000, registeredUsers: 510, admins: 1, status: 'Active', color: theme.success },
   { id: '14', name: 'NMKRV College for Women', shortName: 'NMKRV', location: 'Bengaluru, Karnataka', established: 1973, totalAlumni: 8900, registeredUsers: 2100, admins: 4, status: 'Active', color: '#EC4899' },
   { id: '15', name: 'SSMRV College', shortName: 'SSMRV', location: 'Bengaluru, Karnataka', established: 1982, totalAlumni: 7200, registeredUsers: 1840, admins: 3, status: 'Active', color: '#3B82F6' },
   { id: '16', name: 'RV Public School', shortName: 'RVPS', location: 'Bengaluru, Karnataka', established: 1992, totalAlumni: 1900, registeredUsers: 420, admins: 1, status: 'Active', color: '#6B7280' },
@@ -100,11 +101,11 @@ const INITIAL_IMPORTS = [
 ];
 
 const INITIAL_NETWORK_SETTINGS = {
-  'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: theme.primary, secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'Institution': { institutionName: 'Institute of Technology', shortTitle: 'Institution', website: 'https://institution.edu.in', established: '2019', location: 'Bengaluru, Karnataka', primaryColor: '#1a5276', secondaryColor: '#2ecc71', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVPU': { institutionName: 'RV PU College', shortTitle: 'RVPU', website: 'https://rvpucollege.edu.in', established: '1970', location: 'Bengaluru, Karnataka', primaryColor: '#8e44ad', secondaryColor: '#e74c3c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Batchmates', manualApproval: false, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: false, whatsappEnabled: false },
   'RVIS': { institutionName: 'RV International School', shortTitle: 'RVIS', website: 'https://rvis.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#e67e22', secondaryColor: '#f39c12', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: false, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: '#F59E0B', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
+  'RVU': { institutionName: 'RV University', shortTitle: 'RVU', website: 'https://rvu.edu.in', established: '2021', location: 'Bengaluru, Karnataka', primaryColor: '#B45309', secondaryColor: theme.warning, alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: true, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: true },
   'RVCA': { institutionName: 'RV College of Architecture', shortTitle: 'RVCA', website: 'https://rvca.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#4F46E5', secondaryColor: '#818CF8', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVIM': { institutionName: 'RV Institute of Management', shortTitle: 'RVIM', website: 'https://rvim.edu.in', established: '1999', location: 'Bengaluru, Karnataka', primaryColor: '#0891B2', secondaryColor: '#22D3EE', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Classmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: true, displayMentorship: true, displayAlumniCard: true, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVILS': { institutionName: 'RV Institute of Legal Studies', shortTitle: 'RVILS', website: 'https://rvils.edu.in', established: '2018', location: 'Bengaluru, Karnataka', primaryColor: '#DC2626', secondaryColor: '#F87171', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
@@ -112,7 +113,7 @@ const INITIAL_NETWORK_SETTINGS = {
   'RVCN': { institutionName: 'RV College of Nursing', shortTitle: 'RVCN', website: 'https://rvnursing.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#0D9488', secondaryColor: '#2DD4BF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVCP': { institutionName: 'RV College of Physiotherapy', shortTitle: 'RVCP', website: 'https://rvphysiotherapy.edu.in', established: '2003', location: 'Bengaluru, Karnataka', primaryColor: '#BE185D', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: false, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVTC': { institutionName: 'RV Teachers College', shortTitle: 'RVTC', website: 'https://rvtc.edu.in', established: '1954', location: 'Bengaluru, Karnataka', primaryColor: '#8B5CF6', secondaryColor: '#A78BFA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
-  'RVTTI': { institutionName: 'RV Teachers Training Institute', shortTitle: 'RVTTI', website: 'https://rvtti.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: '#10B981', secondaryColor: '#34D399', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
+  'RVTTI': { institutionName: 'RV Teachers Training Institute', shortTitle: 'RVTTI', website: 'https://rvtti.edu.in', established: '1940', location: 'Bengaluru, Karnataka', primaryColor: theme.success, secondaryColor: '#34D399', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'NMKRV': { institutionName: 'NMKRV College for Women', shortTitle: 'NMKRV', website: 'https://nmkrv.edu.in', established: '1973', location: 'Bengaluru, Karnataka', primaryColor: '#EC4899', secondaryColor: '#F472B6', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'SSMRV': { institutionName: 'SSMRV College', shortTitle: 'SSMRV', website: 'https://ssmrv.edu.in', established: '1982', location: 'Bengaluru, Karnataka', primaryColor: '#3B82F6', secondaryColor: '#60A5FA', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
   'RVPS': { institutionName: 'RV Public School', shortTitle: 'RVPS', website: 'https://rvps.edu.in', established: '1992', location: 'Bengaluru, Karnataka', primaryColor: '#6B7280', secondaryColor: '#9CA3AF', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Teachers', batchmatesText: 'Schoolmates', manualApproval: true, emailVouching: false, allowUnverified: false, displayJobs: false, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: false, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
@@ -251,6 +252,9 @@ const MOCK_POSTS = [
 ];
 
 const SuperAdminDashboardScreen = ({ navigation, route }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const initialModule = route?.params?.initialModule ?? null;
   const [activeModule, setActiveModule] = useState(initialModule);
@@ -329,7 +333,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   };
 
   const getPasswordStrength = (pwd) => {
-    if (!pwd) return { score: 0, text: 'None', color: '#94A3B8' };
+    if (!pwd) return { score: 0, text: 'None', color: theme.textMuted };
     let score = 0;
     if (pwd.length >= 6) score++;
     if (pwd.length >= 8) score++;
@@ -337,9 +341,9 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
     if (/[A-Z]/.test(pwd)) score++;
     if (/[^a-zA-Z0-9]/.test(pwd)) score++;
 
-    if (score <= 2) return { score, text: 'Weak', color: '#EF4444' };
-    if (score <= 4) return { score, text: 'Medium', color: '#F59E0B' };
-    return { score, text: 'Strong', color: '#10B981' };
+    if (score <= 2) return { score, text: 'Weak', color: theme.danger };
+    if (score <= 4) return { score, text: 'Medium', color: theme.warning };
+    return { score, text: 'Strong', color: theme.success };
   };
 
   // Helper function to get rich institution metadata
@@ -350,7 +354,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           fullName: 'RV College of Engineering',
           subtitle: 'Bengaluru, Karnataka • Est. 1963',
           logo: 'CE',
-          color: '#003366',
+          color: theme.primary,
         };
       case 'Institution':
         return {
@@ -434,7 +438,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           fullName: 'RV Teachers Training Institute',
           subtitle: 'Bengaluru, Karnataka • Est. 1940',
           logo: 'TT',
-          color: '#10B981',
+          color: theme.success,
         };
       case 'NMKRV':
         return {
@@ -585,7 +589,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
       <View key={post.id} style={styles.postCard}>
         {/* Post header */}
         <View style={styles.postHeader}>
-          <View style={[styles.postUserAvatar, post.isAnnouncement && { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
+          <View style={[styles.postUserAvatar, post.isAnnouncement && { backgroundColor: '#FEF3C7', borderColor: theme.warning }]}>
             <Text style={[styles.postAvatarText, post.isAnnouncement && { color: '#D97706' }]}>{post.avatar}</Text>
           </View>
           <View style={styles.postUserInfo}>
@@ -625,9 +629,9 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               <Ionicons 
                 name={isLiked ? 'heart' : 'heart-outline'} 
                 size={22} 
-                color={isLiked ? '#EF4444' : '#64748B'} 
+                color={isLiked ? theme.danger : theme.textSecondary} 
               />
-              <Text style={[styles.actionBtnText, isLiked && { color: '#EF4444' }]}>{post.likes}</Text>
+              <Text style={[styles.actionBtnText, isLiked && { color: theme.danger }]}>{post.likes}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity activeOpacity={0.6} style={styles.actionBtn} onPress={() => Alert.alert('Comments', 'Comments are in view-only mode for Super Admins.')}>
@@ -644,7 +648,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
             <Ionicons 
               name={isBookmarked ? 'bookmark' : 'bookmark-outline'} 
               size={22} 
-              color={isBookmarked ? '#003366' : '#64748B'} 
+              color={isBookmarked ? theme.primary : theme.textSecondary} 
             />
           </TouchableOpacity>
         </View>
@@ -797,7 +801,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                       <Text style={styles.metricLbl}>Admins</Text>
                     </View>
                     <View style={styles.metricItem}>
-                      <Text style={[styles.metricVal, instSpam > 0 && { color: '#EF4444' }]}>{instSpam}</Text>
+                      <Text style={[styles.metricVal, instSpam > 0 && { color: theme.danger }]}>{instSpam}</Text>
                       <Text style={styles.metricLbl}>Reports</Text>
                     </View>
                   </View>
@@ -898,7 +902,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          style={{ backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E2E8F0', flexGrow: 0 }}
+          style={{ backgroundColor: theme.card, borderBottomWidth: 1, borderColor: theme.border, flexGrow: 0 }}
           contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
         >
           {counts.map(item => (
@@ -1025,7 +1029,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
             <Switch
               value={welcomeAutoSend}
               onValueChange={setWelcomeAutoSend}
-              trackColor={{ true: '#003366', false: '#CBD5E1' }}
+              trackColor={{ true: theme.primary, false: '#CBD5E1' }}
             />
           </View>
 
@@ -1312,7 +1316,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
                 <Text style={styles.formLabel}>Initial Login Password</Text>
                 <View style={styles.passwordInputWrap}>
-                  <TextInput style={{ flex: 1, color: '#0F172A', paddingVertical: 8 }} value={adminFormPassword} onChangeText={setAdminFormPassword} placeholder="Enter Password" secureTextEntry={false} />
+                  <TextInput style={{ flex: 1, color: theme.text, paddingVertical: 8 }} value={adminFormPassword} onChangeText={setAdminFormPassword} placeholder="Enter Password" secureTextEntry={false} />
                   <TouchableOpacity
                     style={styles.btnGenerate}
                     onPress={() => {
@@ -1334,7 +1338,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                   return (
                     <View style={{ marginTop: 8, marginBottom: 12 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600' }}>Password Strength:</Text>
+                        <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '600' }}>Password Strength:</Text>
                         <Text style={{ fontSize: 11, color: strength.color, fontWeight: '700' }}>{strength.text}</Text>
                       </View>
                       <View style={styles.strengthBarBg}>
@@ -1436,7 +1440,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               <View style={styles.metaInfoBox}>
                 <Text style={styles.metaText}>Verification Proof: {item.proof}</Text>
                 {item.adminAction && (
-                  <Text style={[styles.metaText, { color: '#0F172A', fontWeight: '600', marginTop: 4 }]}>
+                  <Text style={[styles.metaText, { color: theme.text, fontWeight: '600', marginTop: 4 }]}>
                     Action: {item.adminAction}
                   </Text>
                 )}
@@ -1586,11 +1590,11 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           <Text style={styles.formLabel}>Quick Palette Presets</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12, paddingBottom: 4 }}>
             {[
-              { name: 'Ocean Blue', primary: '#003366', secondary: '#00A99C' },
-              { name: 'Emerald', primary: '#059669', secondary: '#10B981' },
-              { name: 'Sunset', primary: '#EA580C', secondary: '#F59E0B' },
+              { name: 'Ocean Blue', primary: theme.primary, secondary: '#00A99C' },
+              { name: 'Emerald', primary: '#059669', secondary: theme.success },
+              { name: 'Sunset', primary: '#EA580C', secondary: theme.warning },
               { name: 'Amethyst', primary: '#7C3AED', secondary: '#A78BFA' },
-              { name: 'Slate Dark', primary: '#1E293B', secondary: '#64748B' },
+              { name: 'Slate Dark', primary: '#1E293B', secondary: theme.textSecondary },
             ].map((preset) => (
               <TouchableOpacity
                 key={preset.name}
@@ -1630,39 +1634,39 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           <Text style={styles.sectionHeaderTitle}>Signup & Toggles</Text>
           <View style={styles.switchRow}>
             <Text style={styles.switchTitle}>Manual Moderator Approval</Text>
-            <Switch value={settings.manualApproval} onValueChange={(v) => updateField('manualApproval', v)} trackColor={{ true: '#003366' }} />
+            <Switch value={settings.manualApproval} onValueChange={(v) => updateField('manualApproval', v)} trackColor={{ true: theme.primary }} />
           </View>
 
           <View style={styles.switchRow}>
             <Text style={styles.switchTitle}>Email Identity Vouching</Text>
-            <Switch value={settings.emailVouching} onValueChange={(v) => updateField('emailVouching', v)} trackColor={{ true: '#003366' }} />
+            <Switch value={settings.emailVouching} onValueChange={(v) => updateField('emailVouching', v)} trackColor={{ true: theme.primary }} />
           </View>
 
           <View style={styles.switchRow}>
             <Text style={styles.switchTitle}>Allow Unverified Logins</Text>
-            <Switch value={settings.allowUnverified} onValueChange={(v) => updateField('allowUnverified', v)} trackColor={{ true: '#003366' }} />
+            <Switch value={settings.allowUnverified} onValueChange={(v) => updateField('allowUnverified', v)} trackColor={{ true: theme.primary }} />
           </View>
 
           <Text style={styles.sectionHeaderTitle}>Features Access Control</Text>
           <View style={styles.rowGrid}>
             <View style={styles.featureBox}>
               <Text style={styles.featureText}>Jobs Portal</Text>
-              <Switch value={settings.displayJobs} onValueChange={(v) => updateField('displayJobs', v)} trackColor={{ true: '#003366' }} />
+              <Switch value={settings.displayJobs} onValueChange={(v) => updateField('displayJobs', v)} trackColor={{ true: theme.primary }} />
             </View>
             <View style={styles.featureBox}>
               <Text style={styles.featureText}>Events</Text>
-              <Switch value={settings.displayEvents} onValueChange={(v) => updateField('displayEvents', v)} trackColor={{ true: '#003366' }} />
+              <Switch value={settings.displayEvents} onValueChange={(v) => updateField('displayEvents', v)} trackColor={{ true: theme.primary }} />
             </View>
           </View>
 
           <View style={styles.rowGrid}>
             <View style={styles.featureBox}>
               <Text style={styles.featureText}>Mentorship</Text>
-              <Switch value={settings.displayMentorship} onValueChange={(v) => updateField('displayMentorship', v)} trackColor={{ true: '#003366' }} />
+              <Switch value={settings.displayMentorship} onValueChange={(v) => updateField('displayMentorship', v)} trackColor={{ true: theme.primary }} />
             </View>
             <View style={styles.featureBox}>
               <Text style={styles.featureText}>Alumni Card</Text>
-              <Switch value={settings.displayAlumniCard} onValueChange={(v) => updateField('displayAlumniCard', v)} trackColor={{ true: '#003366' }} />
+              <Switch value={settings.displayAlumniCard} onValueChange={(v) => updateField('displayAlumniCard', v)} trackColor={{ true: theme.primary }} />
             </View>
           </View>
 
@@ -1865,8 +1869,8 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
               </View>
               <View style={styles.historyStatsRow}>
                 <Text style={styles.historyStatText}>Records: {item.records}</Text>
-                <Text style={[styles.historyStatText, { color: '#10B981' }]}>Success: {item.successful}</Text>
-                <Text style={[styles.historyStatText, { color: '#EF4444' }]}>Failed: {item.failed}</Text>
+                <Text style={[styles.historyStatText, { color: theme.success }]}>Success: {item.successful}</Text>
+                <Text style={[styles.historyStatText, { color: theme.danger }]}>Failed: {item.failed}</Text>
               </View>
             </View>
           ))}
@@ -2437,21 +2441,21 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
             <View style={styles.progressStatRow}>
               <Text style={styles.progressLabel}>Total Sent emails: 1,480</Text>
               <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '100%', backgroundColor: '#003366' }]} />
+                <View style={[styles.progressBarFill, { width: '100%', backgroundColor: theme.primary }]} />
               </View>
             </View>
 
             <View style={styles.progressStatRow}>
               <Text style={styles.progressLabel}>Open Rate (78%): 1,154</Text>
               <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '78%', backgroundColor: '#10B981' }]} />
+                <View style={[styles.progressBarFill, { width: '78%', backgroundColor: theme.success }]} />
               </View>
             </View>
 
             <View style={styles.progressStatRow}>
               <Text style={styles.progressLabel}>Click Rate (45%): 666</Text>
               <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '45%', backgroundColor: '#F59E0B' }]} />
+                <View style={[styles.progressBarFill, { width: '45%', backgroundColor: theme.warning }]} />
               </View>
             </View>
           </View>
@@ -2625,7 +2629,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
       <View style={webContainerStyle}>
 
       {/* Header */}
@@ -2636,8 +2640,8 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           </TouchableOpacity>
           
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#002144' }}>{currentModuleData?.title}</Text>
-            <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '500' }}>Super Admin Panel</Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.primary }}>{currentModuleData?.title}</Text>
+            <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>Super Admin Panel</Text>
           </View>
 
           <View style={styles.headerIconsAdminStyle}>
@@ -2669,8 +2673,8 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
           {activeModule === 'dashboard_home' ? (
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#002144' }}>Super Admin Dashboard</Text>
-              <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '500' }}>System Status Overview</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.primary }}>Super Admin Dashboard</Text>
+              <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>System Status Overview</Text>
             </View>
           ) : (
             <View style={styles.searchBarAdminStyle}>
@@ -2729,7 +2733,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                 }}
                 activeOpacity={0.7}
               >
-                <View style={[styles.gridIconBg, { backgroundColor: '#FFFFFF' }]}>
+                <View style={[styles.gridIconBg, { backgroundColor: theme.card }]}>
                   <Ionicons name={item.icon} size={24} color={item.iconColor} />
                 </View>
                 <Text style={styles.gridCardTitle}>{item.title}</Text>
@@ -2752,19 +2756,19 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 // STYLING CONVENTIONS
 // ==========================================
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   headerAdminStyle: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
     height: 60,
   },
   headerAvatarAdminStyle: {
@@ -2777,7 +2781,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerAvatarTextAdminStyle: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -2791,12 +2795,12 @@ const styles = StyleSheet.create({
     height: 38,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   searchInputAdminStyle: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     paddingVertical: 0,
   },
   headerIconsAdminStyle: {
@@ -2818,7 +2822,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
   },
   flexContainer: {
     flex: 1,
@@ -2829,7 +2833,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#002144',
+    backgroundColor: theme.primary,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -2842,7 +2846,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   profileBtn: {
     padding: 2,
@@ -2851,14 +2855,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   panelContainer: {
     padding: 16,
@@ -2867,7 +2871,7 @@ const styles = StyleSheet.create({
   sectionHeaderTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginTop: 20,
     marginBottom: 12,
   },
@@ -2881,8 +2885,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: theme.border,
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
@@ -2903,12 +2907,12 @@ const styles = StyleSheet.create({
   gridCardTitle: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 4,
   },
   gridCardDesc: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 15,
   },
   // Module layouts
@@ -2921,13 +2925,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#0F172A',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
@@ -2936,23 +2940,23 @@ const styles = StyleSheet.create({
   cardHeading: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
   },
   cardTitle: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   cardSubText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   cardPrimaryVal: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#003366',
+    color: theme.primary,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -2970,7 +2974,7 @@ const styles = StyleSheet.create({
   avatarMiniText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   instChip: {
     backgroundColor: '#EFF6FF',
@@ -2994,43 +2998,43 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: theme.border,
+    backgroundColor: theme.card,
   },
   btnSecondaryText: {
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#334155',
+    color: theme.inputBackground,
   },
   btnDanger: {
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
   },
   btnDangerText: {
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   btnSuccess: {
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: '#10B981',
+    backgroundColor: theme.success,
   },
   btnSuccessText: {
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   // Selector style
   selectorWrapper: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -3050,22 +3054,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   selectorChipActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   selectorChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   selectorChipTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   // Subtabs
   subTabsHeader: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   subTabButton: {
     flex: 1,
@@ -3075,43 +3079,43 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   subTabActive: {
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   subTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   subTabTextActive: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   // Search
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     margin: 16,
     marginBottom: 0,
     paddingHorizontal: 12,
     height: 42,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   searchBarInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 13.5,
-    color: '#0F172A',
+    color: theme.text,
   },
   simpleItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 14,
     marginBottom: 8,
   },
@@ -3128,7 +3132,7 @@ const styles = StyleSheet.create({
   },
   // Dashboard Metrics
   summaryCard: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
@@ -3141,7 +3145,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -3157,12 +3161,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: theme.success,
     marginRight: 6,
   },
   healthText: {
     fontSize: 10,
-    color: '#10B981',
+    color: theme.success,
     fontWeight: '800',
   },
   summaryGrid: {
@@ -3175,18 +3179,18 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   summaryLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 4,
   },
   instMetricCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -3214,16 +3218,16 @@ const styles = StyleSheet.create({
   instBadgeCircleText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   instCardTitle: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   instCardLoc: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   statusTag: {
     paddingHorizontal: 8,
@@ -3252,7 +3256,7 @@ const styles = StyleSheet.create({
   statusRejectedText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#EF4444',
+    color: theme.danger,
   },
   instMetricsRow: {
     flexDirection: 'row',
@@ -3265,19 +3269,19 @@ const styles = StyleSheet.create({
   metricVal: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   metricLbl: {
     fontSize: 10,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   // Inner module inputs
   inputCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 16,
   },
   formLabel: {
@@ -3288,14 +3292,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   textInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
     fontSize: 13.5,
-    color: '#0F172A',
+    color: theme.text,
   },
   textArea: {
     height: 120,
@@ -3308,19 +3312,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   switchTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   switchSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   btnPrimary: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     height: 44,
     justifyContent: 'center',
@@ -3331,10 +3335,10 @@ const styles = StyleSheet.create({
   btnPrimaryText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   btnActionTop: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
@@ -3347,7 +3351,7 @@ const styles = StyleSheet.create({
   btnActionTopText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   // Modal layout
   modalBg: {
@@ -3356,7 +3360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
@@ -3367,12 +3371,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   pickerWrapper: {
     flexDirection: 'row',
@@ -3387,22 +3391,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   pickerChipActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   pickerChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   pickerChipTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   passwordInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
@@ -3416,7 +3420,7 @@ const styles = StyleSheet.create({
   btnGenerateText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   // Settings Branding Color Box
   colorBox: {
@@ -3425,7 +3429,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   rowGrid: {
     flexDirection: 'row',
@@ -3433,10 +3437,10 @@ const styles = StyleSheet.create({
   },
   featureBox: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -3446,14 +3450,14 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.inputBackground,
   },
   // Stats Card Inner Layout
   statCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderLeftWidth: 4,
     borderLeftColor: '#0D9488',
     padding: 16,
@@ -3468,16 +3472,16 @@ const styles = StyleSheet.create({
   statCardHeading: {
     fontSize: 13.5,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   statHugeText: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   statSubtitleText: {
     fontSize: 10.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   statNumbersRow: {
@@ -3528,10 +3532,10 @@ const styles = StyleSheet.create({
   datePickerRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     padding: 12,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     gap: 8,
   },
   dateField: {
@@ -3547,15 +3551,15 @@ const styles = StyleSheet.create({
   dateInput: {
     height: 36,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 6,
     paddingHorizontal: 8,
     fontSize: 12.5,
-    color: '#0F172A',
-    backgroundColor: '#F8FAFC',
+    color: theme.text,
+    backgroundColor: theme.background,
   },
   btnApply: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 36,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -3563,7 +3567,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnApplyText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 12.5,
     fontWeight: '700',
   },
@@ -3589,13 +3593,13 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginBottom: 4,
   },
   // Bulk import upload area
   btnOutline: {
     borderWidth: 1,
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderRadius: 8,
     height: 38,
     justifyContent: 'center',
@@ -3606,7 +3610,7 @@ const styles = StyleSheet.create({
   btnOutlineText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   uploadArea: {
     borderWidth: 1.5,
@@ -3616,7 +3620,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     marginBottom: 16,
   },
   uploadTitle: {
@@ -3627,16 +3631,16 @@ const styles = StyleSheet.create({
   },
   uploadSubtitle: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 2,
   },
   mappingList: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   mappingLabel: {
     fontSize: 11.5,
@@ -3651,10 +3655,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   historyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 12,
     marginBottom: 8,
   },
@@ -3669,7 +3673,7 @@ const styles = StyleSheet.create({
   historyStatText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   // Admin Activities Icon
   activityIconBg: {
@@ -3699,11 +3703,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   alertTextBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginTop: 4,
   },
   alertTextTitle: {
@@ -3714,37 +3718,37 @@ const styles = StyleSheet.create({
   },
   alertTextContent: {
     fontSize: 12,
-    color: '#0F172A',
+    color: theme.text,
     lineHeight: 16,
   },
   alertTextMeta: {
     fontSize: 10,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 6,
   },
   spamCountBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     gap: 8,
   },
   spamBadgeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   spamBadgeLabel: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
     marginRight: 4,
   },
   spamCountDot: {
@@ -3756,28 +3760,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   spamCountDotActive: {
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
   },
   spamCountDotEmpty: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   spamCountDotText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 9,
     fontWeight: '800',
   },
   passwordContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginTop: 4,
   },
   passwordLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   passwordRow: {
     flexDirection: 'row',
@@ -3788,7 +3792,7 @@ const styles = StyleSheet.create({
   passwordValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   metaInfoBox: {
@@ -3796,7 +3800,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -3811,22 +3815,22 @@ const styles = StyleSheet.create({
   },
   emptySub: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     marginTop: 4,
   },
   modalSectionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 8,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     paddingBottom: 4,
   },
   modalText: {
     fontSize: 13,
-    color: '#334155',
+    color: theme.inputBackground,
     marginBottom: 6,
   },
   // New Styles
@@ -3839,7 +3843,7 @@ const styles = StyleSheet.create({
   dropdownLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: theme.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginBottom: 6,
@@ -3849,13 +3853,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -3871,16 +3875,16 @@ const styles = StyleSheet.create({
   dropdownLogoText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   dropdownCampusName: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   dropdownCampusSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
     fontWeight: '600',
   },
@@ -3898,7 +3902,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   dropdownModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -3921,13 +3925,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4.5,
     borderRadius: 3,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
     marginBottom: 12,
   },
   dropdownModalTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     textAlign: 'center',
   },
   dropdownOption: {
@@ -3939,11 +3943,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1.5,
     borderColor: 'transparent',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   dropdownOptionActive: {
     backgroundColor: '#F0F9FF',
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   dropdownOptionLogo: {
     width: 38,
@@ -3955,25 +3959,25 @@ const styles = StyleSheet.create({
   dropdownOptionLogoText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: theme.card,
   },
   dropdownOptionText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.inputBackground,
   },
   dropdownOptionTextActive: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '800',
   },
   dropdownOptionSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
     fontWeight: '500',
   },
   dropdownCheckCircle: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -3982,12 +3986,12 @@ const styles = StyleSheet.create({
   },
   // News Feed / Posts
   postCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
@@ -4008,12 +4012,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   postAvatarText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   postUserInfo: {
     flex: 1,
@@ -4021,34 +4025,34 @@ const styles = StyleSheet.create({
   postUserName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   postUserRole: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   followBtn: {
     borderWidth: 1,
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   followBtnActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   followBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   followBtnTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   postContent: {
     fontSize: 14,
-    color: '#334155',
+    color: theme.inputBackground,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -4074,22 +4078,22 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '600',
   },
   // Details Card
   detailsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 16,
   },
   detailsCardHeaderTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     flex: 1,
   },
   detailsDivider: {
@@ -4114,13 +4118,13 @@ const styles = StyleSheet.create({
   detailsLinkText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
     textDecorationLine: 'underline',
   },
   detailsSectionHeader: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -4133,12 +4137,12 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     width: '47%',
   },
   featureItemText: {
@@ -4161,11 +4165,11 @@ const styles = StyleSheet.create({
   adminNameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   adminEmailText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   statusTagMini: {
@@ -4188,11 +4192,11 @@ const styles = StyleSheet.create({
   placementCompanyText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   placementIndustryText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   placementCountBadge: {
     backgroundColor: '#EFF6FF',
@@ -4205,11 +4209,11 @@ const styles = StyleSheet.create({
   placementCountText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   emptyDetailsText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     paddingVertical: 12,
   },
@@ -4217,14 +4221,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   emptyStateText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '600',
     marginTop: 8,
   },
@@ -4234,12 +4238,12 @@ const styles = StyleSheet.create({
   // --- Start of newly added interactivity features styles ---
   // Broadcast announcement
   broadcastCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
@@ -4249,7 +4253,7 @@ const styles = StyleSheet.create({
   broadcastCardTitle: {
     fontSize: 14.5,
     fontWeight: '800',
-    color: '#003366',
+    color: theme.primary,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -4261,14 +4265,14 @@ const styles = StyleSheet.create({
   },
   broadcastInput: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     minHeight: 48,
     maxHeight: 120,
     textAlignVertical: 'top',
@@ -4277,7 +4281,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
@@ -4288,7 +4292,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 0.5,
-    borderColor: '#F59E0B',
+    borderColor: theme.warning,
   },
   announcementBadgeText: {
     fontSize: 9,
@@ -4298,13 +4302,13 @@ const styles = StyleSheet.create({
 
   // Spreadsheet Editor
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     marginVertical: 12,
     borderWidth: 1.5,
-    borderColor: '#003366',
-    shadowColor: '#003366',
+    borderColor: theme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -4313,7 +4317,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#003366',
+    color: theme.primary,
     marginBottom: 12,
   },
   sheetHeaderRow: {
@@ -4339,12 +4343,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sheetCellInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 6,
     fontSize: 12,
-    color: '#0F172A',
+    color: theme.text,
     paddingHorizontal: 6,
     paddingVertical: 4,
     marginHorizontal: 2,
@@ -4356,7 +4360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#E6F0FA',
     borderWidth: 1,
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -4364,7 +4368,7 @@ const styles = StyleSheet.create({
   sheetAddBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
     marginLeft: 4,
   },
   sheetClearBtn: {
@@ -4375,21 +4379,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   sheetClearBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
 
   // Color Presets & Theme Swatches
   presetColorChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -4397,7 +4401,7 @@ const styles = StyleSheet.create({
   presetColorChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.inputBackground,
   },
   presetSwatchMini: {
     width: 10,
@@ -4408,7 +4412,7 @@ const styles = StyleSheet.create({
   // Password Strength Indicator
   strengthBarBg: {
     height: 6,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
     borderRadius: 3,
     marginTop: 6,
     overflow: 'hidden',
@@ -4420,10 +4424,10 @@ const styles = StyleSheet.create({
 
   // Logs/Stats interactive Breakdown Table
   chartDetailsContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 12,
     marginTop: 12,
   },
@@ -4441,19 +4445,19 @@ const styles = StyleSheet.create({
   chartDetailsHeaderRow: {
     flexDirection: 'row',
     borderBottomWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     paddingBottom: 6,
     marginBottom: 6,
   },
   chartDetailsHeaderCell: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   chartDetailsHeaderCellText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
+    color: theme.textSecondary,
     textAlign: 'right',
   },
   chartDetailsRow: {
@@ -4465,7 +4469,7 @@ const styles = StyleSheet.create({
   chartDetailsCellLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.inputBackground,
   },
   chartDetailsCellVal: {
     fontSize: 12,

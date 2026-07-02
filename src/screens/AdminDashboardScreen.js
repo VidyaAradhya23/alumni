@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, useWindowDimensions, StatusBar, Alert, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const AdminDashboardScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
@@ -11,7 +15,7 @@ const AdminDashboardScreen = ({ navigation }) => {
   
   const stats = [
     { label: 'New Users', value: '45', trend: '+18% this wk', icon: 'person-add-outline', color: '#E0F2FE', iconColor: '#0284C7' },
-    { label: 'Reported Posts', value: '12', trend: '-5% this wk', icon: 'flag-outline', color: '#FEE2E2', iconColor: '#EF4444' },
+    { label: 'Reported Posts', value: '12', trend: '-5% this wk', icon: 'flag-outline', color: '#FEE2E2', iconColor: theme.danger },
     { label: 'Pending Jobs', value: '8', trend: 'New alerts', icon: 'briefcase-outline', color: '#FEF3C7', iconColor: '#D97706' },
     { label: 'Event Requests', value: '5', trend: 'Needs review', icon: 'calendar-outline', color: '#DCFCE7', iconColor: '#16A34A' },
   ];
@@ -37,7 +41,7 @@ const AdminDashboardScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header with Back Button */}
       <View style={styles.header}>
@@ -194,10 +198,10 @@ const AdminDashboardScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   header: {
     flexDirection: 'row',
@@ -205,9 +209,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -223,12 +227,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     letterSpacing: -0.5,
   },
   headerSub: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   settingsBtn: {
     width: 36,
@@ -249,12 +253,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.02,
@@ -277,31 +281,31 @@ const styles = StyleSheet.create({
   trendText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   statValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 12,
     marginTop: 16,
   },
   chartContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 16,
   },
   chartTitleRow: {
@@ -310,11 +314,11 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   chartSubtitle: {
     fontSize: 11.5,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 1,
   },
   chartBarRow: {
@@ -337,26 +341,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   barValue: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     borderRadius: 7,
     width: '100%',
   },
   chartMonthText: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 8,
     fontWeight: '600',
   },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 14,
     paddingHorizontal: 14,
     height: 72,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   actionInfo: {
     flex: 1,
@@ -374,11 +378,11 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   actionSub: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   badgeRow: {
@@ -393,7 +397,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   countBadgeText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 11,
     fontWeight: '800',
   },

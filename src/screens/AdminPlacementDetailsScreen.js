@@ -9,6 +9,7 @@ import {
   StatusBar,
   Alert,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const INITIAL_ALUMNI_MASTER = [
@@ -23,6 +24,9 @@ export default function AdminPlacementDetailsScreen({ navigation, route }) {
   const { companyName } = route.params || { companyName: 'Company' };
   
   const getInitialAlumni = () => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
     if (!companyName) return [];
     const keyword = companyName.split(' ')[0].toLowerCase();
     const matched = INITIAL_ALUMNI_MASTER.filter(a => a.title.toLowerCase().includes(keyword));
@@ -51,7 +55,7 @@ export default function AdminPlacementDetailsScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -98,7 +102,7 @@ export default function AdminPlacementDetailsScreen({ navigation, route }) {
           </View>
         )}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', marginTop: 40, color: '#64748B', fontSize: 16 }}>
+          <Text style={{ textAlign: 'center', marginTop: 40, color: theme.textSecondary, fontSize: 16 }}>
             No alumni found for this company.
           </Text>
         }
@@ -107,19 +111,19 @@ export default function AdminPlacementDetailsScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   backBtn: {
     width: 40,
@@ -134,21 +138,21 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   headerSub: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   alumniRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   rowAvatar: {
     width: 48,
@@ -158,17 +162,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   alumniRowName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 2,
   },
   alumniRowDegree: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
   alumniRowTitle: {
@@ -179,11 +183,11 @@ const styles = StyleSheet.create({
   },
   alumniRowLocation: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '500',
   },
   connectBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -191,14 +195,14 @@ const styles = StyleSheet.create({
   connectBtnActive: {
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   connectBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 13,
     fontWeight: '700',
   },
   connectBtnActiveText: {
-    color: '#64748B',
+    color: theme.textSecondary,
   },
 });

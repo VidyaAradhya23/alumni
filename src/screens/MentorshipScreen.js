@@ -1,7 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, ScrollView , Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 
 const MentorshipScreen = () => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const mentors = [
     {
       id: 1,
@@ -96,26 +100,26 @@ const MentorshipScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
   },
   heroSection: {
     padding: 24,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     alignItems: 'center',
   },
   heroTitle: {
@@ -126,20 +130,20 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: theme.card,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 20,
     opacity: 0.9,
   },
   becomeMentorBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
   becomeMentorText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: 'bold',
   },
   sectionHeader: {
@@ -153,14 +157,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: theme.text,
   },
   viewAllText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
   },
   mentorCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 16,
@@ -185,12 +189,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   avatarText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#003366',
+    color: theme.primary,
   },
   mentorName: {
     fontSize: 16,
@@ -199,42 +203,42 @@ const styles = StyleSheet.create({
   },
   mentorDetails: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   expertiseRow: {
     flexDirection: 'row',
     marginBottom: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     padding: 10,
     borderRadius: 8,
   },
   expertiseLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginRight: 8,
   },
   expertiseValue: {
     fontSize: 12,
-    color: '#334155',
+    color: theme.inputBackground,
     flex: 1,
   },
   requestBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
   },
   requestBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontWeight: 'bold',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
@@ -246,11 +250,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#003366',
+    color: theme.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 4,
   }
 });

@@ -1,7 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 
 const LandingScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -46,7 +50,7 @@ const LandingScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F1F5F9',
@@ -58,7 +62,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     backgroundColor: 'rgba(10, 61, 145, 0.1)',
-    color: '#003366',
+    color: theme.primary,
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -70,11 +74,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 16,
   },
   highlight: {
-    color: '#003366',
+    color: theme.primary,
   },
   subtitle: {
     fontSize: 16,
@@ -87,7 +91,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   statBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     padding: 16,
     borderRadius: 12,
     flex: 1,
@@ -100,7 +104,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#003366',
+    color: theme.primary,
     marginBottom: 4,
   },
   statLabel: {
@@ -113,19 +117,19 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   primaryButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -134,10 +138,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   secondaryButtonText: {
-    color: '#003366',
+    color: theme.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },

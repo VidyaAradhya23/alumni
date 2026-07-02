@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const hashtags = ['#Institution', '#AlumniMeet', '#Mentorship', '#TechTalk', '#Careers', '#ClassOf2024'];
 
 const PostCreationScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [content, setContent] = useState('');
   const [audience, setAudience] = useState('All Alumni');
   const [attachedImage, setAttachedImage] = useState(null);
@@ -55,7 +59,7 @@ const PostCreationScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -168,10 +172,10 @@ const PostCreationScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     flexDirection: 'row',
@@ -187,25 +191,25 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 15.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   postBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 16,
   },
   disabledPostBtn: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   postBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -221,20 +225,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontWeight: '800',
     fontSize: 15,
   },
   userName: {
     fontSize: 15.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   audienceSelector: {
     flexDirection: 'row',
@@ -249,12 +253,12 @@ const styles = StyleSheet.create({
   },
   audienceText: {
     fontSize: 11,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   input: {
     fontSize: 16.5,
-    color: '#0F172A',
+    color: theme.text,
     minHeight: 120,
     textAlignVertical: 'top',
     lineHeight: 22,
@@ -265,10 +269,10 @@ const styles = StyleSheet.create({
   mediaPlaceholder: {
     width: '100%',
     height: 100,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
@@ -276,7 +280,7 @@ const styles = StyleSheet.create({
   },
   mediaLabel: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '600',
   },
   previewContainer: {
@@ -302,7 +306,7 @@ const styles = StyleSheet.create({
   hashtagLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.textSecondary,
     marginBottom: 8,
   },
   hashtagScroll: {
@@ -314,11 +318,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   tagText: {
     fontSize: 12,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
   },
   footerContainer: {
@@ -331,11 +335,11 @@ const styles = StyleSheet.create({
     marginRight: 20,
     marginTop: 8,
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '600',
   },
   charCountWarning: {
-    color: '#EF4444',
+    color: theme.danger,
   },
   toolbar: {
     flexDirection: 'row',

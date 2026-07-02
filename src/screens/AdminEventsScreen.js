@@ -1,9 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, StatusBar, Alert, Modal, FlatList, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const AdminEventsScreen = ({ navigation, route }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const isSuperAdmin = route?.params?.isSuperAdmin || false;
   const isFocused = useIsFocused();
   const [selectedInstitution, setSelectedInstitution] = useState(global.selectedInstitution || 'All');
@@ -182,7 +186,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
   if (selectedEvent) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         
         {/* Detail Header */}
         <View style={styles.detailHeader}>
@@ -227,7 +231,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
                 <Ionicons name="document-attach" size={24} color="#003366" style={{ marginRight: 10 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.attachmentDownloadName}>{selectedEvent.attachment}</Text>
-                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>PDF Document • 1.2 MB</Text>
+                  <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>PDF Document • 1.2 MB</Text>
                 </View>
                 <TouchableOpacity style={styles.downloadIconBtn} onPress={() => Alert.alert('Download', `Downloading ${selectedEvent.attachment}...`)}>
                   <Ionicons name="download-outline" size={20} color="#003366" />
@@ -268,12 +272,12 @@ const AdminEventsScreen = ({ navigation, route }) => {
   if (showEditor) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         
         {/* Editor Header */}
         <View style={styles.editorHeader}>
           <TouchableOpacity onPress={() => setShowEditor(false)}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#64748B' }}>Cancel</Text>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: theme.textSecondary }}>Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.editorTitleText}>Create Event</Text>
           <TouchableOpacity style={styles.postBtn} onPress={handlePostEvent}>
@@ -357,7 +361,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -404,7 +408,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
           <Ionicons
             name="options-outline"
             size={18}
-            color={activeFiltersCount > 0 ? '#FFFFFF' : '#003366'}
+            color={activeFiltersCount > 0 ? theme.card : theme.primary}
           />
           <Text style={[styles.filterButtonText, activeFiltersCount > 0 && styles.filterButtonTextActive]}>
             Filter{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
@@ -442,7 +446,7 @@ const AdminEventsScreen = ({ navigation, route }) => {
 
               <TouchableOpacity style={styles.socialItem} onPress={() => handleLike(item.id)}>
                 <Ionicons name={item.liked ? "heart" : "heart-outline"} size={18} color={item.liked ? "#EF4444" : "#64748B"} />
-                <Text style={[styles.socialText, item.liked && { color: '#EF4444' }]}>{item.likes}</Text>
+                <Text style={[styles.socialText, item.liked && { color: theme.danger }]}>{item.likes}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.socialItem} onPress={() => setCommentModalEvent(item)}>
@@ -578,74 +582,74 @@ const AdminEventsScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  headerAvatarText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+const getStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.card },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  headerAvatarText: { color: theme.card, fontSize: 14, fontWeight: '800' },
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 10, paddingHorizontal: 12, height: 36 },
-  searchInput: { flex: 1, fontSize: 14, color: '#0F172A', padding: 0 },
+  searchInput: { flex: 1, fontSize: 14, color: theme.text, padding: 0 },
   headerIcons: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
   headerIconBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
-  dot: { position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: '#EF4444' },
+  dot: { position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: theme.danger },
   listContent: { padding: 16, paddingBottom: 100 },
-  eventCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
+  eventCard: { backgroundColor: theme.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: theme.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
   eventCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   eventIconCircle: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  eventTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  eventMeta: { fontSize: 12, color: '#64748B', marginTop: 2 },
+  eventTitle: { fontSize: 15, fontWeight: '700', color: theme.text },
+  eventMeta: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
   eventDesc: { fontSize: 13, color: '#475569', lineHeight: 19, marginBottom: 14 },
   socialRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 12 },
   socialItem: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
-  socialText: { fontSize: 13, color: '#64748B', fontWeight: '600', marginLeft: 5 },
+  socialText: { fontSize: 13, color: theme.textSecondary, fontWeight: '600', marginLeft: 5 },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#94A3B8', marginTop: 12 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: theme.textMuted, marginTop: 12 },
   emptySubtitle: { fontSize: 13, color: '#CBD5E1', marginTop: 4, textAlign: 'center' },
-  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
   
   // Detail view header
-  detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  detailTitleText: { fontSize: 18, fontWeight: '800', color: '#002144' },
+  detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.border },
+  detailTitleText: { fontSize: 18, fontWeight: '800', color: theme.primary },
 
-  editorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  editorTitleText: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  postBtn: { backgroundColor: '#003366', paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8 },
-  postBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  editorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.border },
+  editorTitleText: { fontSize: 17, fontWeight: '700', color: theme.text },
+  postBtn: { backgroundColor: theme.primary, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8 },
+  postBtnText: { color: theme.card, fontSize: 14, fontWeight: '700' },
   editorBody: { flex: 1, padding: 20 },
   inputGroup: { marginBottom: 18 },
   inputLabel: { fontSize: 13, fontWeight: '700', color: '#475569', marginBottom: 8 },
-  textInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 16, height: 48, fontSize: 15, color: '#0F172A' },
+  textInput: { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border, borderRadius: 12, paddingHorizontal: 16, height: 48, fontSize: 15, color: theme.text },
   // Detail View
-  detailTopCard: { alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 24, marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  detailTopCard: { alignItems: 'center', backgroundColor: theme.card, borderRadius: 16, padding: 24, marginBottom: 16, borderWidth: 1, borderColor: theme.border },
   detailIconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center', marginBottom: 16, borderWidth: 2, borderColor: '#E0F2FE' },
-  detailTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 12 },
+  detailTitle: { fontSize: 20, fontWeight: '800', color: theme.text, textAlign: 'center', marginBottom: 12 },
   detailBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  detailBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8, marginBottom: 6, borderWidth: 1, borderColor: '#E2E8F0' },
-  detailBadgeText: { fontSize: 12, color: '#64748B', fontWeight: '600' },
-  detailSection: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0' },
-  detailSectionTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 10 },
+  detailBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.background, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8, marginBottom: 6, borderWidth: 1, borderColor: theme.border },
+  detailBadgeText: { fontSize: 12, color: theme.textSecondary, fontWeight: '600' },
+  detailSection: { backgroundColor: theme.card, borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: theme.border },
+  detailSectionTitle: { fontSize: 16, fontWeight: '800', color: theme.text, marginBottom: 10 },
   detailDescText: { fontSize: 14, color: '#475569', lineHeight: 22 },
-  detailStatsRow: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  detailStatsRow: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: theme.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: theme.border },
   detailStatItem: { alignItems: 'center' },
-  detailStatValue: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginTop: 4 },
-  detailStatLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '600', marginTop: 2 },
+  detailStatValue: { fontSize: 18, fontWeight: '800', color: theme.text, marginTop: 4 },
+  detailStatLabel: { fontSize: 11, color: theme.textMuted, fontWeight: '600', marginTop: 2 },
   // Attachment Styles
   attachBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderStyle: 'dashed',
     borderRadius: 12,
     paddingVertical: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   attachBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   attachmentPreview: {
     flexDirection: 'row',
@@ -661,22 +665,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.primary,
     marginLeft: 8,
   },
   attachmentDownloadCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   attachmentDownloadName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   downloadIconBtn: {
     width: 36,
@@ -688,20 +692,20 @@ const styles = StyleSheet.create({
   },
   // Comment Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  commentModal: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', minHeight: 300 },
+  commentModal: { backgroundColor: theme.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', minHeight: 300 },
   commentModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  commentModalTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
+  commentModalTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
   commentList: { padding: 16, maxHeight: 300 },
   commentItem: { flexDirection: 'row', marginBottom: 16 },
   commentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  commentAvatarText: { fontSize: 14, fontWeight: '700', color: '#64748B' },
-  commentUser: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
-  commentTime: { fontSize: 11, fontWeight: '500', color: '#94A3B8' },
+  commentAvatarText: { fontSize: 14, fontWeight: '700', color: theme.textSecondary },
+  commentUser: { fontSize: 13, fontWeight: '700', color: theme.text },
+  commentTime: { fontSize: 11, fontWeight: '500', color: theme.textMuted },
   commentText: { fontSize: 13, color: '#475569', marginTop: 2, lineHeight: 18 },
-  noComments: { textAlign: 'center', color: '#94A3B8', fontSize: 14, paddingVertical: 30 },
+  noComments: { textAlign: 'center', color: theme.textMuted, fontSize: 14, paddingVertical: 30 },
   commentInputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  commentInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, height: 40, fontSize: 14, color: '#0F172A', marginRight: 10 },
-  commentSendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center' },
+  commentInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, height: 40, fontSize: 14, color: theme.text, marginRight: 10 },
+  commentSendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' },
 
   // Filter Styles
   filterSummaryBar: {
@@ -710,35 +714,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   filterSummaryText: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '600',
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#003366',
+    borderColor: theme.primary,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
     gap: 6,
   },
   filterButtonActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   filterButtonText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   filterModalOverlay: {
     flex: 1,
@@ -746,7 +750,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   filterSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '85%',
@@ -763,12 +767,12 @@ const styles = StyleSheet.create({
   filterSheetTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   resetText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#EF4444',
+    color: theme.danger,
   },
   filterScrollView: {
     padding: 20,
@@ -792,11 +796,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   pillActive: {
-    backgroundColor: '#003366',
-    borderColor: '#003366',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   pillText: {
     fontSize: 13,
@@ -804,10 +808,10 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   pillTextActive: {
-    color: '#FFFFFF',
+    color: theme.card,
   },
   applyButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     marginHorizontal: 20,
     marginTop: 10,
     borderRadius: 12,
@@ -818,7 +822,7 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: theme.card,
   },
 });
 

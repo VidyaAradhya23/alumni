@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, TextInput, StatusBar, Alert, Modal , Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const initialChats = [
@@ -46,6 +47,9 @@ const initialChats = [
 ];
 
 const MessagesScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [chatList, setChatList] = useState(initialChats);
 
@@ -82,7 +86,7 @@ const MessagesScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header with Back Button */}
       <View style={styles.header}>
@@ -217,10 +221,10 @@ const MessagesScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     flexDirection: 'row',
@@ -245,7 +249,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     letterSpacing: -0.5,
   },
   createBtn: {
@@ -259,24 +263,24 @@ const styles = StyleSheet.create({
   searchSection: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 40,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     marginLeft: 8,
   },
   chatItem: {
@@ -285,7 +289,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: theme.background,
   },
   avatarWrapper: {
     position: 'relative',
@@ -295,12 +299,12 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -311,9 +315,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: theme.success,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: theme.card,
   },
   chatInfo: {
     flex: 1,
@@ -327,19 +331,19 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   time: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   unreadTime: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   role: {
     fontSize: 12,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -350,16 +354,16 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 13.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     flex: 1,
     marginRight: 10,
   },
   unreadLastMessage: {
-    color: '#0F172A',
+    color: theme.text,
     fontWeight: '600',
   },
   unreadBadge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.danger,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -368,7 +372,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   unreadText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -386,7 +390,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13.5,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,
@@ -397,7 +401,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     minHeight: 300,
@@ -408,15 +412,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   closeButton: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
   },
   modalBody: {
@@ -429,21 +433,21 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 20,
   },
   modalStartBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   modalStartBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   }

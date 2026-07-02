@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, StatusBar } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -26,6 +27,9 @@ const institutions = [
 ];
 
 const SelectInstitutionScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
 
@@ -36,7 +40,7 @@ const SelectInstitutionScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={styles.header}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoText}>RV</Text>
@@ -113,10 +117,10 @@ const SelectInstitutionScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     alignItems: 'center',
@@ -127,22 +131,22 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 20,
   },
   logoText: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#002144',
+    color: theme.primary,
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     letterSpacing: -0.5,
   },
   list: {
@@ -162,11 +166,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: theme.border,
+    backgroundColor: theme.background,
   },
   selectedListItem: {
-    borderColor: '#003366',
+    borderColor: theme.primary,
     backgroundColor: '#F0F9FF',
   },
   radioContainer: {
@@ -182,13 +186,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   outerRadioSelected: {
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   innerRadio: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   listItemText: {
     fontSize: 15,
@@ -197,19 +201,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   selectedListItemText: {
-    color: '#002144',
+    color: theme.primary,
     fontWeight: '700',
   },
   footer: {
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     marginHorizontal: 24,
     marginBottom: 16,
@@ -222,20 +226,20 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: '#002144',
+    color: theme.primary,
   },
   button: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
   disabledButton: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: theme.textMuted,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   }

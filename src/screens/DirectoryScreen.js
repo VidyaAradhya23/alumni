@@ -11,10 +11,11 @@ import {
   StatusBar,
   Modal,
   Alert, Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const connectionRequests = [
-  { id: '1', name: 'Ananya Joshi', subtitle: 'CSE \'18 • Product Manager at Microsoft', initials: 'AJ', color: '#003366' },
+  { id: '1', name: 'Ananya Joshi', subtitle: 'CSE \'18 • Product Manager at Microsoft', initials: 'AJ', color: theme.primary },
   { id: '2', name: 'Rahul Verma', subtitle: 'ECE \'20 • Software Engineer at Apple', initials: 'RV', color: '#1E40AF' },
   { id: '3', name: 'Priya Sharma', subtitle: 'ISE \'15 • Staff Engineer at Google', initials: 'PS', color: '#7C3AED' },
   { id: '4', name: 'Vikram Singh', subtitle: 'ME \'12 • Engineering Lead at Tesla', initials: 'VS', color: '#0E7490' },
@@ -23,7 +24,7 @@ const connectionRequests = [
 ];
 
 const directoryAlumni = [
-  { id: 'da1', name: 'Priya Sharma', branch: 'CSE \'20', title: 'Product Manager at Microsoft', institution: 'RVCE', initials: 'PS', color: '#003366' },
+  { id: 'da1', name: 'Priya Sharma', branch: 'CSE \'20', title: 'Product Manager at Microsoft', institution: 'RVCE', initials: 'PS', color: theme.primary },
   { id: 'da2', name: 'Rahul Verma', branch: 'ECE \'19', title: 'Software Engineer at Apple', institution: 'RVCE', initials: 'RV', color: '#1E40AF' },
   { id: 'da3', name: 'Sneha Patel', branch: 'ISE \'21', title: 'Frontend Engineer at Meta', institution: 'RVITM', initials: 'SP', color: '#7C3AED' },
   { id: 'da4', name: 'Arjun Reddy', branch: 'ME \'18', title: 'Mechanical Lead at Tesla', institution: 'RVITM', initials: 'AR', color: '#0E7490' },
@@ -34,6 +35,9 @@ const directoryAlumni = [
 ];
 
 const DirectoryScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [activeTab, setActiveTab] = useState('request');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(connectionRequests);
@@ -328,7 +332,7 @@ const DirectoryScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
 
       {/* ───── Header ───── */}
       <View style={styles.header}>
@@ -517,11 +521,11 @@ const DirectoryScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   /* ── Container ── */
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
 
   /* ── Header ── */
@@ -530,14 +534,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     gap: 10,
   },
   headerAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -553,7 +557,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     paddingVertical: 0,
   },
   headerIcons: {
@@ -572,9 +576,9 @@ const styles = StyleSheet.create({
   /* ── Tab Bar ── */
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   tab: {
     flex: 1,
@@ -584,22 +588,22 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#003366',
+    borderBottomColor: theme.primary,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   activeTabText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
 
   /* ── Tab Content ── */
   tabContent: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
 
   /* ── Section Header ── */
@@ -609,14 +613,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
 
   /* ── Request Row ── */
@@ -628,7 +632,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -641,7 +645,7 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -653,12 +657,12 @@ const styles = StyleSheet.create({
   requestName: {
     fontSize: 15.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 3,
   },
   requestSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 18,
   },
   requestActions: {
@@ -697,12 +701,12 @@ const styles = StyleSheet.create({
   emptyRequestTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
     marginTop: 16,
   },
   emptyRequestSubtitle: {
     fontSize: 13.5,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
@@ -827,21 +831,21 @@ const styles = StyleSheet.create({
   communityTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     textAlign: 'center',
     marginBottom: 14,
     letterSpacing: -0.3,
   },
   communityDescription: {
     fontSize: 14.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 12,
   },
   communityDescriptionSecondary: {
     fontSize: 13.5,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 36,
@@ -852,12 +856,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingVertical: 15,
     paddingHorizontal: 32,
     borderRadius: 28,
     width: '100%',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -866,7 +870,7 @@ const styles = StyleSheet.create({
   communityBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: theme.card,
     letterSpacing: 0.2,
   },
 
@@ -884,30 +888,30 @@ const styles = StyleSheet.create({
   commSectionTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   commNewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     gap: 4,
   },
   commNewBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 12,
     fontWeight: '700',
   },
   commCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -919,13 +923,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   commAvatar: {
     width: 46,
     height: 46,
     borderRadius: 12,
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -937,11 +941,11 @@ const styles = StyleSheet.create({
   commName: {
     fontSize: 15.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   commSubText: {
     fontSize: 12.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   commMoreBtn: {
@@ -958,7 +962,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: theme.background,
   },
   commGroupIconBg: {
     width: 32,
@@ -979,11 +983,11 @@ const styles = StyleSheet.create({
   commGroupName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   commGroupMessage: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: theme.textMuted,
     marginTop: 2,
   },
 
@@ -994,7 +998,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
@@ -1007,17 +1011,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   modalTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   modalActionText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#003366',
+    color: theme.primary,
   },
   wizardBody: {
     padding: 20,
@@ -1032,7 +1036,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1041,7 +1045,7 @@ const styles = StyleSheet.create({
   commIconLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   wizardLabel: {
     fontSize: 14,
@@ -1051,31 +1055,31 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   wizardInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 48,
     fontSize: 14.5,
-    color: '#002144',
+    color: theme.primary,
   },
   charCount: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'right',
     marginTop: 4,
   },
   wizardInfoText: {
     fontSize: 13.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 18,
     marginBottom: 20,
   },
   groupSectionHeader: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: theme.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: 16,
@@ -1084,16 +1088,16 @@ const styles = StyleSheet.create({
   groupSelectRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 12,
     marginBottom: 12,
   },
   groupDisabledSelect: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: theme.background,
+    borderColor: theme.border,
     opacity: 0.8,
   },
   groupSelectInfo: {
@@ -1104,11 +1108,11 @@ const styles = StyleSheet.create({
   groupSelectName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   groupSelectDesc: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2.5,
   },
 
@@ -1121,11 +1125,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#10B981',
+    backgroundColor: theme.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#10B981',
+    shadowColor: theme.success,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -1134,18 +1138,18 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
   },
   successDesc: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 21,
     marginBottom: 32,
   },
   successBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 50,
     width: '100%',
     borderRadius: 25,
@@ -1153,7 +1157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   successBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1192,7 +1196,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
   },

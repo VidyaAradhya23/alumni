@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, useWindowDimensions, Alert, StatusBar, Modal, TextInput, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 
 const ProfileScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState('menu'); // 'menu' | 'profile_edit' | 'profile_settings' | 'security'
@@ -13,15 +18,45 @@ const ProfileScreen = ({ navigation }) => {
   // Profile Data State
   const [profileData, setProfileData] = useState({
     username: 'abhishek_institution',
-    name: 'Abhishek Jaiswal',
-    branch: 'Computer Science & Engineering',
-    batch: '2023',
-    bio: 'Institution Class of 23 🎓\nSenior Software Engineer @ Tech Solutions\nBuilding scalable systems 🚀\ninstitution.edu.in/alumni/abhishek',
-    posts: '6',
-    followers: '1.2k',
-    following: '850',
-    avatar: 'AJ'
+    name: 'Loading...',
+    branch: 'Loading...',
+    batch: 'Loading...',
+    bio: '',
+    posts: '0',
+    followers: '0',
+    following: '0',
+    avatar: '..'
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (data) {
+            setProfileData(prev => ({
+              ...prev,
+              name: data.name || user.email.split('@')[0],
+              username: user.email.split('@')[0],
+              branch: data.department || 'Not specified',
+              batch: data.batch_year || 'Not specified',
+              bio: `Institution Class of ${data.batch_year || ''}`,
+              avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU'
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching profile', e);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Profile Editing States
   const [editName, setEditName] = useState(profileData.name);
@@ -93,6 +128,7 @@ const ProfileScreen = ({ navigation }) => {
     const performLogout = async () => {
       setSettingsVisible(false);
       try {
+        await supabase.auth.signOut();
         await AsyncStorage.removeItem('userInfo');
       } catch (error) {
         console.error('Failed to clear user session', error);
@@ -126,7 +162,7 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Premium Header */}
       <View style={styles.header}>
@@ -216,7 +252,7 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => setActiveTab('post')}
             activeOpacity={0.7}
           >
-            <Ionicons name={activeTab === 'post' ? 'grid' : 'grid-outline'} size={20} color={activeTab === 'post' ? '#003366' : '#94A3B8'} />
+            <Ionicons name={activeTab === 'post' ? 'grid' : 'grid-outline'} size={20} color={activeTab === 'post' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'post' && styles.activeTabLabel]}>Posts</Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -224,7 +260,7 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => setActiveTab('reshare')}
             activeOpacity={0.7}
           >
-            <Ionicons name={activeTab === 'reshare' ? 'repeat' : 'repeat-outline'} size={20} color={activeTab === 'reshare' ? '#003366' : '#94A3B8'} />
+            <Ionicons name={activeTab === 'reshare' ? 'repeat' : 'repeat-outline'} size={20} color={activeTab === 'reshare' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'reshare' && styles.activeTabLabel]}>Reshares</Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -232,7 +268,7 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => setActiveTab('saved')}
             activeOpacity={0.7}
           >
-            <Ionicons name={activeTab === 'saved' ? 'bookmark' : 'bookmark-outline'} size={20} color={activeTab === 'saved' ? '#003366' : '#94A3B8'} />
+            <Ionicons name={activeTab === 'saved' ? 'bookmark' : 'bookmark-outline'} size={20} color={activeTab === 'saved' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'saved' && styles.activeTabLabel]}>Saved</Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -240,7 +276,7 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => setActiveTab('tags')}
             activeOpacity={0.7}
           >
-            <Ionicons name={activeTab === 'tags' ? 'pricetag' : 'pricetag-outline'} size={20} color={activeTab === 'tags' ? '#003366' : '#94A3B8'} />
+            <Ionicons name={activeTab === 'tags' ? 'pricetag' : 'pricetag-outline'} size={20} color={activeTab === 'tags' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'tags' && styles.activeTabLabel]}>Tags</Text>
           </TouchableOpacity>
         </View>
@@ -576,7 +612,15 @@ const ProfileScreen = ({ navigation }) => {
                         { 
                           text: 'Delete Permanently', 
                           style: 'destructive',
-                          onPress: () => {
+                                                    onPress: async () => {
+                            try {
+                              const { error } = await supabase.rpc('delete_user');
+                              if (error) console.error('Delete User Error:', error);
+                              await supabase.auth.signOut();
+                              await AsyncStorage.removeItem('userInfo');
+                            } catch (e) {
+                              console.error('Delete Account Error', e);
+                            }
                             setSettingsVisible(false);
                             navigation.replace('Welcome');
                           }
@@ -666,10 +710,10 @@ const ProfileScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     flexDirection: 'row',
@@ -677,7 +721,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -689,7 +733,7 @@ const styles = StyleSheet.create({
   headerUsername: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   headerRight: {
     flexDirection: 'row',
@@ -719,22 +763,22 @@ const styles = StyleSheet.create({
     padding: 3,
     borderRadius: 44,
     borderWidth: 2,
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   avatar: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#003366',
+    color: theme.primary,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -748,11 +792,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   statLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   bioContainer: {
@@ -761,11 +805,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.text,
   },
   occupationText: {
     fontSize: 13.5,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '600',
     marginVertical: 4,
   },
@@ -790,7 +834,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   smallIconBtn: {
     backgroundColor: '#FEF2F2',
@@ -820,7 +864,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -838,7 +882,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   modalItem: {
     flexDirection: 'row',
@@ -850,7 +894,7 @@ const styles = StyleSheet.create({
   modalItemText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   
   // Instagram-style tabs styling
@@ -860,7 +904,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   tabButton: {
     flex: 1,
@@ -871,25 +915,25 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   activeTabButton: {
-    borderBottomColor: '#003366',
+    borderBottomColor: theme.primary,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   activeTabLabel: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   tabContentList: {
     padding: 16,
   },
   listCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -901,7 +945,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   cardSubtitle: {
     fontSize: 13,
@@ -917,7 +961,7 @@ const styles = StyleSheet.create({
   },
   cardFooterText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '500',
   },
 
@@ -933,16 +977,16 @@ const styles = StyleSheet.create({
   settingsRowLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.text,
   },
   settingsRowDesc: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.textSecondary,
     marginTop: 2,
     maxWidth: '70%',
   },
   saveSettingsBtn: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 48,
     borderRadius: 10,
     alignItems: 'center',
@@ -950,32 +994,32 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   saveSettingsBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 15,
     fontWeight: '700',
   },
   settingsSectionTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#64748B',
+    color: theme.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
     marginTop: 8,
   },
   securityInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 10,
     height: 46,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
     marginBottom: 12,
   },
   changePasswordBtn: {
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.text,
     height: 48,
     borderRadius: 10,
     alignItems: 'center',
@@ -983,7 +1027,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   changePasswordBtnText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1020,7 +1064,7 @@ const styles = StyleSheet.create({
   connectionAvatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   connectionInfo: {
     flex: 1,
@@ -1028,35 +1072,35 @@ const styles = StyleSheet.create({
   connectionName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   connectionUsername: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.textSecondary,
   },
   connectionBtn: {
     paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
     borderRadius: 6,
   },
   connectionBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0F172A',
+    color: theme.text,
   },
   followingBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   followingBtnText: {
-    color: '#0F172A',
+    color: theme.text,
   },
   modalTabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   modalTab: {
     flex: 1,
@@ -1066,15 +1110,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeModalTab: {
-    borderBottomColor: '#0F172A',
+    borderBottomColor: theme.text,
   },
   modalTabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   activeModalTabText: {
-    color: '#0F172A',
+    color: theme.text,
   },
   modalSearchContainer: {
     paddingHorizontal: 16,
@@ -1092,7 +1136,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.text,
   },
 });
 

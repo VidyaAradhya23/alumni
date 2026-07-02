@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, Platform } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -8,6 +9,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 WebBrowser.maybeCompleteAuthSession();
 
 const WelcomeScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const handleOAuthLogin = async (provider) => {
     if (provider === 'linkedin') {
       try {
@@ -48,7 +52,7 @@ const WelcomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={webContainerStyle}>
       
       <View style={styles.content}>
@@ -119,10 +123,10 @@ const WelcomeScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   content: {
     flex: 1,
@@ -134,11 +138,11 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -149,17 +153,17 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 26,
     fontWeight: '900',
-    color: '#002144',
+    color: theme.primary,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748B',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
   bottomSection: {
@@ -171,28 +175,28 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   primaryButton: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     height: 52,
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#003366',
+    borderColor: theme.primary,
   },
   secondaryButtonText: {
-    color: '#003366',
+    color: theme.primary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -209,7 +213,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
   },
   adminLoginLink: {
     flexDirection: 'row',
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   adminLoginText: {
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontSize: 13,
     fontWeight: '600',
   },

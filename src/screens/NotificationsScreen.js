@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, StatusBar, ScrollView , Platform} from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const initialNotifications = [
@@ -69,6 +70,9 @@ const initialNotifications = [
 ];
 
 const NotificationsScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [notificationsList, setNotificationsList] = useState(initialNotifications);
 
   const handleMarkAllRead = () => {
@@ -106,7 +110,7 @@ const NotificationsScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header with Back Button */}
       <View style={styles.header}>
@@ -179,10 +183,10 @@ const NotificationsScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   header: {
     flexDirection: 'row',
@@ -207,12 +211,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     letterSpacing: -0.5,
   },
   markRead: {
     fontSize: 13.5,
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
   scrollContent: {
@@ -224,7 +228,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.textSecondary,
     paddingHorizontal: 20,
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -235,7 +239,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: theme.background,
     position: 'relative',
     alignItems: 'center',
   },
@@ -273,16 +277,16 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   unreadTitle: {
-    color: '#0F172A',
+    color: theme.text,
     fontWeight: '700',
   },
   time: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
   },
   message: {
     fontSize: 13.5,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 18,
   },
   emptyState: {
@@ -299,7 +303,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13.5,
-    color: '#94A3B8',
+    color: theme.textMuted,
     textAlign: 'center',
     marginTop: 6,
   },

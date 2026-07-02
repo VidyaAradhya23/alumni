@@ -14,6 +14,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const INITIAL_JOBS = [
@@ -68,6 +69,9 @@ function JobCard({ item, onPress, onDelete, isSmallScreen }) {
 
 // ─── MAIN SCREEN ─────────────────────────────────────────────────────
 const JobsScreen = ({ navigation, route }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
   const [screen, setScreen] = useState('list');
@@ -112,7 +116,7 @@ const JobsScreen = ({ navigation, route }) => {
   if (screen === 'detail' && detail) {
     return (
       <SafeAreaView style={st.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={st.editorHeader}>
           <TouchableOpacity onPress={() => { setDetail(null); setScreen('list'); }}><Ionicons name="arrow-back" size={24} color="#0F172A" /></TouchableOpacity>
           <Text style={st.editorTitle}>Job Details</Text>
@@ -152,7 +156,7 @@ const JobsScreen = ({ navigation, route }) => {
   if (screen === 'resume') {
     return (
       <SafeAreaView style={st.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={st.editorHeader}>
           <TouchableOpacity onPress={() => setScreen('list')}><Ionicons name="arrow-back" size={24} color="#0F172A" /></TouchableOpacity>
           <Text style={st.editorTitle}>Resume Book</Text>
@@ -205,7 +209,7 @@ const JobsScreen = ({ navigation, route }) => {
   if (screen === 'editor') {
     return (
       <SafeAreaView style={st.container}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={st.editorHeader}>
           <TouchableOpacity onPress={() => setScreen('list')}><Ionicons name="close" size={24} color="#0F172A" /></TouchableOpacity>
           <Text style={st.editorTitle}>Create Job Post</Text>
@@ -247,7 +251,7 @@ const JobsScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={st.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       {/* Header */}
       <View style={[st.header, isSmallScreen && { paddingHorizontal: 10, paddingVertical: 8 }]}>
         <TouchableOpacity style={[st.headerAvatar, isSmallScreen && { width: 32, height: 32, borderRadius: 16, marginRight: 8 }]} activeOpacity={0.8} onPress={() => navigation && navigation.navigate('Profile')}>

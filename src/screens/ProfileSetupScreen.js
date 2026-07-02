@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, StatusBar, Modal, FlatList } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const institutions = [
@@ -39,6 +40,9 @@ const locations = [
 
 
 const ProfileSetupScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
+
   const [formData, setFormData] = useState({
     fullName: '',
     institution: '',
@@ -79,7 +83,7 @@ const ProfileSetupScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -136,7 +140,7 @@ const ProfileSetupScreen = ({ navigation }) => {
                 activeOpacity={0.8}
               >
                 <Ionicons name="business-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                <Text style={[styles.input, !formData.institution && { color: '#94A3B8' }]}>
+                <Text style={[styles.input, !formData.institution && { color: theme.textMuted }]}>
                   {formData.institution ? formData.institution : 'Select your Institution'}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#94A3B8" />
@@ -197,7 +201,7 @@ const ProfileSetupScreen = ({ navigation }) => {
                  activeOpacity={0.8}
                >
                  <Ionicons name="location-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                 <Text style={[styles.input, !formData.location && { color: '#94A3B8' }]}>
+                 <Text style={[styles.input, !formData.location && { color: theme.textMuted }]}>
                    {formData.location ? formData.location : 'Select Location'}
                  </Text>
                  <Ionicons name="chevron-down" size={18} color="#94A3B8" />
@@ -294,10 +298,10 @@ const ProfileSetupScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
   },
   scrollContent: {
     padding: 24,
@@ -313,10 +317,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.border,
   },
   stepActive: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
   },
   header: {
     marginBottom: 24,
@@ -324,13 +328,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.textSecondary,
     lineHeight: 22,
   },
   avatarSection: {
@@ -341,9 +345,9 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
@@ -355,7 +359,7 @@ const styles = StyleSheet.create({
   },
   avatarLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.textMuted,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -382,9 +386,9 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 50,
@@ -395,23 +399,23 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#002144',
+    color: theme.primary,
   },
   button: {
-    backgroundColor: '#003366',
+    backgroundColor: theme.primary,
     height: 52,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#003366',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: theme.card,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -421,7 +425,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -439,7 +443,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#002144',
+    color: theme.primary,
   },
   modalListItem: {
     paddingVertical: 16,
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   selectedModalListItemText: {
-    color: '#003366',
+    color: theme.primary,
     fontWeight: '700',
   },
 });

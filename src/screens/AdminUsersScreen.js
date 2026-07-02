@@ -35,7 +35,7 @@ const COMMUNITIES_DATA = [
   { id: '4', name: 'Sports Alumni Association', members: '432', icon: 'football-outline', joined: false, institution: 'RVIS' },
 ];
 
-const AVATAR_COLORS = [theme.primary, theme.text, '#1E3A5F', '#2C5282', '#1A365D', '#2D3748'];
+const AVATAR_COLORS = ['#003366', '#0F172A', '#1E3A5F', '#2C5282', '#1A365D', '#2D3748'];
 
 const BATCH_OPTIONS = ['All', '2015', '2017', '2018', '2019', '2020', '2021', '2022', '2023'];
 const BRANCH_OPTIONS = ['All', 'CSE', 'ECE', 'ISE', 'MBA', 'ME', 'EEE'];

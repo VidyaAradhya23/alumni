@@ -22,11 +22,10 @@ const INITIAL_ALUMNI_MASTER = [
 
 export default function AdminPlacementDetailsScreen({ navigation, route }) {
   const { companyName } = route.params || { companyName: 'Company' };
-  
-  const getInitialAlumni = () => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
+  const getInitialAlumni = () => {
     if (!companyName) return [];
     const keyword = companyName.split(' ')[0].toLowerCase();
     const matched = INITIAL_ALUMNI_MASTER.filter(a => a.title.toLowerCase().includes(keyword));

@@ -187,6 +187,8 @@ function ResumeCard({ item }) {
 
 // ─── MAIN SCREEN COMPONENT ──────────────────────────────────────────
 export default function AdminJobsScreen({ navigation, route }) {
+  const { theme, isDarkMode } = useTheme();
+  
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
   const isSuperAdmin = route?.params?.isSuperAdmin || false;
@@ -215,9 +217,8 @@ export default function AdminJobsScreen({ navigation, route }) {
   }, [isFocused, isSuperAdmin]);
 
   const clearForm = () => {
-  const { theme, isDarkMode } = useTheme();
-  const styles = getStyles(theme);
- setFRole(''); setFCompany(''); setFMode(''); setFExp(''); setFLoc(''); setFDesc(''); };
+    setFRole(''); setFCompany(''); setFMode(''); setFExp(''); setFLoc(''); setFDesc(''); 
+  };
 
   const postJob = () => {
     if (!fRole.trim() || !fCompany.trim()) { Alert.alert('Missing', 'Fill in Role and Company.'); return; }

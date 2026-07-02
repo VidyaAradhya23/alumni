@@ -93,6 +93,8 @@ const MOCK_USERS = [
 ];
 
 export default function AdminHomeScreen({ navigation }) {
+  const { theme, isDarkMode } = useTheme();
+  const styles = getStyles(theme);
   const { width } = useWindowDimensions();
   const [likedPosts, setLikedPosts] = useState({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
@@ -106,9 +108,6 @@ export default function AdminHomeScreen({ navigation }) {
   const [commentText, setCommentText] = useState('');
 
   const openModal = (type, post) => {
-  const { theme, isDarkMode } = useTheme();
-  const styles = getStyles(theme);
-
     setSelectedPost(post);
     setActiveModal(type);
   };

@@ -77,9 +77,10 @@ const SuperAdminDrawer = createDrawerNavigator();
 // ===== ALUMNI TABS/DRAWER =====
 function MainTabs() {
   const { theme } = useTheme();
-  const isWeb = Platform.OS === 'web';
+  const { width } = useWindowDimensions();
+  const showDrawer = Platform.OS === 'web' && width >= 768;
 
-  if (isWeb) {
+  if (showDrawer) {
     return (
       <Drawer.Navigator
         screenOptions={({ route }) => ({
@@ -151,9 +152,10 @@ function MainTabs() {
 // ===== ADMIN TABS/DRAWER =====
 function AdminTabs() {
   const { theme } = useTheme();
-  const isWeb = Platform.OS === 'web';
+  const { width } = useWindowDimensions();
+  const showDrawer = Platform.OS === 'web' && width >= 768;
 
-  if (isWeb) {
+  if (showDrawer) {
     return (
       <AdminDrawer.Navigator
         screenOptions={({ route }) => ({
@@ -228,9 +230,10 @@ function AdminTabs() {
 // ===== SUPER ADMIN TABS/DRAWER =====
 function SuperAdminTabs() {
   const { theme } = useTheme();
-  const isWeb = Platform.OS === 'web';
+  const { width } = useWindowDimensions();
+  const showDrawer = Platform.OS === 'web' && width >= 768;
 
-  if (isWeb) {
+  if (showDrawer) {
     return (
       <SuperAdminDrawer.Navigator
         screenOptions={({ route }) => ({

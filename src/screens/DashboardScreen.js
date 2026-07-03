@@ -26,9 +26,10 @@ const DashboardScreen = ({ navigation }) => {
   const styles = getStyles(theme);
 
   const { width } = useWindowDimensions();
-  const contentWidth = Platform.OS === 'web' ? Math.min(width, 800) : width;
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
+  const isDesktop = isWeb && width >= 768;
+  const contentWidth = isWeb ? Math.min(width, 800) : width;
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: isDesktop ? 1200 : 800, flex: 1 } : { flex: 1 };
   
   const [likedPosts, setLikedPosts] = useState({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
@@ -269,7 +270,7 @@ const DashboardScreen = ({ navigation }) => {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={webContainerStyle}>
         
-        {isWeb ? (
+        {isDesktop ? (
           // WEB GRID DASHBOARD
           <View style={{ flex: 1, padding: 24, flexDirection: 'row', gap: 24 }}>
             {/* Left Column: Feed */}

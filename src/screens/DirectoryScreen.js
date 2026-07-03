@@ -10,7 +10,7 @@ import {
   ScrollView,
   StatusBar,
   Modal,
-  Alert, Platform} from 'react-native';
+  Alert, Platform, useWindowDimensions} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -386,7 +386,9 @@ const DirectoryScreen = ({ navigation }) => {
     );
   };
 
-    const isWeb = Platform.OS === 'web';
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isDesktop = isWeb && width >= 768;
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 1024, flex: 1 } : { flex: 1 };
 
   return (
@@ -459,7 +461,7 @@ const DirectoryScreen = ({ navigation }) => {
 
       {/* ───── Tab Content ───── */}
       {activeTab === 'directory' ? (
-        isWeb ? renderWebDirectoryTab() : renderDirectoryTab()
+        isDesktop ? renderWebDirectoryTab() : renderDirectoryTab()
       ) : activeTab === 'request' ? (
         renderRequestTab()
       ) : (

@@ -11,6 +11,7 @@ const EngageScreen = ({ navigation }) => {
 
   const { width } = useWindowDimensions();
   const [currentView, setCurrentView] = useState('feed');
+  const [searchText, setSearchText] = useState('');
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [jobPreference, setJobPreference] = useState('Full-Time');
   const [jobPrefModalVisible, setJobPrefModalVisible] = useState(false);
@@ -41,6 +42,7 @@ const EngageScreen = ({ navigation }) => {
           content,
           image_url,
           created_at,
+          user_id,
           users (
             name,
             institution,
@@ -55,6 +57,7 @@ const EngageScreen = ({ navigation }) => {
         .filter(p => !blockedUsers.has(p.user_id))
         .map(p => ({
         id: p.id,
+        user_id: p.user_id,
         user: p.users?.name || 'Unknown User',
         subtitle: p.users?.institution || 'Institution',
         avatar: p.users?.name ? p.users.name.substring(0,2).toUpperCase() : 'UU',
@@ -348,7 +351,13 @@ const EngageScreen = ({ navigation }) => {
   // ===== MAIN FEED VIEW =====
   const isDesktop = width >= 1024;
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: isDesktop ? 1200 : 800, flex: 1, flexDirection: isDesktop ? 'row' : 'column' } : { flex: 1 };
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: isDesktop ? 1200 : 800, flex: 1 } : { flex: 1 };
+
+  const filteredPosts = postsList.filter(p => 
+    !blockedUsers.has(p.user_id) && 
+    (p.content.toLowerCase().includes(searchText.toLowerCase()) || 
+     p.user.toLowerCase().includes(searchText.toLowerCase()))
+  );
 
   const feedContent = (
     <View style={{ flex: 1, maxWidth: isDesktop ? 750 : '100%' }}>
@@ -372,7 +381,7 @@ const EngageScreen = ({ navigation }) => {
         </View>
 
         {/* Posts List */}
-        {postsList.filter(p => !blockedUsers.has(p.user_id)).map((post, index) => (
+        {filteredPosts.map((post, index) => (
           <React.Fragment key={post.id}>
             <View style={styles.postCard}>
               <View style={styles.postHeader}>
@@ -495,8 +504,52 @@ const EngageScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
       <View style={webContainerStyle}>
-        {feedContent}
-        {sidePanel}
+        {/* ── Header ─────────────────────────────────────── */}
+        <View style={styles.header}>
+          {/* Left – User avatar */}
+          <TouchableOpacity
+            style={styles.headerAvatar}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.headerAvatarText}>AJ</Text>
+          </TouchableOpacity>
+
+          {/* Center – Search bar */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search posts..."
+              placeholderTextColor="#94A3B8"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+
+          {/* Right – Icons */}
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Messages')}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={22} color="#003366" />
+              <View style={styles.dot} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Ionicons name="notifications-outline" size={22} color="#003366" />
+              <View style={styles.dot} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ flex: 1, flexDirection: isDesktop ? 'row' : 'column' }}>
+          {feedContent}
+          {sidePanel}
+        </View>
       </View>
 
       {/* Rewrite with AI floating button */}
@@ -717,6 +770,68 @@ const getStyles = (theme) => StyleSheet.create({
 
   webModalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)', justifyContent: 'center', alignItems: 'center' },
   webModalContainer: { width: 500, backgroundColor: theme.card, borderRadius: 16, padding: 24, maxHeight: '80%', overflow: 'hidden' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: theme.card,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  headerAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: theme.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerAvatarText: {
+    color: theme.card,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.background,
+    paddingHorizontal: 12,
+    height: 38,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.text,
+    paddingVertical: 0,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtn: {
+    position: 'relative',
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dot: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.danger,
+    borderWidth: 1.5,
+    borderColor: theme.card,
+  },
 });
 
 export default EngageScreen;

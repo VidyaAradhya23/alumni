@@ -270,6 +270,48 @@ const DashboardScreen = ({ navigation }) => {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={webContainerStyle}>
         
+        {/* ── Header ─────────────────────────────────────── */}
+        <View style={styles.header}>
+          {/* Left – User avatar */}
+          <TouchableOpacity
+            style={styles.headerAvatar}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.headerAvatarText}>AJ</Text>
+          </TouchableOpacity>
+
+          {/* Center – Search bar */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor="#94A3B8"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+
+          {/* Right – Icons */}
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Messages')}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={22} color="#003366" />
+              <View style={styles.dot} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Ionicons name="notifications-outline" size={22} color="#003366" />
+              <View style={styles.dot} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {isDesktop ? (
           // WEB GRID DASHBOARD
           <View style={{ flex: 1, padding: 24, flexDirection: 'row', gap: 24 }}>

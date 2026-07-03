@@ -398,7 +398,11 @@ const DirectoryScreen = ({ navigation }) => {
 
       {/* ───── Header ───── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerAvatar} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={styles.headerAvatar} 
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Profile')}
+        >
           <Ionicons name="person" size={18} color="#FFFFFF" />
         </TouchableOpacity>
 
@@ -419,11 +423,19 @@ const DirectoryScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.headerIconBtn} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Messages')}
+          >
             <Ionicons name="chatbubble-ellipses-outline" size={22} color="#002144" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
-            <Ionicons name="person-add-outline" size={22} color="#002144" />
+          <TouchableOpacity 
+            style={styles.headerIconBtn} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Notifications')}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#002144" />
           </TouchableOpacity>
         </View>
       </View>

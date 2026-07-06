@@ -16,6 +16,44 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const RVCE_VERIFICATION_DB = [
+  { name: 'arjun menon', joining: '2008', leaving: '2011' },
+  { name: 'rahul rao', joining: '2008', leaving: '2011' },
+  { name: 'gururaj', joining: '2008', leaving: '2011' },
+  { name: 'vishwas', joining: '2008', leaving: '2011' },
+  { name: 'vidya', joining: '2008', leaving: '2011' },
+  { name: 'harshitha', joining: '2008', leaving: '2011' },
+  { name: 'arun', joining: '2008', leaving: '2011' },
+  { name: 'hemanth', joining: '2008', leaving: '2011' },
+  { name: 'chaitra', joining: '2008', leaving: '2011' },
+  { name: 'pramod', joining: '2008', leaving: '2011' },
+  { name: 'kavan', joining: '2008', leaving: '2011' },
+  { name: 'prajwal', joining: '2008', leaving: '2011' }
+];
+
+const checkDatabaseVerification = (name, batchYear, joiningYear) => {
+  if (!name) return { verified: false, reason: 'Name is missing' };
+  const cleanName = name.toLowerCase().trim();
+  const match = RVCE_VERIFICATION_DB.find(
+    (item) => item.name.toLowerCase().trim() === cleanName
+  );
+
+  if (!match) {
+    return { verified: false, reason: 'No database record' };
+  }
+  
+  if (batchYear && match.leaving !== batchYear.toString().trim()) {
+    return { verified: false, reason: `Yr mismatch (Exp ${match.leaving}, got ${batchYear})` };
+  }
+  
+  if (joiningYear && match.joining !== joiningYear.toString().trim()) {
+    return { verified: false, reason: `Yr mismatch (Exp ${match.joining}, got ${joiningYear})` };
+  }
+  
+  return { verified: true, matchRecord: match };
+};
 
 const FRIENDS_DATA = [
   { id: '1', name: 'Priya Sharma', branch: 'CSE', department: 'Computer Science', batch: '2020', location: 'Bengaluru', course: 'B.E.', avatar: 'PS', institution: 'RVCE' },
@@ -54,15 +92,41 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [communities, setCommunities] = useState(COMMUNITIES_DATA);
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [adminInstitution, setAdminInstitution] = useState('All');
+
+  useEffect(() => {
+    const loadAdminInfo = async () => {
+      try {
+        const infoStr = await AsyncStorage.getItem('userInfo');
+        if (infoStr) {
+          const info = JSON.parse(infoStr);
+          if (info && info.role === 'superadmin') {
+            setAdminInstitution('All');
+          } else if (info && info.institution) {
+            setAdminInstitution(info.institution);
+            setSelectedInstitution(info.institution);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading admin info:', err);
+      }
+    };
+    loadAdminInfo();
+  }, []);
 
   const fetchPendingUsers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('users')
         .select('*')
         .eq('is_approved', false)
         .order('created_at', { ascending: false });
       
+      if (adminInstitution !== 'All') {
+        query = query.eq('institution', adminInstitution);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       setPendingUsers(data || []);
     } catch (err) {
@@ -74,7 +138,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
     if (isFocused) {
       fetchPendingUsers();
     }
-  }, [isFocused]);
+  }, [isFocused, adminInstitution]);
 
   const handleApprove = async (userId) => {
     try {
@@ -167,6 +231,18 @@ const AdminUsersScreen = ({ navigation, route }) => {
     return data;
   }, [searchQuery, selectedBatch, selectedBranch, selectedDept, selectedLoc, selectedCourse, isSuperAdmin, selectedInstitution]);
 
+  const filteredPendingUsers = useMemo(() => {
+    let data = pendingUsers;
+    if (isSuperAdmin && selectedInstitution !== 'All') {
+      data = data.filter(u => u.institution === selectedInstitution);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      data = data.filter(u => u.name && u.name.toLowerCase().includes(q));
+    }
+    return data;
+  }, [pendingUsers, selectedInstitution, searchQuery, isSuperAdmin]);
+
   const filteredCommunities = useMemo(() => {
     let data = communities;
     if (isSuperAdmin && selectedInstitution !== 'All') {
@@ -246,7 +322,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
         activeOpacity={0.7}
       >
         <Text style={[styles.tabText, activeTab === 'friends' && styles.tabTextActive]}>
-          Friends List
+          Alumni Directory
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -258,35 +334,67 @@ const AdminUsersScreen = ({ navigation, route }) => {
           Community
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'pending' && styles.tabActive]}
+        onPress={() => setActiveTab('pending')}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}>
+          Pending ({filteredPendingUsers.length})
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
-  const renderPendingItem = ({ item, index }) => (
-    <View style={styles.friendCard}>
-      <View style={[styles.friendAvatar, { backgroundColor: theme.warning }]}>
-        <Text style={styles.friendAvatarText}>{item.name ? item.name.substring(0,2).toUpperCase() : 'UU'}</Text>
+  const renderPendingItem = ({ item }) => {
+    const check = checkDatabaseVerification(item.name, item.batch_year, item.joining_year);
+    
+    return (
+      <View style={styles.friendCard}>
+        <View style={[styles.friendAvatar, { backgroundColor: theme.warning }]}>
+          <Text style={styles.friendAvatarText}>{item.name ? item.name.substring(0,2).toUpperCase() : 'UU'}</Text>
+        </View>
+        <View style={styles.friendInfo}>
+          <Text style={styles.friendName}>{item.name || 'Unknown'}</Text>
+          <Text style={styles.friendDetail}>{item.department || 'No Dept'} • Batch {item.batch_year || 'N/A'}</Text>
+          <Text style={styles.friendDetailSub}>{item.institution || 'No Institution'} • {item.email}</Text>
+          {item.joining_year && (
+            <Text style={styles.friendDetailSub}>Joining Year: {item.joining_year}</Text>
+          )}
+          
+          <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center' }}>
+            {check.verified ? (
+              <View style={{ backgroundColor: '#DEF7EC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="checkmark-circle" size={13} color="#03543F" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700' }}>✓ Verified DB Match</Text>
+              </View>
+            ) : (
+              <View style={{ backgroundColor: '#FDE8E8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="close-circle" size={13} color="#9B1C1C" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 11, color: '#9B1C1C', fontWeight: '700' }}>✗ {check.reason}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={{ flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
+          <TouchableOpacity 
+            style={[styles.messageBtn, { backgroundColor: theme.success, borderColor: theme.success }]} 
+            onPress={() => handleApprove(item.id)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.messageBtnText, { color: '#FFF' }]}>Approve</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.messageBtn, { borderColor: theme.danger }]} 
+            onPress={() => handleReject(item.id)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.messageBtnText, { color: theme.danger }]}>Reject</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.friendInfo}>
-        <Text style={styles.friendName}>{item.name || 'Unknown'}</Text>
-        <Text style={styles.friendDetail}>{item.department || 'No Dept'} • Batch {item.batch_year || 'N/A'}</Text>
-        <Text style={styles.friendDetailSub}>{item.institution || 'No Institution'} • {item.email}</Text>
-      </View>
-      <View style={{ flexDirection: 'column', gap: 6 }}>
-        <TouchableOpacity 
-          style={[styles.messageBtn, { backgroundColor: theme.success, borderColor: theme.success }]} 
-          onPress={() => handleApprove(item.id)}
-        >
-          <Text style={[styles.messageBtnText, { color: '#FFF' }]}>Approve</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.messageBtn, { borderColor: theme.danger }]} 
-          onPress={() => handleReject(item.id)}
-        >
-          <Text style={[styles.messageBtnText, { color: theme.danger }]}>Reject</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderFriendItem = ({ item, index }) => (
     <View style={styles.friendCard}>
@@ -390,13 +498,29 @@ const AdminUsersScreen = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyFriends}
         />
-      ) : (
+      ) : activeTab === 'community' ? (
         <FlatList
           data={filteredCommunities}
           keyExtractor={(item) => item.id}
           renderItem={renderCommunityItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <FlatList
+          data={filteredPendingUsers}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPendingItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 80 }}>
+              <Ionicons name="people-outline" size={48} color="#94A3B8" />
+              <Text style={{ fontSize: 16, color: '#64748B', fontWeight: '600', marginTop: 12 }}>
+                No pending approval requests.
+              </Text>
+            </View>
+          )}
         />
       )}
 

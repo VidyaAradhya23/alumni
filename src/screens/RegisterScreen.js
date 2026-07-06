@@ -70,7 +70,8 @@ const RegisterScreen = ({ navigation }) => {
     password: '',
     institution: '',
     branch: '',
-    batchYear: ''
+    batchYear: '',
+    joiningYear: ''
   });
   const [agreeEULA, setAgreeEULA] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -78,8 +79,8 @@ const RegisterScreen = ({ navigation }) => {
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
 
   const handleRegister = async () => {
-    const { name, email, password, institution, branch, batchYear } = formData;
-    if (!name || !email || !password || !institution || !branch || !batchYear) {
+    const { name, email, password, institution, branch, batchYear, joiningYear } = formData;
+    if (!name || !email || !password || !institution || !branch || !batchYear || !joiningYear) {
       alert('Please fill in all fields');
       return;
     }
@@ -98,7 +99,8 @@ const RegisterScreen = ({ navigation }) => {
             name,
             institution,
             department: branch,
-            batchYear
+            batchYear,
+            joiningYear
           }
         }
       });
@@ -164,6 +166,8 @@ const RegisterScreen = ({ navigation }) => {
       setFormData({ ...formData, institution: item, branch: '' });
     } else if (modalType === 'branch') {
       setFormData({ ...formData, branch: item });
+    } else if (modalType === 'joining') {
+      setFormData({ ...formData, joiningYear: item });
     } else {
       setFormData({ ...formData, batchYear: item });
     }
@@ -256,8 +260,21 @@ const RegisterScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
 
+              <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
+                <Text style={styles.label}>Joining Yr</Text>
+                <TouchableOpacity 
+                  style={styles.selector} 
+                  onPress={() => openPicker('joining')}
+                >
+                  <Text style={[styles.selectorText, !formData.joiningYear && { color: theme.textMuted }]}>
+                    {formData.joiningYear || 'Year'}
+                  </Text>
+                  <Text style={styles.arrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={[styles.inputContainer, { flex: 1 }]}>
-                <Text style={styles.label}>Batch</Text>
+                <Text style={styles.label}>Grad Yr</Text>
                 <TouchableOpacity 
                   style={styles.selector} 
                   onPress={() => openPicker('batch')}
@@ -327,7 +344,7 @@ const RegisterScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select {modalType === 'institution' ? 'Institution' : modalType === 'branch' ? 'Department' : 'Batch'}</Text>
+              <Text style={styles.modalTitle}>Select {modalType === 'institution' ? 'Institution' : modalType === 'branch' ? 'Department' : modalType === 'joining' ? 'Joining Year' : 'Graduation Year'}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>

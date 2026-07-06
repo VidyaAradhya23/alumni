@@ -63,6 +63,43 @@ const INITIAL_SPAM_REPORTS = [
   { id: '5', name: 'Sneha Patil', institution: 'Institution', branch: 'MBA', year: '2021', reason: 'Promoting external MLM schemes', reportedBy: 'Suresh Babu', date: '07/06/2026' },
 ];
 
+const RVCE_VERIFICATION_DB = [
+  { name: 'arjun menon', joining: '2008', leaving: '2011' },
+  { name: 'rahul rao', joining: '2008', leaving: '2011' },
+  { name: 'gururaj', joining: '2008', leaving: '2011' },
+  { name: 'vishwas', joining: '2008', leaving: '2011' },
+  { name: 'vidya', joining: '2008', leaving: '2011' },
+  { name: 'harshitha', joining: '2008', leaving: '2011' },
+  { name: 'arun', joining: '2008', leaving: '2011' },
+  { name: 'hemanth', joining: '2008', leaving: '2011' },
+  { name: 'chaitra', joining: '2008', leaving: '2011' },
+  { name: 'pramod', joining: '2008', leaving: '2011' },
+  { name: 'kavan', joining: '2008', leaving: '2011' },
+  { name: 'prajwal', joining: '2008', leaving: '2011' }
+];
+
+const checkDatabaseVerification = (name, batchYear, joiningYear) => {
+  if (!name) return { verified: false, reason: 'Name is missing' };
+  const cleanName = name.toLowerCase().trim();
+  const match = RVCE_VERIFICATION_DB.find(
+    (item) => item.name.toLowerCase().trim() === cleanName
+  );
+
+  if (!match) {
+    return { verified: false, reason: 'No database record' };
+  }
+  
+  if (batchYear && match.leaving !== batchYear.toString().trim()) {
+    return { verified: false, reason: `Yr mismatch (Exp ${match.leaving}, got ${batchYear})` };
+  }
+  
+  if (joiningYear && match.joining !== joiningYear.toString().trim()) {
+    return { verified: false, reason: `Yr mismatch (Exp ${match.joining}, got ${joiningYear})` };
+  }
+  
+  return { verified: true, matchRecord: match };
+};
+
 const INITIAL_MEMBERSHIP_REQUESTS = [
   { id: '1', name: 'Srinivas Murthy', institution: 'RVCE', branch: 'BE, Mechanical', year: '2020', email: 'srinivas.m@example.com', phone: '+91 98456 12345', proof: 'Degree Certificate ID: 948210', status: 'pending', adminAction: null, details: { company: 'Tata Motors', designation: 'Senior Engineer', graduationYear: 2020, linkedIn: 'linkedin.com/in/srinivas-m' } },
   { id: '2', name: 'Priya Sharma', institution: 'RVCE', branch: 'MBA', year: '2021', email: 'priya.sharma@example.com', phone: '+91 87654 32100', proof: 'Alumni ID Card No: RV-9481', status: 'approved', adminAction: 'Approved by Dr. Ramesh Kumar', details: { company: 'Deloitte', designation: 'Consultant', graduationYear: 2021, linkedIn: 'linkedin.com/in/priya-sharma' } },
@@ -1366,31 +1403,48 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
           data={filteredByStatus}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listPadding}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.avatarMini}>
-                  <Text style={styles.avatarMiniText}>{item.name.charAt(0)}</Text>
+          renderItem={({ item }) => {
+            const check = checkDatabaseVerification(item.name, item.year, item.joining_year);
+            
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                  <View style={styles.avatarMini}>
+                    <Text style={styles.avatarMiniText}>{item.name.charAt(0)}</Text>
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.cardTitle}>{item.name}</Text>
+                    <Text style={styles.cardSubText}>{item.branch} • Class of {item.year}</Text>
+                  </View>
+                  <View style={[styles.statusTag, item.status === 'approved' ? styles.statusActive : item.status === 'pending' ? styles.statusPending : styles.statusRejected]}>
+                    <Text style={item.status === 'approved' ? styles.statusActiveText : item.status === 'pending' ? styles.statusPendingText : styles.statusRejectedText}>
+                      {item.status.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.cardSubText}>{item.branch} • Class of {item.year}</Text>
-                </View>
-                <View style={[styles.statusTag, item.status === 'approved' ? styles.statusActive : item.status === 'pending' ? styles.statusPending : styles.statusRejected]}>
-                  <Text style={item.status === 'approved' ? styles.statusActiveText : item.status === 'pending' ? styles.statusPendingText : styles.statusRejectedText}>
-                    {item.status.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
 
-              <View style={styles.metaInfoBox}>
-                <Text style={styles.metaText}>Verification Proof: {item.proof}</Text>
-                {item.adminAction && (
-                  <Text style={[styles.metaText, { color: theme.text, fontWeight: '600', marginTop: 4 }]}>
-                    Action: {item.adminAction}
-                  </Text>
-                )}
-              </View>
+                <View style={styles.metaInfoBox}>
+                  <Text style={styles.metaText}>Verification Proof: {item.proof}</Text>
+                  {item.adminAction && (
+                    <Text style={[styles.metaText, { color: theme.text, fontWeight: '600', marginTop: 4 }]}>
+                      Action: {item.adminAction}
+                    </Text>
+                  )}
+                  
+                  <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    {check.verified ? (
+                      <View style={{ backgroundColor: '#DEF7EC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="checkmark-circle" size={13} color="#03543F" style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700' }}>✓ Verified DB Match</Text>
+                      </View>
+                    ) : (
+                      <View style={{ backgroundColor: '#FDE8E8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="close-circle" size={13} color="#9B1C1C" style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, color: '#9B1C1C', fontWeight: '700' }}>✗ {check.reason}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
 
               <View style={styles.cardActionRow}>
                 <TouchableOpacity style={styles.btnSecondary} onPress={() => setAlumniDetailModal(item)}>
@@ -1415,7 +1469,8 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
                 )}
               </View>
             </View>
-          )}
+          );
+        }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="clipboard-outline" size={48} color="#CBD5E1" />

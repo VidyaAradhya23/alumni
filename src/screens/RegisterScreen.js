@@ -104,7 +104,7 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
-    const emailClean = email.trim();
+    const emailClean = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailClean)) {
       alert('Email address is not valid');

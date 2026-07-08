@@ -145,7 +145,29 @@ const RegisterScreen = ({ navigation }) => {
       alert('Account created successfully! Check your email for verification.');
       navigation.navigate('Login');
     } catch (error) {
-      alert(error.message || 'Registration failed');
+      console.error('Registration error:', error);
+      let errorMsg = 'Registration failed';
+      if (error) {
+        if (typeof error === 'string') {
+          errorMsg = error;
+        } else if (error.message && typeof error.message === 'string') {
+          errorMsg = error.message;
+          if (errorMsg.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(errorMsg);
+              errorMsg = parsed.message || parsed.error || errorMsg;
+            } catch (e) {}
+          }
+        } else {
+          try {
+            const str = JSON.stringify(error);
+            errorMsg = str === '{}' ? (error.toString() || 'Registration failed') : str;
+          } catch (e) {
+            errorMsg = error.toString() || 'Registration failed';
+          }
+        }
+      }
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -114,8 +114,17 @@ BEGIN
         coalesce(new.raw_user_meta_data->>'department', ''),
         coalesce(new.raw_user_meta_data->>'batchYear', ''),
         coalesce(new.raw_user_meta_data->>'joiningYear', ''),
-        false -- starts unapproved (needs admin approval)
-    );
+        false
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        email = EXCLUDED.email,
+        password = EXCLUDED.password,
+        institution = EXCLUDED.institution,
+        department = EXCLUDED.department,
+        batch_year = EXCLUDED.batch_year,
+        joining_year = EXCLUDED.joining_year,
+        is_approved = EXCLUDED.is_approved;
     RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

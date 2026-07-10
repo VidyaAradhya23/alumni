@@ -18,7 +18,6 @@ import { supabase } from '../lib/supabase';
 
 export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
   const { theme, isDarkMode } = useTheme();
-  const { width } = useWindowDimensions();
   const isFocused = useIsFocused();
 
   const [institution, setInstitution] = useState('Institution');
@@ -32,9 +31,6 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
     upcomingEvents: 5 // Mock
   });
 
-  const [recentPending, setRecentPending] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (isFocused) {
       loadDashboardData();
@@ -43,7 +39,7 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
 
   const loadDashboardData = async () => {
     try {
-      setLoading(true);
+    try {
       // Fetch user info from async storage
       const userInfoString = await AsyncStorage.getItem('userInfo');
       let instName = 'Institution';
@@ -64,7 +60,6 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
 
       if (!usersErr && pendingUsers) {
         setMetrics(prev => ({ ...prev, pendingApprovals: pendingUsers.length }));
-        setRecentPending(pendingUsers.slice(0, 5)); // Show top 5
       }
 
       const { count: alumniCount, error: countErr } = await supabase
@@ -80,8 +75,6 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
 
     } catch (err) {
       console.log('Error loading dashboard data:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -293,14 +286,7 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
     </View>
   );
 
-  const ActionButton = ({ icon, label, onPress, color }) => (
-    <TouchableOpacity style={styles.actionBtn} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.actionIconBg}>
-        <Ionicons name={icon} size={24} color={color || theme.primary} />
-      </View>
-      <Text style={styles.actionText}>{label}</Text>
-    </TouchableOpacity>
-  );
+
 
   const content = (
     <View style={webContainerStyle}>
@@ -354,68 +340,7 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
             />
           </View>
 
-          {/* Quick Actions */}
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <ActionButton 
-              icon="checkmark-circle-outline" 
-              label="Approvals" 
-              color="#F59E0B"
-              onPress={() => navigation && navigation.navigate('AdminUsers')} 
-            />
-            <ActionButton 
-              icon="briefcase-outline" 
-              label="Post Job" 
-              color="#10B981"
-              onPress={() => navigation && navigation.navigate('AdminJobs')} 
-            />
-            <ActionButton 
-              icon="calendar-outline" 
-              label="New Event" 
-              color="#8B5CF6"
-              onPress={() => navigation && navigation.navigate('AdminEvents')} 
-            />
-            <ActionButton 
-              icon="mail-outline" 
-              label="Broadcast" 
-              color={theme.primary}
-              onPress={() => navigation && navigation.navigate('AdminPanel')} 
-            />
-          </View>
 
-          {/* Recent Pending Approvals */}
-          <Text style={styles.sectionTitle}>Pending Approvals</Text>
-          <View style={styles.listContainer}>
-            {recentPending.length === 0 ? (
-              <View style={styles.emptyList}>
-                <Ionicons name="checkmark-done-circle-outline" size={48} color={theme.textMuted} />
-                <Text style={styles.emptyText}>No pending users. You&apos;re all caught up!</Text>
-              </View>
-            ) : (
-              recentPending.map((user, index) => (
-                <View 
-                  key={user.id || index.toString()} 
-                  style={[styles.listItem, index === recentPending.length - 1 && { borderBottomWidth: 0 }]}
-                >
-                  <View style={styles.listLeft}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{user.name ? user.name.charAt(0).toUpperCase() : 'U'}</Text>
-                    </View>
-                    <View>
-                      <Text style={styles.listName}>{user.name}</Text>
-                      <Text style={styles.listSub}>{user.email}</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.reviewBtn}
-                    onPress={() => navigation && navigation.navigate('AdminUsers')}
-                  >
-                    <Text style={styles.reviewBtnText}>Review</Text>
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
 
       </ScrollView>
     </View>

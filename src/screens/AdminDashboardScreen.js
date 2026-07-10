@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, useWindowDimensions, StatusBar, Alert, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AdminDashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -11,7 +12,25 @@ const AdminDashboardScreen = ({ navigation }) => {
   const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
   
+  const [adminInstitution, setAdminInstitution] = useState('Institution');
   const [pendingApprovals, setPendingApprovals] = useState(45);
+  
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      try {
+        const userInfoStr = await AsyncStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          if (userInfo.institution) {
+            setAdminInstitution(userInfo.institution);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchAdminInfo();
+  }, []);
   
   const stats = [
     { label: 'New Users', value: '45', trend: '+18% this wk', icon: 'person-add-outline', color: '#E0F2FE', iconColor: '#0284C7' },
@@ -60,7 +79,7 @@ const AdminDashboardScreen = ({ navigation }) => {
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Admin Console</Text>
-            <Text style={styles.headerSub}>Admin Portal</Text>
+            <Text style={styles.headerSub}>{adminInstitution} Portal</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.settingsBtn} onPress={() => Alert.alert('Admin Settings', 'Configuration panel.')}>

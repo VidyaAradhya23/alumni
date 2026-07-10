@@ -77,7 +77,7 @@ const DashboardScreen = ({ navigation }) => {
       role: 'Staff Engineer @ Google',
       avatar: 'SK',
       content:
-        'Truly honored to be back on campus for the Institution Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #Institution #AlumniMeet',
+        `Truly honored to be back on campus for the ${userInstitution} Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #AlumniMeet`,
       image:
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 124,
@@ -90,7 +90,7 @@ const DashboardScreen = ({ navigation }) => {
       role: 'SDE-2 @ Microsoft',
       avatar: 'AJ',
       content:
-        'Our Silicon Valley Institution chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea',
+        `Our Silicon Valley ${userInstitution} chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea`,
       image:
         'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
       likes: 89,
@@ -109,7 +109,7 @@ const DashboardScreen = ({ navigation }) => {
   const eventsAndJobs = [
     {
       id: 'e1',
-      title: 'Alumni Gala Night 2026',
+      title: `${userInstitution} Gala 2026`,
       subtitle: 'Date: Nov 28, 2026 • 6 PM',
       btnText: 'RSVP Now',
       image:

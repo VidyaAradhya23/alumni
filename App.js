@@ -30,6 +30,7 @@ if (Platform.OS === 'web') {
 
 // Onboarding Screens
 import SplashScreen from './src/screens/SplashScreen';
+import PortalSelectionScreen from './src/screens/PortalSelectionScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -317,6 +318,7 @@ const linking = {
   config: {
     screens: {
       Splash: '',
+      PortalSelection: 'portal-selection',
       Welcome: 'welcome',
       Login: 'login',
       Signup: 'signup',
@@ -375,7 +377,7 @@ function RootNavigator() {
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator 
-        initialRouteName="Splash"
+        initialRouteName="PortalSelection"
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
@@ -383,6 +385,7 @@ function RootNavigator() {
         }}
       >
         {/* Onboarding Flow */}
+        <Stack.Screen name="PortalSelection" component={PortalSelectionScreen} />
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />

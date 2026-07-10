@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +16,21 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [portal, setPortal] = useState(null);
+
+  useEffect(() => {
+    const fetchPortal = async () => {
+      try {
+        const portalStr = await AsyncStorage.getItem('current_portal_institution');
+        if (portalStr) {
+          setPortal(JSON.parse(portalStr));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchPortal();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -111,7 +126,10 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Login</Text>
+            <Text style={styles.title}>{portal ? `Log in to ${portal.name}` : 'Welcome Back'}</Text>
+            <Text style={styles.subtitle}>
+              {portal ? portal.fullName : 'Enter your details to access your alumni account.'}
+            </Text>
           </View>
 
           <View style={styles.form}>

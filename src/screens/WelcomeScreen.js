@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,22 @@ WebBrowser.maybeCompleteAuthSession();
 const WelcomeScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
+
+  const [portal, setPortal] = useState(null);
+
+  useEffect(() => {
+    const fetchPortal = async () => {
+      try {
+        const portalStr = await AsyncStorage.getItem('current_portal_institution');
+        if (portalStr) {
+          setPortal(JSON.parse(portalStr));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchPortal();
+  }, []);
 
   const handleOAuthLogin = async (provider) => {
     if (provider === 'linkedin') {
@@ -57,12 +73,16 @@ const WelcomeScreen = ({ navigation }) => {
       
       <View style={styles.content}>
         {/* Large Logo */}
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>Alumni</Text>
+        <View style={[styles.logoCircle, portal && { borderColor: portal.color }]}>
+          {portal ? (
+             <Ionicons name={portal.icon} size={60} color={portal.color} />
+          ) : (
+            <Text style={styles.logoText}>Alumni</Text>
+          )}
         </View>
         
-        <Text style={styles.title}>Welcome to System</Text>
-        <Text style={styles.subtitle}>Alumni Portal Network</Text>
+        <Text style={styles.title}>{portal ? `Welcome to ${portal.name}` : 'Welcome to System'}</Text>
+        <Text style={styles.subtitle}>{portal ? portal.fullName : 'Alumni Portal Network'}</Text>
       </View>
 
       <View style={styles.bottomSection}>

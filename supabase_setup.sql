@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     bio TEXT,
     linkedin TEXT,
     avatar_url TEXT,
+    role TEXT DEFAULT 'Alumni',
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -54,18 +55,21 @@ ALTER TABLE public.blocked_users ENABLE ROW LEVEL SECURITY;
 -- 5. Define RLS Policies
 
 -- Public Users Policies
+-- Allow anyone logged in to see profiles
 CREATE POLICY "Allow authenticated users to read profiles" ON public.users
     FOR SELECT USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Allow users to update their own profile" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
+-- Allow a user to update their own profile, OR an Admin/Super Admin to update ANY profile
+CREATE POLICY "Allow users to update their own profile or admins to update anyone" ON public.users
+    FOR UPDATE USING (
+        auth.uid() = id OR 
+        (SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1) IN ('Admin', 'Super Admin')
+    );
 
+-- Allow ONLY Admin or Super Admin to delete users
 CREATE POLICY "Allow admins to delete users" ON public.users
     FOR DELETE USING (
-        COALESCE(
-            (SELECT is_approved FROM public.users WHERE id = auth.uid()), 
-            FALSE
-        )
+        (SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1) IN ('Admin', 'Super Admin')
     );
 
 -- Posts Policies
@@ -101,6 +105,7 @@ BEGIN
         department, 
         batch_year, 
         joining_year, 
+        role,
         is_approved
     )
     VALUES (
@@ -111,7 +116,8 @@ BEGIN
         coalesce(new.raw_user_meta_data->>'department', ''),
         coalesce(new.raw_user_meta_data->>'batchYear', ''),
         coalesce(new.raw_user_meta_data->>'joiningYear', ''),
-        false
+        'Alumni',
+        false -- starts unapproved (needs admin approval)
     )
     ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -120,6 +126,7 @@ BEGIN
         department = EXCLUDED.department,
         batch_year = EXCLUDED.batch_year,
         joining_year = EXCLUDED.joining_year,
+        role = EXCLUDED.role,
         is_approved = EXCLUDED.is_approved;
     RETURN new;
 END;

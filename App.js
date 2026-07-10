@@ -37,6 +37,8 @@ import OTPVerificationScreen from './src/screens/OTPVerificationScreen';
 import ProfileSetupScreen from './src/screens/ProfileSetupScreen';
 import SelectInstitutionScreen from './src/screens/SelectInstitutionScreen';
 import DemoCarouselScreen from './src/screens/DemoCarouselScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 
 // Main Tab Screens (Alumni)
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -337,6 +339,9 @@ const linking = {
       AdminMain: {
         path: 'admin',
         screens: {
+          DemoCarousel: 'demo',
+          ForgotPassword: 'forgot-password',
+          ResetPassword: 'reset-password',
           AdminHome: 'home',
           AdminUsers: 'users',
           AdminJobs: 'jobs',
@@ -386,6 +391,8 @@ function RootNavigator() {
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         <Stack.Screen name="SelectInstitution" component={SelectInstitutionScreen} />
         <Stack.Screen name="DemoCarousel" component={DemoCarouselScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
 
         {/* Alumni Main App */}
         <Stack.Screen name="Main" component={MainTabs} />

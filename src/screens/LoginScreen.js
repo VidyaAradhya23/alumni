@@ -139,7 +139,10 @@ const LoginScreen = ({ navigation }) => {
               </View>
             </View>
 
-            <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }}>
+            <TouchableOpacity 
+              style={{ alignSelf: 'flex-end', marginBottom: 16 }}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
               <Text style={{ color: theme.primary, fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
             </TouchableOpacity>
 

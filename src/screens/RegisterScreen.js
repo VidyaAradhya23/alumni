@@ -132,8 +132,7 @@ const RegisterScreen = ({ navigation }) => {
             institution,
             department: branch,
             batchYear,
-            joiningYear,
-            password
+            joiningYear
           }
         }
       });

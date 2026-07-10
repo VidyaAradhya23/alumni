@@ -63,6 +63,7 @@ import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import AdminJobsScreen from './src/screens/AdminJobsScreen';
 import AdminEventsScreen from './src/screens/AdminEventsScreen';
 import AdminPanelScreen from './src/screens/AdminPanelScreen';
+import AdminMetricsScreen from './src/screens/AdminMetricsScreen';
 import AdminProfileScreen from './src/screens/AdminProfileScreen';
 import AdminPlacementDetailsScreen from './src/screens/AdminPlacementDetailsScreen';
 
@@ -177,6 +178,7 @@ function AdminTabs() {
           drawerLabelStyle: { fontSize: 15, fontWeight: '600', marginLeft: -12 },
           drawerIcon: ({ focused, color, size }) => {
             if (route.name === 'AdminHome') return <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />;
+            if (route.name === 'AdminMetrics') return <Ionicons name={focused ? 'pie-chart' : 'pie-chart-outline'} size={22} color={color} />;
             if (route.name === 'AdminUsers') return <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />;
             if (route.name === 'AdminJobs') return <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />;
             if (route.name === 'AdminEvents') return <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={color} />;
@@ -186,6 +188,7 @@ function AdminTabs() {
         })}
       >
         <AdminDrawer.Screen name="AdminHome" component={AdminHomeScreen} options={{ drawerLabel: 'Home' }} />
+        <AdminDrawer.Screen name="AdminMetrics" component={AdminMetricsScreen} options={{ drawerLabel: 'Overview' }} />
         <AdminDrawer.Screen name="AdminUsers" component={AdminUsersScreen} options={{ drawerLabel: 'Users' }} />
         <AdminDrawer.Screen name="AdminJobs" component={AdminJobsScreen} options={{ drawerLabel: 'Jobs' }} />
         <AdminDrawer.Screen name="AdminEvents" component={AdminEventsScreen} options={{ drawerLabel: 'Events' }} />
@@ -206,6 +209,7 @@ function AdminTabs() {
           let label = route.name;
 
           if (route.name === 'AdminHome') { iconName = focused ? 'home' : 'home-outline'; label = 'Home'; }
+          else if (route.name === 'AdminMetrics') { iconName = focused ? 'pie-chart' : 'pie-chart-outline'; label = 'Overview'; }
           else if (route.name === 'AdminUsers') { iconName = focused ? 'people' : 'people-outline'; label = 'Users'; }
           else if (route.name === 'AdminJobs') { iconName = focused ? 'briefcase' : 'briefcase-outline'; label = 'Jobs'; }
           else if (route.name === 'AdminEvents') { iconName = focused ? 'calendar' : 'calendar-outline'; label = 'Events'; }
@@ -223,6 +227,7 @@ function AdminTabs() {
       })}
     >
       <AdminTab.Screen name="AdminHome" component={AdminHomeScreen} />
+      <AdminTab.Screen name="AdminMetrics" component={AdminMetricsScreen} />
       <AdminTab.Screen name="AdminUsers" component={AdminUsersScreen} />
       <AdminTab.Screen name="AdminJobs" component={AdminJobsScreen} />
       <AdminTab.Screen name="AdminEvents" component={AdminEventsScreen} />

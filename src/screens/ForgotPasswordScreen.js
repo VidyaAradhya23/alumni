@@ -78,7 +78,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
             <View style={{ marginBottom: 32 }}>
               <Text style={{ fontSize: 28, fontWeight: '700', color: theme.text, marginBottom: 8 }}>Reset Password</Text>
               <Text style={{ fontSize: 16, color: theme.textMuted, lineHeight: 24 }}>
-                Enter your registered email address and we'll send you a secure link to reset your password.
+                Enter your registered email address and we&apos;ll send you a secure link to reset your password.
               </Text>
             </View>
 
@@ -94,7 +94,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
                 <Ionicons name="mail-unread-outline" size={48} color="#10B981" style={{ marginBottom: 16 }} />
                 <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text, marginBottom: 8, textAlign: 'center' }}>Check your email</Text>
                 <Text style={{ fontSize: 15, color: theme.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 20 }}>
-                  We've sent a password reset link to {email}. Click the link to set a new password.
+                  We&apos;ve sent a password reset link to {email}. Click the link to set a new password.
                 </Text>
                 <TouchableOpacity 
                   style={{

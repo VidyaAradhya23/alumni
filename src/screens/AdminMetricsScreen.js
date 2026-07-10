@@ -39,7 +39,6 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
 
   const loadDashboardData = async () => {
     try {
-    try {
       // Fetch user info from async storage
       const userInfoString = await AsyncStorage.getItem('userInfo');
       let instName = 'Institution';

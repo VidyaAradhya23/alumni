@@ -1,10 +1,24 @@
 const Post = require('../models/Post');
+const BlockedUser = require('../models/BlockedUser');
 
 // @desc    Get all posts
 // @route   GET /api/posts
 exports.getPosts = async (req, res) => {
     try {
-        const posts = await Post.find().populate('user', 'name branch batchYear').sort({ createdAt: -1 });
+        // Fetch users the current user has blocked or who have blocked the current user
+        const blockedRecords = await BlockedUser.find({
+            $or: [{ blocker: req.user._id }, { blocked: req.user._id }]
+        });
+        
+        const blockedUserIds = blockedRecords.map(record => {
+            return record.blocker.toString() === req.user._id.toString() 
+                ? record.blocked 
+                : record.blocker;
+        });
+
+        const posts = await Post.find({ user: { $nin: blockedUserIds } })
+            .populate('user', 'name branch department batchYear avatar_url')
+            .sort({ createdAt: -1 });
         res.json(posts);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -23,7 +37,7 @@ exports.createPost = async (req, res) => {
             image
         });
 
-        const fullPost = await post.populate('user', 'name branch batchYear');
+        const fullPost = await post.populate('user', 'name branch department batchYear avatar_url');
         res.status(201).json(fullPost);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -44,6 +58,28 @@ exports.likePost = async (req, res) => {
 
         await post.save();
         res.json(post);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete a post
+// @route   DELETE /api/posts/:id
+exports.deletePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id).populate('user');
+        
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        // Check if the current user owns the post OR is an admin
+        if (post.user._id.toString() !== req.user._id.toString() && req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
+            return res.status(401).json({ message: 'User not authorized to delete this post' });
+        }
+
+        await Post.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Post removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

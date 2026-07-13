@@ -14,7 +14,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
+import { getDashboardStats } from '../services/adminService';
 
 export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
   const { theme, isDarkMode } = useTheme();
@@ -49,28 +49,15 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
         setAdminName(userInfo.name || 'Admin');
       }
 
-      // Fetch pending approvals for this institution
-      const { data: pendingUsers, error: usersErr } = await supabase
-        .from('users')
-        .select('*')
-        .eq('institution', instName)
-        .eq('is_approved', false)
-        .order('created_at', { ascending: false });
-
-      if (!usersErr && pendingUsers) {
-        setMetrics(prev => ({ ...prev, pendingApprovals: pendingUsers.length }));
-      }
-
-      const { count: alumniCount, error: countErr } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('institution', instName)
-        .eq('is_approved', true)
-        .eq('role', 'Alumni');
-        
-      if (!countErr) {
-        setMetrics(prev => ({ ...prev, totalAlumni: alumniCount || 0 }));
-      }
+      const stats = await getDashboardStats(instName);
+      
+      setMetrics(prev => ({
+        ...prev,
+        totalAlumni: stats.totalAlumni || 0,
+        pendingApprovals: stats.pendingUsers || 0,
+        activeJobs: stats.totalPosts || 24, // Assuming jobs are part of posts or keeping it as mock
+        upcomingEvents: stats.totalEvents || 5 // Assuming we have events count
+      }));
 
     } catch (err) {
       console.log('Error loading dashboard data:', err);

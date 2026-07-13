@@ -9,6 +9,9 @@ const protect = async (req, res, next) => {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.id).select('-password');
+            if (!req.user) {
+                return res.status(401).json({ message: 'User not found' });
+            }
             return next();
         } catch (error) {
             console.error(error);
@@ -21,4 +24,18 @@ const protect = async (req, res, next) => {
     }
 };
 
-module.exports = { protect };
+const adminOnly = (req, res, next) => {
+    if (req.user && (req.user.role === 'Admin' || req.user.role === 'Super Admin')) {
+        return next();
+    }
+    return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+};
+
+const superAdminOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'Super Admin') {
+        return next();
+    }
+    return res.status(403).json({ message: 'Access denied. Super Admin privileges required.' });
+};
+
+module.exports = { protect, adminOnly, superAdminOnly };

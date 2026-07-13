@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, Modal, Image, TextInput, useWindowDimensions, Alert, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { changePassword } from '../services/authService';
 
 // Seed Data for Profile Campus Info Tab
 const INSTITUTIONS = [
@@ -689,42 +689,10 @@ const AdminProfileScreen = ({ navigation }) => {
                           return;
                         }
                         try {
-                          const { data: { user } } = await supabase.auth.getUser();
-                          if (!user) throw new Error('No user session found.');
-
-                          // 1. Fetch current password from public.users table
-                          const { data: dbUser, error: dbError } = await supabase
-                            .from('users')
-                            .select('password')
-                            .eq('id', user.id)
-                            .single();
-                          
-                          if (dbError) throw dbError;
-
-                          // 2. Validate current password match
-                          if (dbUser && dbUser.password && dbUser.password !== currentPassword) {
-                            Alert.alert('Error', 'Current password is incorrect.');
-                            return;
-                          }
-
-                          // 3. Prevent reuse
-                          if (dbUser && dbUser.password && dbUser.password === newPassword) {
-                            Alert.alert('Error', 'New password cannot be the same as your old password.');
-                            return;
-                          }
-
-                          // 4. Update in Supabase Auth
-                          const { error: authError } = await supabase.auth.updateUser({
-                            password: newPassword
+                          await changePassword({
+                            currentPassword,
+                            newPassword
                           });
-                          if (authError) throw authError;
-
-                          // 5. Update in public.users table
-                          const { error: updateError } = await supabase
-                            .from('users')
-                            .update({ password: newPassword })
-                            .eq('id', user.id);
-                          if (updateError) throw updateError;
 
                           setCurrentPassword('');
                           setNewPassword('');

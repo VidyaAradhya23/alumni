@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, Image, StatusBar, Modal, FlatList } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadFile } from '../services/uploadService';
+import { updateProfile } from '../services/authService';
 
 const institutions = [
   { id: 'RV School', name: 'RVS', fullName: 'RV School' },
@@ -60,10 +63,12 @@ const ProfileSetupScreen = ({ navigation }) => {
   });
   
   const [avatar, setAvatar] = useState(null);
+  const [avatarMimeType, setAvatarMimeType] = useState('image/jpeg');
+  const [isUploading, setIsUploading] = useState(false);
   const [instModalVisible, setInstModalVisible] = useState(false);
   const [locModalVisible, setLocModalVisible] = useState(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!formData.fullName.trim()) {
       Alert.alert('Required', 'Please enter your full name.');
       return;
@@ -76,12 +81,45 @@ const ProfileSetupScreen = ({ navigation }) => {
       Alert.alert('Required', 'Please enter your department/branch.');
       return;
     }
-    navigation.navigate('Main');
+
+    setIsUploading(true);
+    try {
+      let avatarUrl = null;
+      if (avatar) {
+        avatarUrl = await uploadFile(avatar, avatarMimeType, 'avatar.jpg');
+      }
+
+      await updateProfile({
+        name: formData.fullName,
+        institution: formData.institution,
+        batch_year: formData.batchYear,
+        department: formData.department,
+        company: formData.company,
+        location: formData.location,
+        avatar_url: avatarUrl
+      });
+
+      setIsUploading(false);
+      navigation.navigate('Main');
+    } catch (error) {
+      console.error('Error saving profile setup:', error);
+      setIsUploading(false);
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    }
   };
 
-  const handleSelectAvatar = () => {
-    // Simulate photo selection
-    setAvatar('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80');
+  const handleSelectAvatar = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setAvatar(result.assets[0].uri);
+      setAvatarMimeType(result.assets[0].mimeType || 'image/jpeg');
+    }
   };
 
     const isWeb = Platform.OS === 'web';
@@ -216,9 +254,9 @@ const ProfileSetupScreen = ({ navigation }) => {
              </View>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleContinue} activeOpacity={0.8}>
-            <Text style={styles.buttonText}>Save & Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          <TouchableOpacity style={[styles.button, isUploading && { opacity: 0.7 }]} onPress={handleContinue} activeOpacity={0.8} disabled={isUploading}>
+            <Text style={styles.buttonText}>{isUploading ? 'Saving...' : 'Save & Continue'}</Text>
+            {!isUploading && <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

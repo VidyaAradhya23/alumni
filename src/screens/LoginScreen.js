@@ -4,7 +4,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { supabase } from '../lib/supabase';
+import { login } from '../services/authService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -60,49 +60,26 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailClean,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // Check if user is approved and fetch role
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('is_approved, role')
-        .eq('id', data.user.id)
-        .single();
-
-      if (userError || !userData?.is_approved) {
-        // Log them back out if not approved
-        await supabase.auth.signOut();
-        alert('Your account is pending admin approval. You cannot log in yet.');
-        setLoading(false);
-        return;
-      }
-
-      const userRole = userData?.role || 'Alumni';
+      const userData = await login({ email: emailClean, password });
 
       // Successful login
-      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
-        name: data.user.user_metadata?.name || 'Alumni User', 
-        email: data.user.email,
-        institution: data.user.user_metadata?.institution || 'Institution',
-        role: userRole
+      await AsyncStorage.setItem('userInfo', JSON.stringify({
+        token: userData.token,
+        name: userData.name || 'Alumni User', 
+        email: userData.email,
+        institution: userData.institution || 'Institution',
+        role: userData.role
       }));
       
-      if (userRole === 'Super Admin') {
+      if (userData.role === 'Super Admin') {
         navigation.navigate('SuperAdminMain');
-      } else if (userRole === 'Admin') {
+      } else if (userData.role === 'Admin') {
         navigation.navigate('AdminMain');
       } else {
         navigation.navigate('Main');
       }
     } catch (error) {
-      alert(error.message || 'Login failed');
+      alert(error.response?.data?.message || error.message || 'Login failed');
     } finally {
       setLoading(false);
     }

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
+import { getPendingUsers, approveUser, rejectUser } from '../services/adminService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendWelcomeEmail } from '../lib/sendgrid';
 
@@ -102,18 +102,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
 
   const fetchPendingUsers = async () => {
     try {
-      let query = supabase
-        .from('users')
-        .select('*')
-        .eq('is_approved', false)
-        .order('created_at', { ascending: false });
-      
-      if (adminInstitution !== 'All') {
-        query = query.eq('institution', adminInstitution);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await getPendingUsers(adminInstitution !== 'All' ? adminInstitution : undefined);
       setPendingUsers(data || []);
     } catch (err) {
       console.error('Error fetching pending users:', err);
@@ -128,11 +117,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
 
   const handleApprove = async (userId) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ is_approved: true })
-        .eq('id', userId);
-      if (error) throw error;
+      await approveUser(userId);
       
       const approvedUser = pendingUsers.find(u => u.id === userId);
       if (approvedUser && approvedUser.email) {
@@ -148,11 +133,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
 
   const handleReject = async (userId) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-      if (error) throw error;
+      await rejectUser(userId);
       setPendingUsers(prev => prev.filter(u => u.id !== userId));
       alert('User rejected and removed.');
     } catch (err) {

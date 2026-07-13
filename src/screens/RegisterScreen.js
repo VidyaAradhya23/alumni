@@ -18,7 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
+import { register, checkEmailExists } from '../services/authService';
 
 WebBrowser.maybeCompleteAuthSession();
 const institutions = [
@@ -226,9 +226,8 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // Check if email already exists
-      const { data: emailExists } = await supabase
-        .rpc('check_email_exists', { email_to_check: emailClean });
+      // Check if email already exists using custom backend
+      const emailExists = await checkEmailExists(emailClean);
 
       if (emailExists) {
         alert('This email has already been taken. Please use a different email or log in.');
@@ -236,23 +235,16 @@ const RegisterScreen = ({ navigation }) => {
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      await register({
+        name,
         email: emailClean,
         password,
-        options: {
-          data: {
-            name,
-            institution,
-            department: branch,
-            batchYear,
-            joiningYear
-          }
-        }
+        institution,
+        branch: branch,
+        department: branch,
+        batchYear,
+        joiningYear
       });
-
-      if (error) {
-        throw error;
-      }
 
       alert('Account created successfully! Check your email for verification.');
       navigation.navigate('Login');

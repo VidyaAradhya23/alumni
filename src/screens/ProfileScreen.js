@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollVi
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
+import { getProfile, updateProfile, changePassword, deleteAccount } from '../services/authService';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -51,26 +51,19 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          if (data) {
-            setProfileData(prev => ({
-              ...prev,
-              name: data.name || user.email.split('@')[0],
-              username: user.email.split('@')[0],
-              branch: data.department || 'Not specified',
-              batch: data.batch_year || 'Not specified',
-              bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
-              linkedin: data.linkedin || '',
-              avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU'
-            }));
-          }
+      try {
+        const data = await getProfile();
+        if (data) {
+          setProfileData(prev => ({
+            ...prev,
+            name: data.name || data.email.split('@')[0],
+            username: data.email.split('@')[0],
+            branch: data.department || 'Not specified',
+            batch: data.batch_year || 'Not specified',
+            bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
+            linkedin: data.linkedin || '',
+            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU'
+          }));
         }
       } catch (e) {
         console.error('Error fetching profile', e);
@@ -125,7 +118,6 @@ const ProfileScreen = ({ navigation }) => {
     const performLogout = async () => {
       setSettingsVisible(false);
       try {
-        await supabase.auth.signOut();
         await AsyncStorage.removeItem('userInfo');
       } catch (error) {
         console.error('Failed to clear user session', error);
@@ -469,27 +461,20 @@ const ProfileScreen = ({ navigation }) => {
                       avatar: editName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'AJ'
                     });
 
-                    const updateProfileInSupabase = async () => {
+                    const submitProfileUpdate = async () => {
                       try {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (user) {
-                          const { error } = await supabase
-                            .from('users')
-                            .update({
-                              name: editName,
-                              department: editBranch,
-                              batch_year: editBatch,
-                              bio: editBio,
-                              linkedin: editLinkedin
-                            })
-                            .eq('id', user.id);
-                          if (error) throw error;
-                        }
+                        await updateProfile({
+                          name: editName,
+                          department: editBranch,
+                          batch_year: editBatch,
+                          bio: editBio,
+                          linkedin: editLinkedin
+                        });
                       } catch (err) {
-                        console.error('Error saving profile to Supabase:', err);
+                        console.error('Error saving profile:', err);
                       }
                     };
-                    updateProfileInSupabase();
+                    submitProfileUpdate();
 
                     setSettingsVisible(false);
                     setSettingsSubView('menu');
@@ -605,38 +590,10 @@ const ProfileScreen = ({ navigation }) => {
                       return;
                     }
                     try {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) throw new Error('No user session found.');
-
-                      const { data: dbUser, error: dbError } = await supabase
-                        .from('users')
-                        .select('password')
-                        .eq('id', user.id)
-                        .single();
-                      
-                      if (dbError) throw dbError;
-                      
-                      if (dbUser && dbUser.password && dbUser.password !== currentPassword) {
-                        Alert.alert('Error', 'Current password is incorrect.');
-                        return;
-                      }
-
-                      if (dbUser && dbUser.password && dbUser.password === newPassword) {
-                        Alert.alert('Error', 'New password cannot be the same as your old password.');
-                        return;
-                      }
-
-                      const { error: authError } = await supabase.auth.updateUser({
-                        password: newPassword
+                      await changePassword({
+                        currentPassword,
+                        newPassword
                       });
-                      if (authError) throw authError;
-
-                      const { error: updateError } = await supabase
-                        .from('users')
-                        .update({ password: newPassword })
-                        .eq('id', user.id);
-                      
-                      if (updateError) throw updateError;
 
                       setCurrentPassword('');
                       setNewPassword('');
@@ -686,9 +643,7 @@ const ProfileScreen = ({ navigation }) => {
                           style: 'destructive',
                                                     onPress: async () => {
                             try {
-                              const { error } = await supabase.rpc('delete_user');
-                              if (error) console.error('Delete User Error:', error);
-                              await supabase.auth.signOut();
+                              await deleteAccount();
                               await AsyncStorage.removeItem('userInfo');
                             } catch (e) {
                               console.error('Delete Account Error', e);

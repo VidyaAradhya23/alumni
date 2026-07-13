@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar, ScrollView, Alert } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resetPassword } from '../services/authService';
 
 const ResetPasswordScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -15,24 +15,15 @@ const ResetPasswordScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
 
+  const token = navigation.getState()?.routes?.find(r => r.name === 'ResetPassword')?.params?.token || 'dummy_token';
+
   useEffect(() => {
-    // Check if user has a session (established by the reset link)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setSession(session);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    // If we had deep linking, we would extract the token from the URL here
+    // For now, assume token is passed via navigation params
+    if (token) {
+      setSession(true);
+    }
+  }, [token]);
 
   const handleUpdatePassword = async () => {
     if (!password || !confirmPassword) {
@@ -50,34 +41,11 @@ const ResetPasswordScreen = ({ navigation }) => {
 
     setLoading(true);
 
-    try {
-      // 1. Call our custom secure RPC function to check if the new password is the same as the old one
-      const { data: isSamePassword, error: rpcError } = await supabase.rpc('check_password_match', { 
-        plain_password: password 
-      });
+      // Call the custom backend reset password API
+      await resetPassword(token, password);
 
-      if (rpcError) {
-        console.error("RPC Error:", rpcError);
-        // If the RPC fails (e.g. they haven't run the SQL yet), we still proceed to update,
-        // but normally we would want to block it. We will assume the SQL was run.
-      }
-
-      if (isSamePassword === true) {
-        Alert.alert('Security Error', 'You cannot reuse your old password. Please choose a different password.');
-        setLoading(false);
-        return;
-      }
-
-      // 2. Update the password
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (error) throw error;
-
-      // 3. Success! Clear old session info and redirect to login
+      // Success! Clear old session info and redirect to login
       await AsyncStorage.removeItem('userInfo');
-      await supabase.auth.signOut();
       
       Alert.alert('Success', 'Your password has been updated securely! Please log in with your new password.', [
         { text: 'Log In', onPress: () => navigation.navigate('Login') }

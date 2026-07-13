@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, useWindowDimensions, Image, StatusBar, Modal, TextInput, FlatList, Alert , Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getPosts, createPost, reportItem } from '../services/postService';
+import { blockUser } from '../services/authService';
 
 const EngageScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -35,32 +36,16 @@ const EngageScreen = ({ navigation }) => {
 
   const fetchPosts = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          content,
-          image_url,
-          created_at,
-          user_id,
-          users (
-            name,
-            institution,
-            avatar_url
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await getPosts();
       
       const formatted = data
-        .filter(p => !blockedUsers.has(p.user_id))
+        .filter(p => !blockedUsers.has(p.user._id))
         .map(p => ({
-        id: p.id,
-        user_id: p.user_id,
-        user: p.users?.name || 'Unknown User',
-        subtitle: p.users?.institution || 'Institution',
-        avatar: p.users?.name ? p.users.name.substring(0,2).toUpperCase() : 'UU',
+        id: p._id,
+        user_id: p.user._id,
+        user: p.user.name || 'Unknown User',
+        subtitle: p.user.institution || 'Institution',
+        avatar: p.user.name ? p.user.name.substring(0,2).toUpperCase() : 'UU',
         image: p.image_url,
         likes: 0,
         time: new Date(p.created_at).toLocaleDateString(),
@@ -102,21 +87,15 @@ const EngageScreen = ({ navigation }) => {
     }
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!currentUser) {
         Alert.alert('Error', 'You must be logged in to post.');
         return;
       }
 
-      const { error } = await supabase.from('posts').insert([
-        { 
-          user_id: user.id, 
-          content: postText,
-          image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&h=400&q=80' // default demo image
-        }
-      ]);
-
-      if (error) throw error;
+      await createPost({ 
+        content: postText,
+        image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&h=400&q=80' // default demo image
+      });
 
       setPostText('');
       setCurrentView('feed');
@@ -396,12 +375,12 @@ const EngageScreen = ({ navigation }) => {
                 <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => {
                   Alert.alert('Report Options', 'Select an action for this content', [
                     { text: 'Report Post', style: 'destructive', onPress: async () => {
-                      if (!currentUser?.id) return;
-                      await supabase.from('reports').insert([{ reporter_id: currentUser.id, reported_item_id: post.id, item_type: 'post', reason: 'Flagged' }]);
+                      if (!currentUser) return;
+                      await reportItem({ reportedItemId: post.id, itemType: 'post', reason: 'Flagged' });
                     }},
                     { text: 'Block User', style: 'destructive', onPress: async () => {
-                      if (!currentUser?.id) return;
-                      await supabase.from('blocked_users').insert([{ blocker_id: currentUser.id, blocked_id: post.user_id }]);
+                      if (!currentUser) return;
+                      await blockUser(post.user_id);
                       setBlockedUsers(prev => new Set([...prev, post.user_id]));
                     }},
                     { text: 'Cancel', style: 'cancel' }

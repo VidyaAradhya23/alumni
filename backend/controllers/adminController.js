@@ -1,0 +1,129 @@
+const User = require('../models/User');
+const Post = require('../models/Post');
+const Event = require('../models/Event');
+const Report = require('../models/Report');
+
+// @desc    Get Admin Dashboard Stats
+// @route   GET /api/admin/stats
+exports.getStats = async (req, res) => {
+    try {
+        const { institution } = req.query;
+        
+        const userFilter = {};
+        const pendingUserFilter = { is_approved: false };
+        const activeAlumniFilter = { is_approved: true, role: 'Alumni' };
+
+        if (institution && institution !== 'All') {
+            userFilter.institution = institution;
+            pendingUserFilter.institution = institution;
+            activeAlumniFilter.institution = institution;
+        }
+
+        const totalUsers = await User.countDocuments(userFilter);
+        const pendingUsers = await User.countDocuments(pendingUserFilter);
+        const totalAlumni = await User.countDocuments(activeAlumniFilter);
+        const totalPosts = await Post.countDocuments();
+        const totalEvents = await Event.countDocuments();
+        const pendingReports = await Report.countDocuments({ status: 'pending' });
+
+        res.json({
+            totalUsers,
+            pendingUsers,
+            totalAlumni,
+            totalPosts,
+            totalEvents,
+            pendingReports
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get all users pending approval
+// @route   GET /api/admin/pending-users
+exports.getPendingUsers = async (req, res) => {
+    try {
+        const { institution } = req.query;
+        let filter = { is_approved: false };
+        if (institution && institution !== 'All') {
+            filter.institution = institution;
+        }
+
+        const pendingUsers = await User.find(filter)
+            .select('-password -passwordResetToken -passwordResetExpires')
+            .sort({ created_at: -1 });
+        res.json(pendingUsers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Approve a user
+// @route   PUT /api/admin/users/:id/approve
+exports.approveUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.is_approved = true;
+        await user.save();
+
+        res.json({ message: 'User approved successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Reject/Delete a pending user
+// @route   DELETE /api/admin/users/:id/reject
+exports.rejectUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'User rejected and deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update user role
+// @route   PUT /api/admin/users/:id/role
+exports.updateUserRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+        
+        // Basic validation
+        if (!['Alumni', 'Admin', 'Super Admin'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+
+        // Only super admin can make other super admins
+        if (role === 'Super Admin' && req.user.role !== 'Super Admin') {
+             return res.status(403).json({ message: 'Only Super Admins can assign the Super Admin role' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Cannot modify own role here to prevent self-demotion
+        if (user._id.toString() === req.user._id.toString()) {
+            return res.status(400).json({ message: 'Cannot modify your own role' });
+        }
+
+        user.role = role;
+        await user.save();
+
+        res.json({ message: 'User role updated successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

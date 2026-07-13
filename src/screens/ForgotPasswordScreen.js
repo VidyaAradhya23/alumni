@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
+import { forgotPassword } from '../services/authService';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -27,13 +27,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(emailClean, {
-        redirectTo: Platform.OS === 'web' 
-          ? window.location.origin + '/reset-password'
-          : 'alumni://reset-password',
-      });
-
-      if (error) throw error;
+      await forgotPassword(emailClean);
       
       setSuccess(true);
     } catch (error) {

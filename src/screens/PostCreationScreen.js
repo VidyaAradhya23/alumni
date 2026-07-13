@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadFile } from '../services/uploadService';
+import { createPost } from '../services/postService';
 
 const hashtags = ['#Institution', '#AlumniMeet', '#Mentorship', '#TechTalk', '#Careers', '#ClassOf2024'];
 
@@ -11,24 +14,45 @@ const PostCreationScreen = ({ navigation }) => {
 
   const [content, setContent] = useState('');
   const [audience, setAudience] = useState('All Alumni');
-  const [attachedImage, setAttachedImage] = useState(null);
+  const [localImageUri, setLocalImageUri] = useState(null);
+  const [mimeType, setMimeType] = useState('image/jpeg');
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handlePost = () => {
-    if (!content.trim()) {
-      Alert.alert('Empty Post', 'Please enter some text before posting.');
+  const handlePost = async () => {
+    if (!content.trim() && !localImageUri) {
+      Alert.alert('Empty Post', 'Please enter some text or attach an image.');
       return;
     }
-    Alert.alert(
-      'Success',
-      'Your post has been shared with the community!',
-      [{ text: 'OK', onPress: () => {
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        } else {
-          navigation.navigate('Main');
-        }
-      } }]
-    );
+
+    setIsUploading(true);
+    try {
+      let imageUrl = null;
+      if (localImageUri) {
+        imageUrl = await uploadFile(localImageUri, mimeType, 'post-image.jpg');
+      }
+
+      await createPost({
+        content: content.trim(),
+        image: imageUrl
+      });
+
+      setIsUploading(false);
+      Alert.alert(
+        'Success',
+        'Your post has been shared with the community!',
+        [{ text: 'OK', onPress: () => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('Main');
+          }
+        } }]
+      );
+    } catch (error) {
+      console.error('Error creating post:', error);
+      setIsUploading(false);
+      Alert.alert('Error', 'Failed to create post. Please try again later.');
+    }
   };
 
   const handleAddHashtag = (tag) => {
@@ -49,8 +73,17 @@ const PostCreationScreen = ({ navigation }) => {
     );
   };
 
-  const handleSelectMedia = () => {
-    setAttachedImage('https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80');
+  const handleSelectMedia = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setLocalImageUri(result.assets[0].uri);
+      setMimeType(result.assets[0].mimeType || 'image/jpeg');
+    }
   };
 
     const isWeb = Platform.OS === 'web';
@@ -80,11 +113,11 @@ const PostCreationScreen = ({ navigation }) => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Post</Text>
           <TouchableOpacity 
-            style={[styles.postBtn, !content.trim() && styles.disabledPostBtn]}
-            disabled={!content.trim()}
+            style={[styles.postBtn, (!content.trim() && !localImageUri || isUploading) && styles.disabledPostBtn]}
+            disabled={(!content.trim() && !localImageUri) || isUploading}
             onPress={handlePost}
           >
-            <Text style={styles.postBtnText}>Post</Text>
+            <Text style={styles.postBtnText}>{isUploading ? 'Posting...' : 'Post'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -117,10 +150,10 @@ const PostCreationScreen = ({ navigation }) => {
           />
 
           {/* Attached Image Preview */}
-          {attachedImage ? (
+          {localImageUri ? (
             <View style={styles.previewContainer}>
-              <Image source={{ uri: attachedImage }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.removeImageBtn} onPress={() => setAttachedImage(null)}>
+              <Image source={{ uri: localImageUri }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeImageBtn} onPress={() => setLocalImageUri(null)}>
                 <Ionicons name="close-circle" size={26} color="rgba(15, 23, 42, 0.8)" />
               </TouchableOpacity>
             </View>

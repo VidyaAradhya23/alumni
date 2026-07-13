@@ -51,7 +51,6 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-      try {
         const data = await getProfile();
         if (data) {
           setProfileData(prev => ({

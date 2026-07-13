@@ -239,7 +239,7 @@ const PostCreationScreen = ({ navigation }) => {
               <Ionicons name="image" size={24} color="#003366" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolBtn} onPress={handleSelectDocument}>
-              <Ionicons name="document-attach" size={24} color="#003366" />
+              <Ionicons name="add" size={26} color="#003366" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolBtn} onPress={handleToggleAudience}>
               <Ionicons name="people" size={24} color="#003366" />

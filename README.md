@@ -1,50 +1,37 @@
-# Welcome to your Expo app 👋
+# RVITM Alumni Network 🎓
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Welcome to the RVITM Alumni Network platform! This application serves as a central hub for alumni to connect, share updates, post media, and network with their peers.
 
-## Get started
+## 🚀 Live Links
 
-1. Install dependencies
+- **Frontend Application (Live UI):** [https://alumni-app-nine.vercel.app](https://alumni-app-nine.vercel.app) 
+- **Backend API Server:** [https://alma-test-three.vercel.app](https://alma-test-three.vercel.app)
 
+> [!NOTE]
+> **To the Repository Owner:** To fix the "About" link on the right side of the GitHub page, click the `⚙️` (Settings gear) icon in the "About" section on the right, and paste `https://alumni-app-nine.vercel.app` into the "Website" field!
+
+## 📱 Features
+
+- **Dynamic Post Creation**: Attach images, PDFs, and documents natively or via drag-and-drop.
+- **Real-time Feed**: See updates, connect with alumni, and stay up to date.
+- **Alumni Profiles**: View and customize your personal alumni profile.
+- **Cross-Platform**: Built with Expo and React Native for Web, iOS, and Android support.
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React Native Web / Expo
+- **Backend:** Node.js, Express
+- **Database:** MongoDB
+- **File Storage:** GridFS
+
+## 💻 Running Locally
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the Frontend & Backend:
    ```bash
-   npx expo start
+   npm start
    ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

@@ -139,13 +139,10 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(true);
     try {
       // Check if email already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', emailClean)
-        .maybeSingle();
+      const { data: emailExists } = await supabase
+        .rpc('check_email_exists', { email_to_check: emailClean });
 
-      if (existingUser) {
+      if (emailExists) {
         alert('This email has already been taken. Please use a different email or log in.');
         setLoading(false);
         return;

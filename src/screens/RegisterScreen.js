@@ -119,6 +119,11 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
+    if (parseInt(joiningYear, 10) >= parseInt(batchYear, 10)) {
+      alert('Graduation year must be greater than joining year');
+      return;
+    }
+
     const emailClean = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailClean)) {

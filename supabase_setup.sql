@@ -1,5 +1,4 @@
 -- Supabase Setup Script for RVCE Alumni App
--- Run this script in the SQL Editor of your Supabase Dashboard to create all necessary tables, triggers, and functions.
 
 -- 1. Create PUBLIC.USERS Table
 CREATE TABLE IF NOT EXISTS public.users (
@@ -55,41 +54,48 @@ ALTER TABLE public.blocked_users ENABLE ROW LEVEL SECURITY;
 -- 5. Define RLS Policies
 
 -- Public Users Policies
--- Allow anyone logged in to see profiles
+DROP POLICY IF EXISTS "Allow authenticated users to read profiles" ON public.users;
 CREATE POLICY "Allow authenticated users to read profiles" ON public.users
     FOR SELECT USING (auth.role() = 'authenticated');
 
--- Allow a user to update their own profile, OR an Admin/Super Admin to update ANY profile
+DROP POLICY IF EXISTS "Allow users to update their own profile" ON public.users;
+DROP POLICY IF EXISTS "Allow users to update their own profile or admins to update anyone" ON public.users;
 CREATE POLICY "Allow users to update their own profile or admins to update anyone" ON public.users
     FOR UPDATE USING (
         auth.uid() = id OR 
         (SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1) IN ('Admin', 'Super Admin')
     );
 
--- Allow ONLY Admin or Super Admin to delete users
+DROP POLICY IF EXISTS "Allow admins to delete users" ON public.users;
 CREATE POLICY "Allow admins to delete users" ON public.users
     FOR DELETE USING (
         (SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1) IN ('Admin', 'Super Admin')
     );
 
 -- Posts Policies
+DROP POLICY IF EXISTS "Allow authenticated users to read posts" ON public.posts;
 CREATE POLICY "Allow authenticated users to read posts" ON public.posts
     FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow users to create their own posts" ON public.posts;
 CREATE POLICY "Allow users to create their own posts" ON public.posts
     FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Allow users to delete their own posts" ON public.posts;
 CREATE POLICY "Allow users to delete their own posts" ON public.posts
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Reports Policies
+DROP POLICY IF EXISTS "Allow authenticated users to submit reports" ON public.reports;
 CREATE POLICY "Allow authenticated users to submit reports" ON public.reports
     FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.uid() = reporter_id);
 
+DROP POLICY IF EXISTS "Allow authenticated users to see reports" ON public.reports;
 CREATE POLICY "Allow authenticated users to see reports" ON public.reports
     FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Blocked Users Policies
+DROP POLICY IF EXISTS "Allow users to manage their blocklist" ON public.blocked_users;
 CREATE POLICY "Allow users to manage their blocklist" ON public.blocked_users
     FOR ALL USING (auth.uid() = blocker_id);
 
@@ -117,7 +123,7 @@ BEGIN
         coalesce(new.raw_user_meta_data->>'batchYear', ''),
         coalesce(new.raw_user_meta_data->>'joiningYear', ''),
         'Alumni',
-        false -- starts unapproved (needs admin approval)
+        false
     )
     ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -138,10 +144,48 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 7. RPC function to allow users to delete their own account from client library safely
+-- 7. RPC function to allow users to delete their own account
 CREATE OR REPLACE FUNCTION public.delete_user()
 RETURNS void AS $$
 BEGIN
     DELETE FROM auth.users WHERE id = auth.uid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enable the pgcrypto extension
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Create the secure function to check passwords
+CREATE OR REPLACE FUNCTION public.check_password_match(plain_password TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    current_hash TEXT;
+BEGIN
+    SELECT encrypted_password INTO current_hash 
+    FROM auth.users 
+    WHERE id = auth.uid();
+    
+    IF current_hash IS NULL THEN
+        RETURN FALSE;
+    END IF;
+    
+    RETURN current_hash = crypt(plain_password, current_hash);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Promote default Admins
+UPDATE public.users SET role = 'Super Admin', is_approved = true WHERE email = 'superadmin@institution.edu';
+UPDATE public.users SET role = 'Admin', is_approved = true WHERE email = 'admin@institution.edu';
+
+-- 8. Create a secure RPC function to check for duplicate emails
+CREATE OR REPLACE FUNCTION public.check_email_exists(email_to_check text)
+RETURNS boolean AS $$
+DECLARE
+    email_exists boolean;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 FROM public.users WHERE email = email_to_check
+    ) INTO email_exists;
+    RETURN email_exists;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -186,6 +186,10 @@ const PostCreationScreen = ({ navigation }) => {
             onChangeText={setContent}
             placeholderTextColor="#94A3B8"
             autoFocus
+            spellCheck={false}
+            autoCorrect={false}
+            // For Edge specific blocking if possible via data attributes on web:
+            {...(Platform.OS === 'web' ? { 'data-ms-editor': false } : {})}
           />
 
           {/* Attached Image Preview */}

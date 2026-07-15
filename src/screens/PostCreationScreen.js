@@ -93,16 +93,21 @@ const PostCreationScreen = ({ navigation }) => {
   };
 
   const handleSelectMedia = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+      });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setLocalImageUri(result.assets[0].uri);
-      setMimeType(result.assets[0].mimeType || 'image/jpeg');
-      setFileName(result.assets[0].fileName || 'image.jpg');
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setLocalImageUri(result.assets[0].uri);
+        setMimeType(result.assets[0].mimeType || 'image/jpeg');
+        setFileName(result.assets[0].fileName || 'image.jpg');
+      }
+    } catch (err) {
+      console.error('Image picker error:', err);
+      Alert.alert('Error', 'Could not open image picker: ' + err.message);
     }
   };
 
@@ -121,6 +126,7 @@ const PostCreationScreen = ({ navigation }) => {
       }
     } catch (err) {
       console.error('Document picker error:', err);
+      Alert.alert('Error', 'Could not open document picker: ' + err.message);
     }
   };
 

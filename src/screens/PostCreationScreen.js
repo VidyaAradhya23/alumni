@@ -20,6 +20,21 @@ const PostCreationScreen = ({ navigation }) => {
   const [fileName, setFileName] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState(null);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const userStr = await AsyncStorage.getItem('userInfo');
+        if (userStr) {
+          setCurrentUser(JSON.parse(userStr));
+        }
+      } catch (err) {}
+    };
+    fetchUser();
+  }, []);
+
   const handlePost = async () => {
     if (!content.trim() && !localImageUri) {
       Alert.alert('Empty Post', 'Please enter some text or attach an image.');
@@ -164,10 +179,10 @@ const PostCreationScreen = ({ navigation }) => {
           {/* User Header */}
           <View style={styles.userSection}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>AJ</Text>
+              <Text style={styles.avatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text>
             </View>
             <View>
-              <Text style={styles.userName}>Abhishek Jaiswal</Text>
+              <Text style={styles.userName}>{currentUser?.name || 'User'}</Text>
               <TouchableOpacity style={styles.audienceSelector} onPress={handleToggleAudience} activeOpacity={0.6}>
                 <Ionicons name="people-outline" size={12} color="#003366" />
                 <Text style={styles.audienceText}>{audience}</Text>

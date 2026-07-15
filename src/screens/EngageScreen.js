@@ -124,92 +124,7 @@ const EngageScreen = ({ navigation }) => {
 
   const toggleLike = (id) => setLikedPosts(prev => ({ ...prev, [id]: !prev[id] }));
 
-  // ===== WRITE POST VIEW =====
-  if (currentView === 'writePost') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <View style={styles.writePostHeader}>
-          <TouchableOpacity onPress={() => setCurrentView('feed')}>
-            <Ionicons name="close" size={24} color="#002144" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.writePostHeaderCenter} 
-            onPress={() => setJobPrefModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.smallAvatar}><Text style={styles.smallAvatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text></View>
-            <Text style={styles.anyoneText}>{jobPreference}</Text>
-            <Ionicons name="chevron-down" size={16} color="#002144" />
-          </TouchableOpacity>
-          <View style={styles.writePostHeaderRight}>
-            <TouchableOpacity><Ionicons name="time-outline" size={22} color="#64748B" /></TouchableOpacity>
-            <TouchableOpacity style={styles.postButton} onPress={handleCreatePost}>
-              <Text style={styles.postButtonText}>Post</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.writePostBody}>
-          <TextInput
-            style={styles.writePostInput}
-            placeholder="Share your thoughts..."
-            placeholderTextColor="#94A3B8"
-            multiline
-            textAlignVertical="top"
-            value={postText}
-            onChangeText={setPostText}
-            autoFocus
-          />
-        </View>
-        <View style={styles.writePostFooter}>
-          <View style={styles.writePostFooterIcons}>
-            <TouchableOpacity style={styles.footerIconBtn}>
-              <Ionicons name="image-outline" size={24} color="#64748B" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.footerIconBtn}>
-              <Ionicons name="add-outline" size={24} color="#64748B" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Job Preference Modal */}
-        <Modal visible={jobPrefModalVisible} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity style={{ flex: 1 }} onPress={() => setJobPrefModalVisible(false)} />
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Job Preference</Text>
-                <TouchableOpacity onPress={() => setJobPrefModalVisible(false)}>
-                  <Ionicons name="close" size={24} color="#0F172A" />
-                </TouchableOpacity>
-              </View>
-              {['Full-Time', 'Part-Time', 'Internship', 'Freelance', 'Contract', 'Open to Referrals'].map((pref) => (
-                <TouchableOpacity
-                  key={pref}
-                  style={[
-                    styles.modalItem,
-                    jobPreference === pref && styles.selectedModalItem
-                  ]}
-                  onPress={() => {
-                    setJobPreference(pref);
-                    setJobPrefModalVisible(false);
-                  }}
-                >
-                  <Text style={[
-                    styles.modalItemText,
-                    jobPreference === pref && styles.selectedModalItemText
-                  ]}>
-                    {pref}
-                  </Text>
-                  {jobPreference === pref && <Ionicons name="checkmark" size={20} color="#003366" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </Modal>
-      </SafeAreaView>
-    );
-  }
+  // ===== WRITE POST VIEW REMOVED - Navigating to PostCreationScreen instead =====
 
   // ===== CREATE EVENT VIEW =====
   if (currentView === 'createEvent') {
@@ -344,14 +259,14 @@ const EngageScreen = ({ navigation }) => {
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
               <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text>
             </View>
-            <TouchableOpacity style={{ flex: 1, height: 44, borderRadius: 22, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 16, justifyContent: 'center' }} onPress={() => setActionSheetVisible(true)}>
+            <TouchableOpacity style={{ flex: 1, height: 44, borderRadius: 22, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 16, justifyContent: 'center' }} onPress={() => navigation.navigate('PostCreation')}>
               <Text style={{ color: '#94A3B8', fontSize: 14.5 }}>Share an update, milestone, or question...</Text>
             </TouchableOpacity>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, paddingHorizontal: 8 }}>
-            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => setActionSheetVisible(true)}><Ionicons name="image" size={20} color="#10B981" /><Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>Media</Text></TouchableOpacity>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => navigation.navigate('PostCreation')}><Ionicons name="image" size={20} color="#10B981" /><Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>Media</Text></TouchableOpacity>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => setActionSheetVisible(true)}><Ionicons name="calendar" size={20} color="#F59E0B" /><Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>Event</Text></TouchableOpacity>
-            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => setActionSheetVisible(true)}><Ionicons name="newspaper" size={20} color="#3B82F6" /><Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>Article</Text></TouchableOpacity>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => navigation.navigate('PostCreation')}><Ionicons name="newspaper" size={20} color="#3B82F6" /><Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>Article</Text></TouchableOpacity>
           </View>
         </View>
 
@@ -529,7 +444,7 @@ const EngageScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* FAB - Hide on desktop since we added inline post box */}
+      {/* FAB */}
       {!isDesktop && (
         <TouchableOpacity style={styles.fab} onPress={() => setActionSheetVisible(true)}>
           <Ionicons name="add" size={28} color="#FFFFFF" />
@@ -545,7 +460,7 @@ const EngageScreen = ({ navigation }) => {
             <View style={styles.actionSheetTitleRow}>
               <Text style={styles.actionSheetTitle}>Create New</Text>
             </View>
-            <TouchableOpacity style={styles.actionItem} onPress={() => { setActionSheetVisible(false); setCurrentView('writePost'); }}>
+            <TouchableOpacity style={styles.actionItem} onPress={() => { setActionSheetVisible(false); navigation.navigate('PostCreation'); }}>
               <Ionicons name="create-outline" size={22} color="#003366" style={{ marginRight: 4 }} />
               <Text style={styles.actionItemText}>Post</Text>
             </TouchableOpacity>

@@ -330,11 +330,14 @@ const DashboardScreen = ({ navigation }) => {
                 </View>
                 <TouchableOpacity 
                   style={{ flex: 1, backgroundColor: theme.inputBackground, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: theme.border }}
-                  onPress={() => openModal('post', null)}
+                  onPress={() => navigation.navigate('PostCreation')}
                 >
                   <Text style={{ color: theme.textMuted, fontSize: 14 }}>Start a post or share an update...</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ padding: 8, backgroundColor: theme.background, borderRadius: 20 }}>
+                <TouchableOpacity 
+                  style={{ padding: 8, backgroundColor: theme.background, borderRadius: 20 }}
+                  onPress={() => navigation.navigate('PostCreation')}
+                >
                   <Ionicons name="image-outline" size={20} color={theme.primary} />
                 </TouchableOpacity>
               </View>

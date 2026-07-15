@@ -184,7 +184,9 @@ const AdminHomeScreen = ({ navigation }) => {
       </View>
 
       {/* Post image */}
-      <Image source={{ uri: post.image }} style={[styles.postImage, { width: '100%', height: contentWidth * 0.65 }]} />
+      {post.image ? (
+        <Image source={{ uri: post.image }} style={[styles.postImage, { width: '100%', height: contentWidth * 0.65 }]} />
+      ) : null}
 
       {/* Action row */}
       <View style={styles.postActions}>
@@ -253,7 +255,7 @@ const AdminHomeScreen = ({ navigation }) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('AdminProfile')}
           >
-            <Text style={styles.headerAvatarText}>AD</Text>
+            <Text style={styles.headerAvatarText}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
           </TouchableOpacity>
 
           {/* Center – Search bar */}
@@ -295,9 +297,9 @@ const AdminHomeScreen = ({ navigation }) => {
             <View style={{ flex: 3 }}>
               <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, elevation: 2, borderWidth: 1, borderColor: theme.border, marginBottom: 24, alignItems: 'center' }}>
                 <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 12, shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>AJ</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Ananya Joshi</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Admin User</Text>
                 <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>Alumni Developer{'\n'}@ {userInstitution}</Text>
                 
                 <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />
@@ -324,7 +326,7 @@ const AdminHomeScreen = ({ navigation }) => {
               {/* Create Post Widget */}
               <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, elevation: 2, borderWidth: 1, borderColor: theme.border, marginBottom: 24, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.card }}>AJ</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.card }}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
                 <TouchableOpacity 
                   style={{ flex: 1, backgroundColor: theme.inputBackground, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: theme.border }}

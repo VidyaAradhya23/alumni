@@ -138,7 +138,7 @@ const EngageScreen = ({ navigation }) => {
             onPress={() => setJobPrefModalVisible(true)}
             activeOpacity={0.7}
           >
-            <View style={styles.smallAvatar}><Text style={styles.smallAvatarText}>AJ</Text></View>
+            <View style={styles.smallAvatar}><Text style={styles.smallAvatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text></View>
             <Text style={styles.anyoneText}>{jobPreference}</Text>
             <Ionicons name="chevron-down" size={16} color="#002144" />
           </TouchableOpacity>
@@ -162,10 +162,6 @@ const EngageScreen = ({ navigation }) => {
           />
         </View>
         <View style={styles.writePostFooter}>
-          <TouchableOpacity style={styles.aiButton}>
-            <Ionicons name="sparkles" size={16} color="#003366" />
-            <Text style={styles.aiButtonText}>Rewrite with AI</Text>
-          </TouchableOpacity>
           <View style={styles.writePostFooterIcons}>
             <TouchableOpacity style={styles.footerIconBtn}>
               <Ionicons name="image-outline" size={24} color="#64748B" />
@@ -256,8 +252,8 @@ const EngageScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.hostRow}>
-            <View style={styles.hostAvatar}><Text style={styles.hostAvatarText}>AJ</Text></View>
-            <Text style={styles.hostName}>Name</Text>
+            <View style={styles.hostAvatar}><Text style={styles.hostAvatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text></View>
+            <Text style={styles.hostName}>{currentUser?.name || 'User'}</Text>
             <Ionicons name="chevron-down" size={16} color="#002144" />
           </View>
 
@@ -392,7 +388,9 @@ const EngageScreen = ({ navigation }) => {
               <View style={styles.postContentContainer}>
                 <Text style={styles.postContentText}>{post.content}</Text>
               </View>
-              <Image source={{ uri: post.image }} style={[styles.postImage, { width: isDesktop ? 700 : width, height: isDesktop ? 450 : width * 0.65 }]} />
+              {post.image ? (
+                <Image source={{ uri: post.image }} style={[styles.postImage, { width: isDesktop ? 700 : width, height: isDesktop ? 450 : width * 0.65 }]} />
+              ) : null}
               <View style={styles.postActions}>
                 <View style={styles.leftActions}>
                   <TouchableOpacity onPress={() => toggleLike(post.id)}>
@@ -491,7 +489,7 @@ const EngageScreen = ({ navigation }) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.headerAvatarText}>AJ</Text>
+            <Text style={styles.headerAvatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text>
           </TouchableOpacity>
 
           {/* Center – Search bar */}
@@ -530,12 +528,6 @@ const EngageScreen = ({ navigation }) => {
           {sidePanel}
         </View>
       </View>
-
-      {/* Rewrite with AI floating button */}
-      <TouchableOpacity style={styles.aiFloatingBtn}>
-        <Ionicons name="sparkles" size={16} color="#003366" />
-        <Text style={styles.aiFloatingText}>Rewrite with AI</Text>
-      </TouchableOpacity>
 
       {/* FAB - Hide on desktop since we added inline post box */}
       {!isDesktop && (

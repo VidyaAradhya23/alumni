@@ -130,22 +130,34 @@ const PostCreationScreen = ({ navigation }) => {
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      const url = URL.createObjectURL(file);
-      setLocalImageUri(url);
-      setMimeType(file.type);
-      setFileName(file.name);
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleGlobalDragOver = (e) => {
+        e.preventDefault();
+      };
+      
+      const handleGlobalDrop = (e) => {
+        e.preventDefault();
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          const file = e.dataTransfer.files[0];
+          const url = URL.createObjectURL(file);
+          setLocalImageUri(url);
+          setMimeType(file.type);
+          setFileName(file.name);
+        }
+      };
+
+      window.addEventListener('dragover', handleGlobalDragOver);
+      window.addEventListener('drop', handleGlobalDrop);
+
+      return () => {
+        window.removeEventListener('dragover', handleGlobalDragOver);
+        window.removeEventListener('drop', handleGlobalDrop);
+      };
     }
-  };
+  }, []);
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-    const isWeb = Platform.OS === 'web';
+  const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
   return (
@@ -155,7 +167,6 @@ const PostCreationScreen = ({ navigation }) => {
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        {...(isWeb ? { onDrop: handleDrop, onDragOver: handleDragOver } : {})}
       >
         {/* Header */}
         <View style={styles.header}>

@@ -37,6 +37,7 @@ const DashboardScreen = ({ navigation }) => {
   const [followedSuggestions, setFollowedSuggestions] = useState({});
   const [searchText, setSearchText] = useState('');
   const [userInstitution, setUserInstitution] = useState('Our Network');
+  const [userName, setUserName] = useState('Alumni Member');
 
   // Modal States
   const [activeModal, setActiveModal] = useState(null);
@@ -63,6 +64,9 @@ const DashboardScreen = ({ navigation }) => {
         const userInfo = JSON.parse(userInfoString);
         if (userInfo.institution) {
           setUserInstitution(userInfo.institution);
+        }
+        if (userInfo.name) {
+          setUserName(userInfo.name);
         }
       }
     };
@@ -255,7 +259,7 @@ const DashboardScreen = ({ navigation }) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.headerAvatarText}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
+            <Text style={styles.headerAvatarText}>{userName ? userName.substring(0, 2).toUpperCase() : 'ME'}</Text>
           </TouchableOpacity>
 
           {/* Center – Search bar */}
@@ -297,9 +301,9 @@ const DashboardScreen = ({ navigation }) => {
             <View style={{ flex: 3 }}>
               <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, elevation: 2, borderWidth: 1, borderColor: theme.border, marginBottom: 24, alignItems: 'center' }}>
                 <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 12, shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>{userName ? userName.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Ananya Joshi</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{userName}</Text>
                 <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>Alumni Developer{'\n'}@ {userInstitution}</Text>
                 
                 <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />
@@ -326,7 +330,7 @@ const DashboardScreen = ({ navigation }) => {
               {/* Create Post Widget */}
               <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, elevation: 2, borderWidth: 1, borderColor: theme.border, marginBottom: 24, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.card }}>{userInstitution ? userInstitution.substring(0, 2).toUpperCase() : 'ME'}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.card }}>{userName ? userName.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
                 <TouchableOpacity 
                   style={{ flex: 1, backgroundColor: theme.inputBackground, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: theme.border }}

@@ -3,11 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, Keyb
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const CREDENTIALS = [
-  { email: 'superadmin@institution.edu', password: 'super123', role: 'superadmin', label: 'Super Admin' },
-  { email: 'admin@institution.edu', password: 'admin123', role: 'admin', label: 'Admin (Institution)' },
-];
+import { login } from '../services/authService';
 
 const AdminLoginScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -18,36 +14,41 @@ const AdminLoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       alert('Please enter your email and password');
       return;
     }
-    const matched = CREDENTIALS.find(
-      (c) => c.email === email.trim().toLowerCase() && c.password === password
-    );
-    if (!matched) {
-      alert('Invalid credentials. Please use valid admin/superadmin credentials.');
-      return;
-    }
     setLoading(true);
-    setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem('userInfo', JSON.stringify({
-          name: matched.label,
-          email: matched.email,
-          role: matched.role
-        }));
-      } catch (error) {
-        console.error('Failed to save userInfo to AsyncStorage', error);
+    const emailClean = email.toLowerCase().trim();
+    try {
+      const userData = await login({ email: emailClean, password });
+      
+      const role = userData.role;
+      if (role !== 'Admin' && role !== 'Super Admin' && role !== 'admin' && role !== 'superadmin') {
+        alert('Access denied. You do not have administrator permissions.');
+        setLoading(false);
+        return;
       }
+      
+      await AsyncStorage.setItem('userInfo', JSON.stringify({
+        token: userData.token,
+        name: userData.name || 'Admin',
+        email: userData.email,
+        institution: userData.institution || 'All',
+        role: role.toLowerCase() === 'super admin' ? 'superadmin' : role.toLowerCase() === 'superadmin' ? 'superadmin' : 'admin'
+      }));
+      
       setLoading(false);
-      if (matched.role === 'superadmin') {
+      if (role.toLowerCase() === 'super admin' || role.toLowerCase() === 'superadmin') {
         navigation.navigate('SuperAdminMain');
       } else {
         navigation.navigate('AdminMain');
       }
-    }, 800);
+    } catch (error) {
+      alert(error.response?.data?.message || error.message || 'Login failed');
+      setLoading(false);
+    }
   };
 
   const isWeb = Platform.OS === 'web';
@@ -140,19 +141,9 @@ const AdminLoginScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.infoBox}>
+          <View style={[styles.infoBox, { marginBottom: 40 }]}>
             <Ionicons name="information-circle-outline" size={20} color="#64748B" />
             <Text style={styles.infoText}>Admin accounts are pre-provisioned by the institution. Contact your IT department if you need access.</Text>
-          </View>
-
-          <View style={styles.credentialsBox}>
-            <Text style={styles.credentialsTitle}>Demo Credentials</Text>
-            {CREDENTIALS.map((cred, index) => (
-              <View key={index} style={styles.credentialRow}>
-                <Text style={[styles.credentialLabel, cred.role === 'superadmin' && { color: '#D97706' }]}>{cred.label}</Text>
-                <Text style={styles.credentialValue}>{cred.email} / {cred.password}</Text>
-              </View>
-            ))}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

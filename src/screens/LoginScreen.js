@@ -47,17 +47,7 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
 
-    if (emailClean === 'alumni@institution.edu' && password === 'alumni123') {
-      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
-        name: 'Alumni User', 
-        email: 'alumni@institution.edu',
-        institution: 'RVITM',
-        role: 'Alumni'
-      }));
-      setLoading(false);
-      navigation.navigate('Main');
-      return;
-    }
+
 
     try {
       const userData = await login({ email: emailClean, password });
@@ -169,24 +159,11 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, marginBottom: 40 }}>
             <Text style={{ color: theme.textMuted }}>{"Don't have an account? "}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
               <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Sign Up</Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-            <Text style={styles.infoText}>Use the demo credential listed below for quick access.</Text>
-          </View>
-
-          <View style={styles.credentialsBox}>
-            <Text style={styles.credentialsTitle}>Demo Credential</Text>
-            <View style={styles.credentialRow}>
-              <Text style={styles.credentialLabel}>Alumni Account</Text>
-              <Text style={styles.credentialValue}>alumni@institution.edu / alumni123</Text>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

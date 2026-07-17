@@ -12,7 +12,7 @@ const getApiUrl = () => {
   }
   // Default to the live Vercel backend so physical devices work out of the box
   // without needing a local backend server running.
-  return 'https://backend-six-dusky-31.vercel.app/api';
+  return 'https://backend-pi-bice-97.vercel.app/api';
 };
 
 export const API_URL = getApiUrl();

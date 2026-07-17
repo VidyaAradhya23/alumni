@@ -4,6 +4,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { API_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -35,7 +36,7 @@ const WelcomeScreen = ({ navigation }) => {
         const stateObj = { redirectUrl };
         const state = encodeURIComponent(JSON.stringify(stateObj));
         
-        const backendAuthUrl = 'http://localhost:5000/api/auth/linkedin/callback';
+        const backendAuthUrl = `${API_URL}/auth/linkedin/callback`;
         const clientId = 'your_linkedin_client_id'; 
         const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendAuthUrl)}&state=${state}&scope=openid%20profile%20email`;
 

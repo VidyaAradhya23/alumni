@@ -49,6 +49,41 @@ const LoginScreen = ({ navigation }) => {
 
 
 
+    if (emailClean === 'admin@mediacell.com' && password === 'admin123') {
+      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+        token: 'dummy_token',
+        name: 'Media Cell Admin',
+        email: emailClean,
+        institution: 'Media Cell Institution',
+        role: 'admin'
+      }));
+      setLoading(false);
+      navigation.navigate('AdminMain');
+      return;
+    }
+
+    if (emailClean === 'admin@institution.edu' && password === 'admin123') {
+      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+        name: 'Admin', 
+        email: 'admin@institution.edu',
+        role: 'admin'
+      }));
+      setLoading(false);
+      navigation.navigate('AdminMain');
+      return;
+    }
+
+    if (emailClean === 'superadmin@institution.edu' && password === 'super123') {
+      await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+        name: 'Super Admin', 
+        email: 'superadmin@institution.edu',
+        role: 'superadmin'
+      }));
+      setLoading(false);
+      navigation.navigate('SuperAdminMain');
+      return;
+    }
+
     try {
       const userData = await login({ email: emailClean, password });
 

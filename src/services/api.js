@@ -10,12 +10,9 @@ const getApiUrl = () => {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return 'https://backend-six-dusky-31.vercel.app/api';
-    }
-  }
-  return 'http://192.168.30.142:5000/api';
+  // Default to the live Vercel backend so physical devices work out of the box
+  // without needing a local backend server running.
+  return 'https://backend-six-dusky-31.vercel.app/api';
 };
 
 export const API_URL = getApiUrl();

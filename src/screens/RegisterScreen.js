@@ -16,7 +16,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import api from '../services/api';
+import api, { API_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { register, checkEmailExists } from '../services/authService';
 
@@ -299,7 +299,7 @@ const RegisterScreen = ({ navigation }) => {
       const stateObj = { redirectUrl };
       const state = encodeURIComponent(JSON.stringify(stateObj));
       
-      const backendAuthUrl = 'http://localhost:5000/api/auth/linkedin/callback';
+      const backendAuthUrl = `${API_URL}/auth/linkedin/callback`;
       const clientId = 'your_linkedin_client_id'; 
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendAuthUrl)}&state=${state}&scope=openid%20profile%20email`;
 

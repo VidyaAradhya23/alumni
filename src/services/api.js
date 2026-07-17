@@ -4,7 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // FOR PHYSICAL DEVICE TESTING: Replace 'localhost' with your machine's IP address (e.g. 192.168.x.x)
 // FOR EMULATOR TESTING: Use 10.0.2.2 for Android
 // FOR VERCEL DEPLOYMENT: Configure EXPO_PUBLIC_API_URL in Vercel settings
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.30.142:5000/api'; 
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://backend-six-dusky-31.vercel.app/api' : 'http://192.168.30.142:5000/api');
+const BASE_URL = API_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,

@@ -12,6 +12,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -106,6 +107,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const [adminInstitution, setAdminInstitution] = useState('All');
   const [sheetMatches, setSheetMatches] = useState({});
   const [checkingMatch, setCheckingMatch] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const loadAdminInfo = async () => {
@@ -134,6 +136,12 @@ const AdminUsersScreen = ({ navigation, route }) => {
     } catch (err) {
       console.error('Error fetching pending users:', err);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchPendingUsers();
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -581,6 +589,13 @@ const AdminUsersScreen = ({ navigation, route }) => {
               </Text>
             </View>
           )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.primary]}
+            />
+          }
         />
       )}
 

@@ -31,6 +31,7 @@ const institutions = [
   { id: 'SSMRV College', name: 'SSMRV', fullName: 'SSMRV College', icon: 'grid' },
   { id: 'RV University, Bengaluru Campus', name: 'RVU_BLR', fullName: 'RV University, Bengaluru Campus', icon: 'ribbon' },
   { id: 'RV University, Mysuru Campus', name: 'RVU_MYS', fullName: 'RV University, Mysuru Campus', icon: 'ribbon' },
+  { id: 'Media Cell Institution', name: 'MCI', fullName: 'Media Cell Institution', icon: 'camera' },
 ];
 
 const SelectInstitutionScreen = ({ navigation }) => {

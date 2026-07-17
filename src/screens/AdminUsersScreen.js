@@ -34,10 +34,35 @@ const RVCE_VERIFICATION_DB = [
   { name: 'prajwal', joining: '2008', leaving: '2011' }
 ];
 
-const checkDatabaseVerification = (name, batchYear, joiningYear) => {
+const MEDIA_CELL_VERIFICATION_DB = [
+  { name: 'arjun menon', joining: '2008', leaving: '2011' },
+  { name: 'rahul rao', joining: '2008', leaving: '2011' },
+  { name: 'gururaj', joining: '2008', leaving: '2011' },
+  { name: 'vishwas', joining: '2008', leaving: '2011' },
+  { name: 'vidya', joining: '2008', leaving: '2011' },
+  { name: 'harshitha', joining: '2008', leaving: '2011' },
+  { name: 'arun', joining: '2008', leaving: '2011' },
+  { name: 'hemanth', joining: '2008', leaving: '2011' },
+  { name: 'chaitra', joining: '2008', leaving: '2011' },
+  { name: 'pramod', joining: '2008', leaving: '2011' },
+  { name: 'kavan', joining: '2008', leaving: '2011' },
+  { name: 'prajwal', joining: '2008', leaving: '2011' }
+];
+
+const checkDatabaseVerification = (name, batchYear, joiningYear, institution) => {
   if (!name) return { verified: false, reason: 'Name is missing' };
   const cleanName = name.toLowerCase().trim();
-  const match = RVCE_VERIFICATION_DB.find(
+  
+  let dbToSearch = [];
+  if (institution === 'Media Cell Institution' || institution === 'MCI' || institution === 'Media Cell') {
+    dbToSearch = MEDIA_CELL_VERIFICATION_DB;
+  } else if (institution === 'RV College of Engineering' || institution === 'RVCE') {
+    dbToSearch = RVCE_VERIFICATION_DB;
+  } else {
+    return { verified: false, reason: 'No database record' };
+  }
+
+  const match = dbToSearch.find(
     (item) => item.name.toLowerCase().trim() === cleanName
   );
 
@@ -207,7 +232,41 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const filteredPendingUsers = useMemo(() => {
     let data = pendingUsers;
     if (isSuperAdmin && selectedInstitution !== 'All') {
-      data = data.filter(u => u.institution === selectedInstitution);
+      data = data.filter(u => {
+        if (!u.institution) return false;
+        if (u.institution === selectedInstitution) return true;
+        
+        const instMap = {
+          'MCI': 'Media Cell Institution',
+          'RVCE': 'RV College of Engineering',
+          'RVITM': 'RV Institute of Technology and Management',
+          'RVSK': 'RV-Skills',
+          'RVCA': 'RV College of Architecture',
+          'RVIM': 'RV Institute of Management',
+          'RVILS': 'MKPM RV Institute of Legal Studies',
+          'RVTC': 'RV Teachers College',
+          'DAPMRV': 'D.A. Pandu Memorial RV Dental College',
+          'RVCP': 'RV College of Physiotherapy',
+          'RVCN': 'RV College of Nursing',
+          'NMKRV': 'NMKRV College',
+          'SSMRV': 'SSMRV College',
+          'RVU_BLR': 'RV University, Bengaluru Campus',
+          'RVU_MYS': 'RV University, Mysuru Campus',
+          'RVS': 'RV School',
+          'RVGHS': 'RV Girls High School',
+          'RVPS': 'RV Public School',
+          'RVLH': 'RV Learning Hub',
+          'SSMRVPU': 'SSMRV PU College',
+          'NMKRVPU': 'NMKRV PU College',
+          'RVPU_JAY': 'RV PU College Jayanagar',
+          'RVPU_NOR': 'RV PU College North',
+          'RVPU_SOU': 'RV PU College South',
+          'RVPU_ECI': 'RV PU College, E-City',
+          'RVPU_HAR': 'RV PU College, Harohalli',
+          'RVPU_MYS': 'RV PU College, Mysuru'
+        };
+        return instMap[selectedInstitution] === u.institution;
+      });
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -320,7 +379,9 @@ const AdminUsersScreen = ({ navigation, route }) => {
   );
 
   const renderPendingItem = ({ item }) => {
-    const check = checkDatabaseVerification(item.name, item.batch_year, item.joining_year);
+    const batchYear = item.batch_year || item.batchYear;
+    const joiningYear = item.joining_year || item.joiningYear;
+    const check = checkDatabaseVerification(item.name, batchYear, joiningYear, item.institution);
     
     return (
       <View style={styles.friendCard}>
@@ -329,10 +390,10 @@ const AdminUsersScreen = ({ navigation, route }) => {
         </View>
         <View style={styles.friendInfo}>
           <Text style={styles.friendName}>{item.name || 'Unknown'}</Text>
-          <Text style={styles.friendDetail}>{item.department || 'No Dept'} • Batch {item.batch_year || 'N/A'}</Text>
+          <Text style={styles.friendDetail}>{item.department || 'No Dept'} • Batch {batchYear || 'N/A'}</Text>
           <Text style={styles.friendDetailSub}>{item.institution || 'No Institution'} • {item.email}</Text>
-          {item.joining_year && (
-            <Text style={styles.friendDetailSub}>Joining Year: {item.joining_year}</Text>
+          {joiningYear && (
+            <Text style={styles.friendDetailSub}>Joining Year: {joiningYear}</Text>
           )}
           
           <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center' }}>
@@ -600,7 +661,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
                 <>
                   <Text style={styles.filterGroupLabel}>Institution</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH'].map((inst) => (
+                    {['All', 'RVCE', 'RVITM', 'RVPU', 'RVIS', 'RVU', 'RVCA', 'RVIM', 'RVILS', 'DAPMRV', 'RVCN', 'RVCP', 'RVTC', 'RVTTI', 'NMKRV', 'SSMRV', 'RVPS', 'RVS', 'RVLH', 'MCI'].map((inst) => (
                       <TouchableOpacity
                         key={inst}
                         style={[styles.pill, selectedInstitution === inst && styles.pillActive]}

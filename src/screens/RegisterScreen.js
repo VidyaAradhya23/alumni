@@ -30,7 +30,8 @@ const institutions = [
   'RV Institute of Management', 'MKPM RV Institute of Legal Studies', 
   'RV Teachers College', 'D.A. Pandu Memorial RV Dental College', 
   'RV College of Physiotherapy', 'RV College of Nursing', 'NMKRV College', 
-  'SSMRV College', 'RV University, Bengaluru Campus', 'RV University, Mysuru Campus'
+  'SSMRV College', 'RV University, Bengaluru Campus', 'RV University, Mysuru Campus',
+  'Media Cell Institution'
 ];
 
 const institutionDepartments = {
@@ -150,6 +151,15 @@ const institutionDepartments = {
     "School of Business", 
     "School of Economics and Finance", 
     "School of Liberal Arts & Sciences"
+  ],
+  'Media Cell Institution': [
+    "Photography",
+    "Videography",
+    "Content Writing",
+    "Design",
+    "Social Media",
+    "General",
+    "Other"
   ]
 };
 

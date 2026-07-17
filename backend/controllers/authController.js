@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const StudentData = require('../models/StudentData');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { sendWelcomeEmail } = require('../utils/sendEmail');
@@ -48,6 +49,19 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Check against Mediacell StudentData
+        let isVerifiedByMediacell = false;
+        if (name && joiningYear && batchYear) {
+            const studentMatch = await StudentData.findOne({
+                name: name.trim().toLowerCase(),
+                joiningYear: joiningYear.trim(),
+                leavingYear: batchYear.trim() // batchYear acts as leavingYear
+            });
+            if (studentMatch) {
+                isVerifiedByMediacell = true;
+            }
+        }
+
         const user = await User.create({
             name,
             email: email.trim().toLowerCase(),
@@ -58,7 +72,8 @@ exports.registerUser = async (req, res) => {
             batchYear,
             joiningYear,
             role: role || 'Alumni',
-            is_approved: false // Default to false pending admin approval
+            is_approved: false, // Default to false pending admin approval
+            isVerifiedByMediacell
         });
 
         // Fire and forget welcome email

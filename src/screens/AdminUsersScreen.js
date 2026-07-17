@@ -379,9 +379,8 @@ const AdminUsersScreen = ({ navigation, route }) => {
   );
 
   const renderPendingItem = ({ item }) => {
-    const batchYear = item.batch_year || item.batchYear;
+    const batchYear = item.batch_year || item.batchYear || item.leavingYear;
     const joiningYear = item.joining_year || item.joiningYear;
-    const check = checkDatabaseVerification(item.name, batchYear, joiningYear, item.institution);
     
     return (
       <View style={styles.friendCard}>
@@ -397,15 +396,15 @@ const AdminUsersScreen = ({ navigation, route }) => {
           )}
           
           <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center' }}>
-            {check.verified ? (
+            {item.isVerifiedByMediacell ? (
               <View style={{ backgroundColor: '#DEF7EC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="checkmark-circle" size={13} color="#03543F" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700' }}>✓ Verified DB Match</Text>
+                <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700' }}>✓ Mediacell Verified</Text>
               </View>
             ) : (
               <View style={{ backgroundColor: '#FDE8E8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="close-circle" size={13} color="#9B1C1C" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 11, color: '#9B1C1C', fontWeight: '700' }}>✗ {check.reason}</Text>
+                <Text style={{ fontSize: 11, color: '#9B1C1C', fontWeight: '700' }}>✗ Not Verified by Mediacell</Text>
               </View>
             )}
           </View>

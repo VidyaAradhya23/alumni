@@ -196,18 +196,12 @@ const MASTER_BATCHES = ['2015', '2016', '2017', '2018', '2019', '2020', '2021', 
 const MASTER_COMPANIES = ['Cisco Systems', 'Accenture', 'Qualcomm', 'Infosys', 'Wipro', 'TCS', 'IBM', 'Amazon', 'Google', 'Microsoft', 'Oracle', 'SAP'];
 
 const panelItems = [
-  { id: '1', title: 'Spam/Report', icon: 'flag-outline', color: '#FFF5F5', iconColor: '#E53E3E', moduleName: 'spam_report', desc: 'Accounts flagged for spam or abuse' },
-  { id: '2', title: 'Welcome Mail', icon: 'mail-open-outline', color: '#F0F9FF', iconColor: '#0284C7', moduleName: 'welcome_mail', desc: 'Compose welcome mails to admins only' },
-  { id: '3', title: 'Master List', icon: 'list-outline', color: '#F0FDF4', iconColor: '#16A34A', moduleName: 'master_list', desc: 'Institutions, locations, batches & companies' },
-  { id: '4', title: 'Administrator', icon: 'person-add-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'administrator', desc: 'Manage institution administrators' },
-  { id: '5', title: 'Membership Request', icon: 'checkbox-outline', color: '#FFF7ED', iconColor: '#EA580C', moduleName: 'membership_request', desc: 'Approve or delete membership applications' },
-  { id: '6', title: 'Network Settings', icon: 'settings-outline', color: '#F5F3FF', iconColor: '#7C3AED', moduleName: 'network_settings', desc: 'AlmaConnect-style institution configs' },
-  { id: '7', title: 'Bulk Import', icon: 'cloud-upload-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'bulk_import', desc: 'Bulk import alumni profiles via CSV' },
-  { id: '8', title: 'Placement Tool', icon: 'briefcase-outline', color: '#FAF5FF', iconColor: '#9333EA', moduleName: 'placement_tool', desc: 'View and update hiring statistics' },
-  { id: '9', title: 'Logs/Stats', icon: 'bar-chart-outline', color: '#FFF1F2', iconColor: '#E11D48', moduleName: 'logs_stats', desc: 'Database, visitors, jobs & email charts' },
-  { id: '10', title: 'Dynamic Email Stats', icon: 'analytics-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'email_stats', desc: 'Track invite and campaign mail open rates' },
-  { id: '11', title: 'Data Exports', icon: 'download-outline', color: '#EFF6FF', iconColor: '#3B82F6', moduleName: 'data_exports', desc: 'Export institution directories' },
-  { id: '12', title: 'Admin Activities', icon: 'time-outline', color: '#F1F5F9', iconColor: '#475569', moduleName: 'admin_activities', desc: 'Audit log of actions taken by admins' },
+  { id: '1', title: 'Administrator', icon: 'person-add-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'administrator', desc: 'Manage institution administrators' },
+  { id: '2', title: 'Network Settings', icon: 'settings-outline', color: '#F5F3FF', iconColor: '#7C3AED', moduleName: 'network_settings', desc: 'AlmaConnect-style institution configs' },
+  { id: '3', title: 'Bulk Import', icon: 'cloud-upload-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'bulk_import', desc: 'Bulk import alumni profiles via CSV' },
+  { id: '4', title: 'Logs/Stats', icon: 'bar-chart-outline', color: '#FFF1F2', iconColor: '#E11D48', moduleName: 'logs_stats', desc: 'Database, visitors, jobs & email charts' },
+  { id: '5', title: 'Admin Activities', icon: 'time-outline', color: '#F1F5F9', iconColor: '#475569', moduleName: 'admin_activities', desc: 'Audit log of actions taken by admins' },
+  { id: '6', title: 'Master List', icon: 'list-outline', color: '#F0FDF4', iconColor: '#16A34A', moduleName: 'master_list', desc: 'Institutions, locations, batches & companies' },
 ];
 
 const MOCK_POSTS = [];

@@ -159,12 +159,12 @@ const AdminUsersScreen = ({ navigation, route }) => {
     try {
       await approveUser(userId);
       
-      const approvedUser = pendingUsers.find(u => u.id === userId);
+      const approvedUser = pendingUsers.find(u => u._id === userId);
       if (approvedUser && approvedUser.email) {
         await sendWelcomeEmail(approvedUser.email, approvedUser.name || 'Alumnus');
       }
 
-      setPendingUsers(prev => prev.filter(u => u.id !== userId));
+      setPendingUsers(prev => prev.filter(u => u._id !== userId));
       alert('User approved successfully. Welcome email triggered.');
     } catch (err) {
       alert('Error approving user: ' + err.message);
@@ -174,7 +174,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const handleReject = async (userId) => {
     try {
       await rejectUser(userId);
-      setPendingUsers(prev => prev.filter(u => u.id !== userId));
+      setPendingUsers(prev => prev.filter(u => u._id !== userId));
       alert('User rejected and removed.');
     } catch (err) {
       alert('Error rejecting user: ' + err.message);
@@ -439,14 +439,14 @@ const AdminUsersScreen = ({ navigation, route }) => {
         <View style={{ flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
           <TouchableOpacity 
             style={[styles.messageBtn, { backgroundColor: theme.success, borderColor: theme.success }]} 
-            onPress={() => handleApprove(item.id)}
+            onPress={() => handleApprove(item._id)}
             activeOpacity={0.7}
           >
             <Text style={[styles.messageBtnText, { color: '#FFF' }]}>Approve</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.messageBtn, { borderColor: theme.danger }]} 
-            onPress={() => handleReject(item.id)}
+            onPress={() => handleReject(item._id)}
             activeOpacity={0.7}
           >
             <Text style={[styles.messageBtnText, { color: theme.danger }]}>Reject</Text>

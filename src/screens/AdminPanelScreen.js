@@ -59,16 +59,14 @@ const INITIAL_ACTIVITIES = [
 ];
 
 const panelItems = [
-  { id: '1', title: 'Spam/Report', icon: 'flag-outline', color: '#FFF5F5', iconColor: '#E53E3E', moduleName: 'spam_report', desc: 'Accounts flagged for spam or abuse' },
-  { id: '2', title: 'Welcome Mail', icon: 'mail-open-outline', color: '#F0F9FF', iconColor: '#0284C7', moduleName: 'welcome_mail', desc: 'Set automated welcomes for new joiners' },
-  { id: '3', title: 'Master List', icon: 'people-outline', color: '#F0FDF4', iconColor: '#16A34A', moduleName: 'master_list', desc: 'Search and view institution alumni directory' },
-  { id: '4', title: 'Membership Request', icon: 'checkbox-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'membership_request', desc: 'Approve or reject pending signups' },
-  { id: '5', title: 'Placement Tool', icon: 'briefcase-outline', color: '#FAF5FF', iconColor: '#9333EA', moduleName: 'placement_tool', desc: 'Track companies employing alumni' },
-  { id: '6', title: 'Dynamic Email Stats', icon: 'analytics-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'email_stats', desc: 'Track invite and custom mail open rates' },
-  { id: '7', title: 'Mentor Application', icon: 'git-pull-request-outline', color: '#FFF7ED', iconColor: '#EA580C', moduleName: 'mentor_application', desc: 'Approve mentor and mentee requests' },
-  { id: '8', title: 'Admin Activities', icon: 'time-outline', color: '#F1F5F9', iconColor: '#475569', moduleName: 'admin_activities', desc: 'Past interactions and task log' },
-  { id: '9', title: 'Data Exports', icon: 'download-outline', color: '#EFF6FF', iconColor: '#3B82F6', moduleName: 'data_exports', desc: 'Export verified alumni directory to CSV' },
-  { id: '10', title: 'Dashboard Overview', icon: 'pie-chart-outline', color: '#EEF2FF', iconColor: '#4F46E5', moduleName: 'dashboard_overview', desc: 'High-level metrics and quick actions' },
+  { id: '1', title: 'Dashboard Overview', icon: 'pie-chart-outline', color: '#EEF2FF', iconColor: '#4F46E5', moduleName: 'dashboard_overview', desc: 'High-level metrics and quick actions' },
+  { id: '2', title: 'Membership Request', icon: 'checkbox-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'membership_request', desc: 'Approve or reject pending signups' },
+  { id: '3', title: 'Placement Tool', icon: 'briefcase-outline', color: '#FAF5FF', iconColor: '#9333EA', moduleName: 'placement_tool', desc: 'Track companies employing alumni' },
+  { id: '4', title: 'Mentor Application', icon: 'git-pull-request-outline', color: '#FFF7ED', iconColor: '#EA580C', moduleName: 'mentor_application', desc: 'Approve mentor and mentee requests' },
+  { id: '5', title: 'Welcome Mail', icon: 'mail-open-outline', color: '#F0F9FF', iconColor: '#0284C7', moduleName: 'welcome_mail', desc: 'Set automated welcomes for new joiners' },
+  { id: '6', title: 'Spam/Report', icon: 'flag-outline', color: '#FFF5F5', iconColor: '#E53E3E', moduleName: 'spam_report', desc: 'Accounts flagged for spam or abuse' },
+  { id: '7', title: 'Dynamic Email Stats', icon: 'analytics-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'email_stats', desc: 'Track invite and custom mail open rates' },
+  { id: '8', title: 'Data Exports', icon: 'download-outline', color: '#EFF6FF', iconColor: '#3B82F6', moduleName: 'data_exports', desc: 'Export verified alumni directory to CSV' },
 ];
 
 export default function AdminPanelScreen({ navigation }) {

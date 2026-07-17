@@ -11,8 +11,19 @@ export const getDashboardStats = async (institution) => {
 };
 
 export const approveUser = async (userId) => {
-    const { data } = await api.put(`/admin/users/${userId}/approve`);
-    return data;
+  try {
+    const userInfoStr = await AsyncStorage.getItem('userInfo');
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo.token === 'dummy_token') {
+        // Option B: Mock successful approval
+        return { message: 'Mock user approved successfully' };
+      }
+    }
+  } catch (e) {}
+
+  const { data } = await api.put(`/admin/users/${userId}/approve`);
+  return data;
 };
 
 export const getPendingUsers = async (institution = undefined) => {
@@ -48,8 +59,19 @@ export const getPendingUsers = async (institution = undefined) => {
 };
 
 export const rejectUser = async (userId) => {
-    const { data } = await api.delete(`/admin/users/${userId}/reject`);
-    return data;
+  try {
+    const userInfoStr = await AsyncStorage.getItem('userInfo');
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo.token === 'dummy_token') {
+        // Option B: Mock successful rejection
+        return { message: 'Mock user rejected successfully' };
+      }
+    }
+  } catch (e) {}
+
+  const { data } = await api.delete(`/admin/users/${userId}/reject`);
+  return data;
 };
 
 export const updateUserRole = async (userId, role) => {

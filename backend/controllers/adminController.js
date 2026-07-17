@@ -127,3 +127,40 @@ exports.updateUserRole = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+const StudentData = require('../models/StudentData');
+
+// @desc    Check potential Mediacell matches for a user
+// @route   GET /api/admin/users/:id/check-match
+exports.checkMatch = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Search for matches in StudentData based on joiningYear or leavingYear
+        // We'll search for partial name match or exact year match
+        let query = {};
+        if (user.name) {
+            query.name = { $regex: user.name.trim(), $options: 'i' };
+        }
+        
+        let matches = await StudentData.find(query);
+        
+        if (matches.length === 0) {
+            // Fallback: search by batchYear or joiningYear
+            let yearQuery = { $or: [] };
+            if (user.joiningYear) yearQuery.$or.push({ joiningYear: user.joiningYear.trim() });
+            if (user.batchYear) yearQuery.$or.push({ leavingYear: user.batchYear.trim() });
+            
+            if (yearQuery.$or.length > 0) {
+                 matches = await StudentData.find(yearQuery).limit(5); // Return up to 5 suggested matches based on year
+            }
+        }
+
+        res.json({ matches });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

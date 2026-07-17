@@ -104,6 +104,8 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const [communities, setCommunities] = useState(COMMUNITIES_DATA);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [adminInstitution, setAdminInstitution] = useState('All');
+  const [sheetMatches, setSheetMatches] = useState({});
+  const [checkingMatch, setCheckingMatch] = useState({});
 
   useEffect(() => {
     const loadAdminInfo = async () => {
@@ -139,6 +141,19 @@ const AdminUsersScreen = ({ navigation, route }) => {
       fetchPendingUsers();
     }
   }, [isFocused, adminInstitution]);
+
+  const handleCheckMatch = async (userId) => {
+    try {
+      setCheckingMatch(prev => ({ ...prev, [userId]: true }));
+      const { checkMatch } = require('../services/adminService');
+      const response = await checkMatch(userId);
+      setSheetMatches(prev => ({ ...prev, [userId]: response.matches || [] }));
+    } catch (err) {
+      alert('Error checking sheet match: ' + err.message);
+    } finally {
+      setCheckingMatch(prev => ({ ...prev, [userId]: false }));
+    }
+  };
 
   const handleApprove = async (userId) => {
     try {
@@ -381,6 +396,8 @@ const AdminUsersScreen = ({ navigation, route }) => {
   const renderPendingItem = ({ item }) => {
     const batchYear = item.batch_year || item.batchYear || item.leavingYear;
     const joiningYear = item.joining_year || item.joiningYear;
+    const matches = sheetMatches[item.id] || [];
+    const isChecking = checkingMatch[item.id];
     
     return (
       <View style={styles.friendCard}>
@@ -395,16 +412,26 @@ const AdminUsersScreen = ({ navigation, route }) => {
             <Text style={styles.friendDetailSub}>Joining Year: {joiningYear}</Text>
           )}
           
-          <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center' }}>
-            {item.isVerifiedByMediacell ? (
-              <View style={{ backgroundColor: '#DEF7EC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="checkmark-circle" size={13} color="#03543F" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700' }}>✓ Mediacell Verified</Text>
-              </View>
+          <View style={{ marginTop: 6 }}>
+            {!matches.length ? (
+              <TouchableOpacity 
+                style={{ backgroundColor: '#E1EFFF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' }}
+                onPress={() => handleCheckMatch(item.id)}
+                disabled={isChecking}
+              >
+                <Ionicons name="search" size={13} color="#1E40AF" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 11, color: '#1E40AF', fontWeight: '700' }}>
+                  {isChecking ? 'Checking...' : 'Check Sheet Data'}
+                </Text>
+              </TouchableOpacity>
             ) : (
-              <View style={{ backgroundColor: '#FDE8E8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="close-circle" size={13} color="#9B1C1C" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 11, color: '#9B1C1C', fontWeight: '700' }}>✗ Not Verified by Mediacell</Text>
+              <View style={{ backgroundColor: '#DEF7EC', padding: 8, borderRadius: 8, marginTop: 4 }}>
+                <Text style={{ fontSize: 11, color: '#03543F', fontWeight: '700', marginBottom: 2 }}>Suggested Matches:</Text>
+                {matches.map((m, idx) => (
+                  <Text key={idx} style={{ fontSize: 11, color: '#03543F' }}>
+                    • {m.name} ({m.joiningYear} - {m.leavingYear})
+                  </Text>
+                ))}
               </View>
             )}
           </View>

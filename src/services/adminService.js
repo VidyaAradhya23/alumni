@@ -95,3 +95,8 @@ export const getAllUsers = async () => {
     const { data } = await api.get('/auth/users');
     return data;
 };
+
+export const checkMatch = async (userId) => {
+    const { data } = await api.get(`/admin/users/${userId}/check-match`);
+    return data;
+};

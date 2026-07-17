@@ -41,6 +41,23 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/activity', activityRoutes);
 
+// Temporary endpoint to grant Admin access to an account
+app.get('/api/make-admin/:email', async (req, res) => {
+    try {
+        const User = require('./models/User');
+        const user = await User.findOne({ email: req.params.email.toLowerCase() });
+        if (!user) return res.send('User not found in live database.');
+        
+        user.role = 'Super Admin';
+        user.isAdmin = true;
+        user.is_approved = true;
+        await user.save();
+        res.send('Success! User is now a Super Admin. You can now log in normally without bypasses.');
+    } catch (e) {
+        res.send('Error: ' + e.message);
+    }
+});
+
 app.get('/', (req, res) => {
     res.send('RVITM Alumni API is running...');
 });

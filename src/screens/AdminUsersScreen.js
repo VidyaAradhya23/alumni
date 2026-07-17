@@ -145,10 +145,18 @@ const AdminUsersScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    if (isFocused) {
+    let interval;
+    if (isFocused && activeTab === 'pending') {
       fetchPendingUsers();
+      // Poll every 10 seconds silently
+      interval = setInterval(() => {
+        fetchPendingUsers();
+      }, 10000);
     }
-  }, [isFocused, adminInstitution]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isFocused, activeTab, adminInstitution]);
 
   const handleCheckMatch = async (userId) => {
     try {

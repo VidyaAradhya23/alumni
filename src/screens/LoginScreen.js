@@ -49,7 +49,19 @@ const LoginScreen = ({ navigation }) => {
 
 
 
-    // No bypasses anymore, real auth is required
+    // Local Bypass for Media Cell Institution Admin (Demo Mode Option B)
+    if (emailClean === 'admin@mediacell.com' && password === 'admin123') {
+      await AsyncStorage.setItem('userInfo', JSON.stringify({
+        token: 'dummy_token',
+        name: 'Media Cell Admin',
+        email: emailClean,
+        institution: 'Media Cell Institution',
+        role: 'admin'
+      }));
+      setLoading(false);
+      navigation.navigate('AdminMain');
+      return;
+    }
 
     if (emailClean === 'superadmin@institution.edu' && password === 'super123') {
       await AsyncStorage.setItem('userInfo', JSON.stringify({ 

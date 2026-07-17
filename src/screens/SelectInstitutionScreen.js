@@ -38,8 +38,10 @@ const SelectInstitutionScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
+  const [selectionMode, setSelectionMode] = useState('list'); // 'list' or 'custom'
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
+  const [customInstitution, setCustomInstitution] = useState('');
 
   const filtered = institutions.filter(inst => 
     inst.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -57,60 +59,107 @@ const SelectInstitutionScreen = ({ navigation }) => {
         <Text style={styles.title}>Institutions</Text>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#94A3B8" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search Institution..."
-          placeholderTextColor="#94A3B8"
-          value={search}
-          onChangeText={setSearch}
-          clearButtonMode="while-editing"
-          autoCapitalize="none"
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-        )}
+      {/* Selection Mode Tabs */}
+      <View style={styles.modeTabs}>
+        <TouchableOpacity 
+          style={[styles.modeTab, selectionMode === 'list' && styles.modeTabActive]}
+          onPress={() => {
+            setSelectionMode('list');
+            setCustomInstitution('');
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.modeTabText, selectionMode === 'list' && styles.modeTabTextActive]}>Choose from List</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.modeTab, selectionMode === 'custom' && styles.modeTabActive]}
+          onPress={() => {
+            setSelectionMode('custom');
+            setSelected(null);
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.modeTabText, selectionMode === 'custom' && styles.modeTabTextActive]}>Type Custom Name</Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.listContainer}>
-          {filtered.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.listItem,
-                selected === item.id && styles.selectedListItem
-              ]}
-              onPress={() => setSelected(item.id)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.radioContainer}>
-                <View style={[styles.outerRadio, selected === item.id && styles.outerRadioSelected]}>
-                  {selected === item.id && <View style={styles.innerRadio} />}
-                </View>
-              </View>
-              <Text style={[
-                styles.listItemText,
-                selected === item.id && styles.selectedListItemText
-              ]}>{item.fullName} ({item.name})</Text>
-            </TouchableOpacity>
-          ))}
+      {selectionMode === 'list' ? (
+        <>
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#94A3B8" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Institution..."
+              placeholderTextColor="#94A3B8"
+              value={search}
+              onChangeText={setSearch}
+              clearButtonMode="while-editing"
+              autoCapitalize="none"
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Ionicons name="close-circle" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <ScrollView style={styles.list} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <View style={styles.listContainer}>
+              {filtered.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.listItem,
+                    selected === item.id && styles.selectedListItem
+                  ]}
+                  onPress={() => setSelected(item.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.radioContainer}>
+                    <View style={[styles.outerRadio, selected === item.id && styles.outerRadioSelected]}>
+                      {selected === item.id && <View style={styles.innerRadio} />}
+                    </View>
+                  </View>
+                  <Text style={[
+                    styles.listItemText,
+                    selected === item.id && styles.selectedListItemText
+                  ]}>{item.fullName} ({item.name})</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </>
+      ) : (
+        <View style={styles.customInputContainer}>
+          <Text style={styles.customInputLabel}>Institution Name</Text>
+          <View style={styles.customTextInputWrapper}>
+            <Ionicons name="business-outline" size={20} color={theme.primary} style={{ marginRight: 12 }} />
+            <TextInput
+              style={styles.customTextInput}
+              placeholder="e.g. Harvard University, Stanford"
+              placeholderTextColor="#94A3B8"
+              value={customInstitution}
+              onChangeText={setCustomInstitution}
+              autoCapitalize="words"
+            />
+          </View>
         </View>
-      </ScrollView>
+      )}
 
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={[styles.button, !selected && styles.disabledButton]}
-          disabled={!selected}
+          style={[
+            styles.button, 
+            ((selectionMode === 'list' && !selected) || (selectionMode === 'custom' && !customInstitution.trim())) && styles.disabledButton
+          ]}
+          disabled={(selectionMode === 'list' && !selected) || (selectionMode === 'custom' && !customInstitution.trim())}
           onPress={async () => {
-            if (selected) {
-              global.selectedInstitution = selected;
+            const finalSelection = selectionMode === 'list' ? selected : customInstitution.trim();
+            if (finalSelection) {
+              global.selectedInstitution = finalSelection;
               try {
-                await AsyncStorage.setItem('selectedInstitution', selected);
+                await AsyncStorage.setItem('selectedInstitution', finalSelection);
               } catch (e) {
                 console.error(e);
               }
@@ -250,7 +299,64 @@ const getStyles = (theme) => StyleSheet.create({
     color: theme.card,
     fontSize: 16,
     fontWeight: '700',
-  }
+  },
+  modeTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 4,
+    marginHorizontal: 24,
+    marginBottom: 20,
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  modeTabActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modeTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  modeTabTextActive: {
+    color: theme.primary,
+    fontWeight: '700',
+  },
+  customInputContainer: {
+    paddingHorizontal: 24,
+    marginTop: 10,
+    flex: 1,
+  },
+  customInputLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 8,
+  },
+  customTextInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.background,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 52,
+  },
+  customTextInput: {
+    flex: 1,
+    fontSize: 15,
+    color: theme.primary,
+  },
 });
 
 export default SelectInstitutionScreen;

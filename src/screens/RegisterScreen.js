@@ -204,6 +204,7 @@ const RegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
+  const [isCustomInstitution, setIsCustomInstitution] = useState(false);
 
   const handleRegister = async () => {
     const { name, email, password, institution, branch, batchYear, joiningYear } = formData;
@@ -397,36 +398,66 @@ const RegisterScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Institution</Text>
-              <TouchableOpacity 
-                style={styles.selector} 
-                onPress={() => openPicker('institution')}
-              >
-                <Text style={[styles.selectorText, !formData.institution && { color: theme.textMuted }]}>
-                  {formData.institution || 'Select Institution'}
-                </Text>
-                <Text style={styles.arrow}>▼</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.label}>Institution</Text>
+                <TouchableOpacity onPress={() => {
+                  setIsCustomInstitution(!isCustomInstitution);
+                  setFormData({ ...formData, institution: '', branch: '' });
+                }}>
+                  <Text style={{ color: '#FFD700', fontSize: 12, fontWeight: '700' }}>
+                    {isCustomInstitution ? "Select from list" : "Type custom name"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {isCustomInstitution ? (
+                <TextInput 
+                  style={styles.input}
+                  placeholder="Enter your custom institution name"
+                  placeholderTextColor="#94A3B8"
+                  value={formData.institution}
+                  onChangeText={(text) => setFormData({ ...formData, institution: text, branch: '' })}
+                />
+              ) : (
+                <TouchableOpacity 
+                  style={styles.selector} 
+                  onPress={() => openPicker('institution')}
+                >
+                  <Text style={[styles.selectorText, !formData.institution && { color: theme.textMuted }]}>
+                    {formData.institution || 'Select Institution'}
+                  </Text>
+                  <Text style={styles.arrow}>▼</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.row}>
               <View style={[styles.inputContainer, { flex: 1.5, marginRight: 10 }]}>
                 <Text style={styles.label}>Department</Text>
-                <TouchableOpacity 
-                  style={[styles.selector, !formData.institution && { opacity: 0.6 }]} 
-                  onPress={() => {
-                    if (!formData.institution) {
-                      alert('Please select an institution first');
-                      return;
-                    }
-                    openPicker('branch');
-                  }}
-                >
-                  <Text style={[styles.selectorText, !formData.branch && { color: theme.textMuted }]}>
-                    {formData.branch || 'Select Dept'}
-                  </Text>
-                  <Text style={styles.arrow}>▼</Text>
-                </TouchableOpacity>
+                {isCustomInstitution ? (
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="e.g. CSE, ECE"
+                    placeholderTextColor="#94A3B8"
+                    value={formData.branch}
+                    onChangeText={(text) => setFormData({ ...formData, branch: text })}
+                  />
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.selector, !formData.institution && { opacity: 0.6 }]} 
+                    onPress={() => {
+                      if (!formData.institution) {
+                        alert('Please select an institution first');
+                        return;
+                      }
+                      openPicker('branch');
+                    }}
+                  >
+                    <Text style={[styles.selectorText, !formData.branch && { color: theme.textMuted }]}>
+                      {formData.branch || 'Select Dept'}
+                    </Text>
+                    <Text style={styles.arrow}>▼</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>

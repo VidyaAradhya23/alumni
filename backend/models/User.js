@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     avatar_url: { type: String },
     role: { type: String, enum: ['Alumni', 'Admin', 'Super Admin'], default: 'Alumni' },
     is_approved: { type: Boolean, default: false },
+    isVerifiedByMediacell: { type: Boolean, default: false },
     verified: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     authProvider: { type: String, default: 'local' },

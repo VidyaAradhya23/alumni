@@ -15,14 +15,20 @@ const activityLogger = require('./middleware/activityLogger');
 
 dotenv.config();
 
-// Connect to Database
-connectDB();
+// We will connect inside a middleware to ensure Serverless cold starts wait for DB
+// connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Ensure database is connected before handling any requests
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 app.use(activityLogger);
 
 app.use('/api/auth', authRoutes);

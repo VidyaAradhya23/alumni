@@ -66,7 +66,9 @@ const LoginScreen = ({ navigation }) => {
       await AsyncStorage.setItem('userInfo', JSON.stringify({ 
         name: 'Test Admin', 
         email: 'testadmin@institution.edu',
-        role: 'Admin'
+        role: 'Admin',
+        institution: 'Media Cell Institution', // Provide a real institution so it can fetch users
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNTlmMzJhNmY3NmUxODFjYTg4Yjc3YSIsImlhdCI6MTc4NDI4MTE2MiwiZXhwIjoxNzg2ODczMTYyfQ.tCgKkvSUnJLcK_lenejGRYAqhXJik2HxglqrydpafBI'
       }));
       setLoading(false);
       navigation.navigate('AdminMain');

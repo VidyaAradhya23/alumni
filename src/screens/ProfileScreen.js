@@ -61,7 +61,9 @@ const ProfileScreen = ({ navigation }) => {
             batch: data.batch_year || 'Not specified',
             bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
             linkedin: data.linkedin || '',
-            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU'
+            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU',
+            followers: mockConnections.length.toString(),
+            following: mockFollowing.length.toString(),
           }));
         }
       } catch (e) {
@@ -94,7 +96,16 @@ const ProfileScreen = ({ navigation }) => {
   const posts = [];
   const mockTags = [];
   const mockSaved = [];
-  const mockConnections = [];
+  const mockConnections = [
+    { id: 'c1', name: 'Rohan K.', title: 'Batch of 2021', avatar: 'RK' },
+    { id: 'c2', name: 'Priya S.', title: 'Software Dev @ Google', avatar: 'PS' },
+    { id: 'c3', name: 'Rahul M.', title: 'Batch of 2018', avatar: 'RM' },
+    { id: 'c4', name: 'Karan G.', title: 'Product Manager', avatar: 'KG' },
+  ];
+  const mockFollowing = [
+    { id: 'f1', name: 'Dr. Satish Kumar', title: 'Staff Engineer @ Google', avatar: 'SK' },
+    { id: 'f2', name: 'Ananya Joshi', title: 'SDE-2 @ Microsoft', avatar: 'AJ' },
+  ];
   const mockReshares = [];
 
   const handleSettings = () => {

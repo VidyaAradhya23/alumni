@@ -104,10 +104,10 @@ const DashboardScreen = ({ navigation }) => {
   ];
 
   const suggestions = [
-    { id: 's1', name: 'Rohan K.', avatar: 'RK', subtitle: 'Batch of 2021 • CSE' },
-    { id: 's2', name: 'Priya S.', avatar: 'PS', subtitle: 'Software Dev @ Google' },
-    { id: 's3', name: 'Rahul M.', avatar: 'RM', subtitle: 'Batch of 2018 • ME' },
-    { id: 's4', name: 'Karan G.', avatar: 'KG', subtitle: 'Product Manager @ MSFT' },
+    { id: 's1', name: 'Rohan K.', avatar: 'RK', subtitle: `Batch of 2021 • ${userInstitution}` },
+    { id: 's2', name: 'Priya S.', avatar: 'PS', subtitle: `Software Dev @ Google • ${userInstitution} Alumni` },
+    { id: 's3', name: 'Rahul M.', avatar: 'RM', subtitle: `Batch of 2018 • ${userInstitution}` },
+    { id: 's4', name: 'Karan G.', avatar: 'KG', subtitle: `Product Manager • ${userInstitution} Alumni` },
   ];
 
   const eventsAndJobs = [

@@ -55,3 +55,18 @@ export const unblockUser = async (blockedId) => {
     const { data } = await api.delete(`/blocks/${blockedId}`);
     return data;
 };
+
+export const getSuggestions = async () => {
+    const { data } = await api.get('/auth/suggestions');
+    return data;
+};
+
+export const getPosts = async () => {
+    const { data } = await api.get('/posts');
+    return data;
+};
+
+export const getEvents = async () => {
+    const { data } = await api.get('/events');
+    return data;
+};

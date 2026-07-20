@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollVi
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, changePassword, deleteAccount } from '../services/authService';
+import { getProfile, updateProfile, changePassword, deleteAccount, getSuggestions, getPosts } from '../services/authService';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -34,29 +34,20 @@ const ProfileScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('post'); // 'post' | 'reshare' | 'saved' | 'tags'
   const [listModalType, setListModalType] = useState(null); // 'connections' | 'following'
   
-  // Profile Data State
-  // Mock data for connections and following
-  const mockConnections = [
-    { id: 'c1', name: 'Rohan K.', title: 'Batch of 2021', avatar: 'RK' },
-    { id: 'c2', name: 'Priya S.', title: 'Software Dev @ Google', avatar: 'PS' },
-    { id: 'c3', name: 'Rahul M.', title: 'Batch of 2018', avatar: 'RM' },
-    { id: 'c4', name: 'Karan G.', title: 'Product Manager', avatar: 'KG' },
-  ];
-  const mockFollowing = [
-    { id: 'f1', name: 'Dr. Satish Kumar', title: 'Staff Engineer @ Google', avatar: 'SK' },
-    { id: 'f2', name: 'Ananya Joshi', title: 'SDE-2 @ Microsoft', avatar: 'AJ' },
-  ];
+  // Real data states for connections and following
+  const [connections, setConnections] = useState([]);
+  const [following, setFollowing] = useState([]);
 
   const [profileData, setProfileData] = useState({
-    username: 'abhishek_institution',
+    username: 'loading',
     name: 'Loading...',
     branch: 'Loading...',
     batch: 'Loading...',
     bio: '',
     linkedin: '',
     posts: '0',
-    followers: mockConnections.length.toString(),
-    following: mockFollowing.length.toString(),
+    followers: '0',
+    following: '0',
     avatar: '..'
   });
 
@@ -80,7 +71,53 @@ const ProfileScreen = ({ navigation }) => {
         console.error('Error fetching profile', e);
       }
     };
+
+    const fetchConnections = async () => {
+      try {
+        const suggestionsData = await getSuggestions();
+        if (suggestionsData && suggestionsData.length > 0) {
+          const formatted = suggestionsData.map(s => ({
+            id: s._id,
+            name: s.name,
+            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+          }));
+          setConnections(formatted);
+          setFollowing(formatted.slice(0, Math.ceil(formatted.length / 2)));
+          setProfileData(prev => ({
+            ...prev,
+            followers: formatted.length.toString(),
+            following: Math.ceil(formatted.length / 2).toString(),
+          }));
+        }
+      } catch (e) {
+        console.error('Error fetching connections', e);
+      }
+    };
+
+    const fetchUserPosts = async () => {
+      try {
+        const postsData = await getPosts();
+        if (postsData) {
+          // Count posts by current user (we'll filter after getting profile)
+          const userInfoStr = await AsyncStorage.getItem('userInfo');
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr);
+            const myPosts = postsData.filter(p => p.user?.name === userInfo.name || p.user?._id === userInfo._id);
+            setProfileData(prev => ({
+              ...prev,
+              posts: myPosts.length.toString(),
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching user posts', e);
+      }
+    };
+
     fetchProfile();
+    fetchConnections();
+    fetchUserPosts();
   }, []);
 
   // Profile Editing States
@@ -720,7 +757,7 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             
             <ScrollView style={{ padding: 16 }}>
-              {(listModalType === 'following' ? mockFollowing : mockConnections).map(user => (
+              {(listModalType === 'following' ? following : connections).map(user => (
                 <View key={user.id} style={styles.connectionItem}>
                   <View style={styles.connectionAvatar}>
                     <Text style={styles.connectionAvatarText}>{user.avatar}</Text>

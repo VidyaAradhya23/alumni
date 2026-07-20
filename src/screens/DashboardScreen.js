@@ -17,9 +17,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getSuggestions, getPosts, getEvents } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -45,6 +47,12 @@ const DashboardScreen = ({ navigation }) => {
   const [commentText, setCommentText] = useState('');
 
   const mockComments = [];
+
+  // Real data states
+  const [posts, setPosts] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [eventsAndJobs, setEventsAndJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const openModal = (type, post) => {
     setSelectedPost(post);
@@ -73,69 +81,79 @@ const DashboardScreen = ({ navigation }) => {
     fetchUserInfo();
   }, []);
 
-  // ─── Data ──────────────────────────────────────────────
-  const posts = [
-    {
-      id: '1',
-      user: 'Dr. Satish Kumar',
-      role: 'Staff Engineer @ Google',
-      avatar: 'SK',
-      content:
-        `Truly honored to be back on campus for the ${userInstitution} Alumni Gala. The growth of our network is incredible! Inspiring to see the next generation of leaders. #AlumniMeet`,
-      image:
-        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&h=400&q=80',
-      likes: 124,
-      commentsCount: 12,
-      time: '2 hours ago',
-    },
-    {
-      id: '2',
-      user: 'Ananya Joshi',
-      role: 'SDE-2 @ Microsoft',
-      avatar: 'AJ',
-      content:
-        `Our Silicon Valley ${userInstitution} chapter is hosting a meetup next month. Anyone in the Bay Area, please join us for coffee and mentorship talks! ☕️ #Mentorship #BayArea`,
-      image:
-        'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&h=400&q=80',
-      likes: 89,
-      commentsCount: 5,
-      time: '5 hours ago',
-    },
-  ];
+  // Fetch real data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [postsData, suggestionsData, eventsData] = await Promise.allSettled([
+          getPosts(),
+          getSuggestions(),
+          getEvents(),
+        ]);
 
-  const suggestions = [
-    { id: 's1', name: 'Rohan K.', avatar: 'RK', subtitle: `Batch of 2021 • ${userInstitution}` },
-    { id: 's2', name: 'Priya S.', avatar: 'PS', subtitle: `Software Dev @ Google • ${userInstitution} Alumni` },
-    { id: 's3', name: 'Rahul M.', avatar: 'RM', subtitle: `Batch of 2018 • ${userInstitution}` },
-    { id: 's4', name: 'Karan G.', avatar: 'KG', subtitle: `Product Manager • ${userInstitution} Alumni` },
-  ];
+        // Process posts
+        if (postsData.status === 'fulfilled' && postsData.value.length > 0) {
+          const formatted = postsData.value.map(p => ({
+            id: p._id,
+            user: p.user?.name || 'Alumni',
+            role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
+            avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+            content: p.content,
+            image: p.image || null,
+            likes: p.likes?.length || 0,
+            commentsCount: p.comments?.length || 0,
+            time: getTimeAgo(p.createdAt),
+          }));
+          setPosts(formatted);
+        }
 
-  const eventsAndJobs = [
-    {
-      id: 'e1',
-      title: `${userInstitution} Gala 2026`,
-      subtitle: 'Date: Nov 28, 2026 • 6 PM',
-      btnText: 'RSVP Now',
-      image:
-        'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=400&h=260&q=80',
-    },
-    {
-      id: 'e2',
-      title: 'SDE Intern @ Amazon',
-      subtitle: 'Location: Bengaluru • 6 Months',
-      btnText: 'Apply Now',
-      image:
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&h=260&q=80',
-    },
-    {
-      id: 'e3',
-      title: 'Tech Talk: AI in 2026',
-      subtitle: 'Online • Speaker: Dr. Sen',
-      btnText: 'Join Stream',
-      image:
-        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&h=260&q=80',
-    },
-  ];
+        // Process suggestions
+        if (suggestionsData.status === 'fulfilled' && suggestionsData.value.length > 0) {
+          const formatted = suggestionsData.value.map(s => ({
+            id: s._id,
+            name: s.name,
+            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+            subtitle: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || s.institution || ''}`.trim(),
+          }));
+          setSuggestions(formatted);
+        }
+
+        // Process events
+        if (eventsData.status === 'fulfilled' && eventsData.value.length > 0) {
+          const formatted = eventsData.value.map(e => ({
+            id: e._id,
+            title: e.title,
+            subtitle: e.date ? `${new Date(e.date).toLocaleDateString()} • ${e.location || 'Online'}` : e.location || 'Online',
+            btnText: 'View Details',
+            image: e.image || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=400&h=260&q=80',
+          }));
+          setEventsAndJobs(formatted);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Helper to format timestamps
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
 
   // ─── Handlers ──────────────────────────────────────────
   const toggleLike = (postId) => {
@@ -400,9 +418,13 @@ const DashboardScreen = ({ navigation }) => {
             </View>
           </View>
         ) : (
-          // MOBILE LAYOUT (Current)
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {renderPostCard(posts[0])}
+            {posts.length > 0 ? posts.slice(0, 1).map(post => renderPostCard(post)) : (
+              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+                <Ionicons name="newspaper-outline" size={40} color={theme.textSecondary} />
+                <Text style={{ color: theme.textSecondary, marginTop: 8, fontSize: 14 }}>No posts yet. Be the first to share!</Text>
+              </View>
+            )}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Suggestions for you</Text>
@@ -427,7 +449,7 @@ const DashboardScreen = ({ navigation }) => {
                 ))}
               </ScrollView>
             </View>
-            {renderPostCard(posts[1])}
+            {posts.length > 1 && posts.slice(1).map(post => renderPostCard(post))}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Events & Job Suggestions</Text>

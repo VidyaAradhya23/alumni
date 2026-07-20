@@ -4,6 +4,7 @@ const {
     loginUser, 
     updateUserProfile, 
     getUsers, 
+    getSuggestions,
     oauthLogin, 
     linkedinAuthCallback,
     checkEmailExists,
@@ -28,6 +29,7 @@ router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateUserProfile);
 router.put('/change-password', protect, changePassword);
 router.delete('/account', protect, deleteAccount);
-router.get('/users', protect, getUsers); // Admin might need a separate route later, but for now this works.
+router.get('/users', protect, getUsers);
+router.get('/suggestions', protect, getSuggestions);
 
 module.exports = router;

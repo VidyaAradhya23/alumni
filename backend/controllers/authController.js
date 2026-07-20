@@ -287,6 +287,28 @@ exports.deleteAccount = async (req, res) => {
     }
 };
 
+// @desc    Get alumni suggestions (same institution, excluding self)
+// @route   GET /api/auth/suggestions
+exports.getSuggestions = async (req, res) => {
+    try {
+        const currentUser = await User.findById(req.user._id);
+        const query = {
+            _id: { $ne: req.user._id },
+            is_approved: true,
+        };
+        // If the current user has an institution, filter by it
+        if (currentUser.institution) {
+            query.institution = currentUser.institution;
+        }
+        const suggestions = await User.find(query)
+            .select('name email institution department batchYear company designation avatar_url')
+            .limit(10);
+        res.json(suggestions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get all users (Directory)
 // @route   GET /api/auth/users
 exports.getUsers = async (req, res) => {

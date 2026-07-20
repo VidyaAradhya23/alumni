@@ -37,7 +37,7 @@ const DashboardScreen = ({ navigation }) => {
   const [followedSuggestions, setFollowedSuggestions] = useState({});
   const [searchText, setSearchText] = useState('');
   const [userInstitution, setUserInstitution] = useState('Our Network');
-  const [userName, setUserName] = useState('Alumni Member');
+  const [userName, setUserName] = useState('');
 
   // Modal States
   const [activeModal, setActiveModal] = useState(null);
@@ -303,7 +303,7 @@ const DashboardScreen = ({ navigation }) => {
                 <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 12, shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
                   <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>{userName ? userName.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{userName}</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{userName || 'Alumni Member'}</Text>
                 <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>Alumni Developer{'\n'}@ {userInstitution}</Text>
                 
                 <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />

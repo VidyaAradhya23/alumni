@@ -720,14 +720,14 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             
             <ScrollView style={{ padding: 16 }}>
-              {mockConnections.map(user => (
+              {(listModalType === 'following' ? mockFollowing : mockConnections).map(user => (
                 <View key={user.id} style={styles.connectionItem}>
                   <View style={styles.connectionAvatar}>
                     <Text style={styles.connectionAvatarText}>{user.avatar}</Text>
                   </View>
                   <View style={styles.connectionInfo}>
                     <Text style={styles.connectionName}>{user.name}</Text>
-                    <Text style={styles.connectionUsername}>{user.username}</Text>
+                    <Text style={styles.connectionUsername}>{user.title}</Text>
                   </View>
                   <TouchableOpacity style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}>
                     <Text style={[styles.connectionBtnText, listModalType === 'following' && styles.followingBtnText]}>

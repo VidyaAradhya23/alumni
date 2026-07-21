@@ -450,7 +450,7 @@ exports.toggleFollow = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const isFollowing = currentUser.following.includes(targetUserId);
+        const isFollowing = currentUser.following.some(id => id.toString() === targetUserId.toString());
 
         if (isFollowing) {
             // Unfollow

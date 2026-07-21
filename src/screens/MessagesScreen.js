@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, TextInput, StatusBar, Alert, Modal , Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getFollowing } from '../services/authService';
+import { getSuggestions } from '../services/authService';
 
 const initialChats = [];
 
@@ -12,20 +12,20 @@ const MessagesScreen = ({ navigation }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [chatList, setChatList] = useState(initialChats);
-  const [followingList, setFollowingList] = useState([]);
+  const [suggestionsList, setSuggestionsList] = useState([]);
 
   useEffect(() => {
-    const fetchFollowing = async () => {
+    const fetchSuggestions = async () => {
       try {
-        const res = await getFollowing();
+        const res = await getSuggestions();
         if (res && res.data) {
-          setFollowingList(res.data);
+          setSuggestionsList(res.data);
         }
       } catch(err) {
         console.log('Error fetching following:', err);
       }
     };
-    fetchFollowing();
+    fetchSuggestions();
   }, []);
 
   const filteredChats = chatList.filter(chat => 
@@ -37,7 +37,7 @@ const MessagesScreen = ({ navigation }) => {
   const [composeModalVisible, setComposeModalVisible] = useState(false);
   const [composeSearch, setComposeSearch] = useState('');
 
-  const filteredFollowing = followingList.filter(f => f.name && f.name.toLowerCase().includes(composeSearch.toLowerCase()));
+  const filteredSuggestions = suggestionsList.filter(f => f.name && f.name.toLowerCase().includes(composeSearch.toLowerCase()));
 
   const startNewChat = () => {
     if (!composeSearch.trim()) return;
@@ -183,7 +183,7 @@ const MessagesScreen = ({ navigation }) => {
                 autoFocus
               />
               <FlatList
-                data={filteredFollowing}
+                data={filteredSuggestions}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
                   <TouchableOpacity 

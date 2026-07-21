@@ -83,8 +83,9 @@ const DashboardScreen = ({ navigation }) => {
   }, []);
 
   // Fetch real data from API
-  useEffect(() => {
-    const fetchData = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
       try {
         setLoading(true);
         const [postsData, suggestionsData, eventsData] = await Promise.allSettled([
@@ -147,11 +148,8 @@ const DashboardScreen = ({ navigation }) => {
         setLoading(false);
       }
     };
-    
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [])
+    fetchData();
+  }, [])
   );
 
   // Helper to format timestamps

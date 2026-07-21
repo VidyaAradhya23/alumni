@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, useWindowDimensions, Alert, StatusBar, Modal, TextInput, Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -51,7 +52,8 @@ const ProfileScreen = ({ navigation }) => {
     avatar: '..'
   });
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     const fetchProfile = async () => {
       try {
         const data = await getProfile();
@@ -132,7 +134,8 @@ const ProfileScreen = ({ navigation }) => {
     fetchProfile();
     fetchConnections();
     fetchUserPosts();
-  }, []);
+  }, [])
+  );
 
   // Profile Editing States
   const [editName, setEditName] = useState(profileData.name);

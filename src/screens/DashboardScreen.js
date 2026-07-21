@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -21,7 +22,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getSuggestions, getPosts, getEvents, toggleFollowUser } from '../services/authService';
+import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -130,14 +131,28 @@ const DashboardScreen = ({ navigation }) => {
           }));
           setEventsAndJobs(formatted);
         }
+        // Fetch following to initialize followedSuggestions
+        const followingData = await getFollowing();
+        if (followingData) {
+          const initialFollowed = {};
+          followingData.forEach(user => {
+            initialFollowed[user._id] = true;
+          });
+          setFollowedSuggestions(initialFollowed);
+        }
+
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+    
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   // Helper to format timestamps
   const getTimeAgo = (dateString) => {

@@ -112,8 +112,7 @@ function MainTabs() {
         })}
       >
         <Drawer.Screen name="Home" component={DashboardScreen} />
-        <Drawer.Screen name="Engage" component={DirectoryScreen} />
-        <Drawer.Screen name="Post" component={EngageScreen} />
+        <Drawer.Screen name="Engage" component={EngageScreen} />
         <Drawer.Screen name="Jobs" component={JobsScreen} />
         <Drawer.Screen name="Contribute" component={ContributeScreen} />
       </Drawer.Navigator>
@@ -131,7 +130,6 @@ function MainTabs() {
           let icon = null;
           if (route.name === 'Home') icon = <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />;
           if (route.name === 'Engage') icon = <MaterialCommunityIcons name={focused ? 'handshake' : 'handshake-outline'} size={22} color={color} />;
-          if (route.name === 'Post') icon = <MaterialCommunityIcons name={focused ? 'account-switch' : 'account-switch-outline'} size={22} color={color} />;
           if (route.name === 'Jobs') icon = <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />;
           if (route.name === 'Contribute') icon = <MaterialCommunityIcons name={focused ? 'hand-heart' : 'hand-heart-outline'} size={22} color={color} />;
           return (
@@ -146,8 +144,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
-      <Tab.Screen name="Engage" component={DirectoryScreen} />
-      <Tab.Screen name="Post" component={EngageScreen} />
+      <Tab.Screen name="Engage" component={EngageScreen} />
       <Tab.Screen name="Jobs" component={JobsScreen} />
       <Tab.Screen name="Contribute" component={ContributeScreen} />
     </Tab.Navigator>
@@ -331,8 +328,7 @@ const linking = {
         path: 'main',
         screens: {
           Home: 'home',
-          Engage: 'directory',
-          Post: 'engage',
+          Engage: 'engage',
           Jobs: 'jobs',
           Contribute: 'contribute',
         }

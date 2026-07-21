@@ -15,6 +15,7 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AdminMetricsScreen from './AdminMetricsScreen';
+import { getPendingUsers, approveUser, rejectUser } from '../services/adminService';
 
 // ==========================================
 // DUMMY DATA FOR THE NEW MODULES
@@ -84,6 +85,28 @@ export default function AdminPanelScreen({ navigation }) {
   const [mentorApplications, setMentorApplications] = useState(INITIAL_MENTOR_APPLICATIONS);
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
 
+  React.useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const data = await getPendingUsers();
+        if (data && Array.isArray(data)) {
+          const mappedPending = data.map(user => ({
+            id: user._id,
+            name: user.name,
+            branch: user.degree || 'BE',
+            year: user.graduation_year || 'Unknown',
+            email: user.email,
+            proof: 'N/A'
+          }));
+          setMembershipRequests(mappedPending);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchPending();
+  }, []);
+
   // Search & Filter state
   const [searchText, setSearchText] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
@@ -144,26 +167,34 @@ export default function AdminPanelScreen({ navigation }) {
     }
   };
 
-  const handleMembershipAction = (id, action) => {
+  const handleMembershipAction = async (id, action) => {
     const request = membershipRequests.find((r) => r.id === id);
-    if (action === 'approve') {
-      // Add to master list
-      const newAlum = {
-        id: Date.now().toString(),
-        name: request.name,
-        degree: `BE '${request.year.slice(-2)}`,
-        title: 'Software Engineer',
-        location: 'Bengaluru',
-        course: request.branch.includes('MBA') ? 'MBA' : 'BE',
-        year: request.year,
-        connected: false,
-      };
-      setAlumniMaster([newAlum, ...alumniMaster]);
-      setMembershipRequests(membershipRequests.filter((r) => r.id !== id));
-      Alert.alert('Approved', `${request.name} is now approved and can log in.`);
-    } else {
-      setMembershipRequests(membershipRequests.filter((r) => r.id !== id));
-      Alert.alert('Rejected', 'Membership request rejected.');
+    if (!request) return;
+
+    try {
+      if (action === 'approve') {
+        await approveUser(id);
+        // Add to master list
+        const newAlum = {
+          id: Date.now().toString(),
+          name: request.name,
+          degree: `BE '${request.year.slice(-2)}`,
+          title: 'Software Engineer',
+          location: 'Bengaluru',
+          course: request.branch.includes('MBA') ? 'MBA' : 'BE',
+          year: request.year,
+          connected: false,
+        };
+        setAlumniMaster([newAlum, ...alumniMaster]);
+        setMembershipRequests(membershipRequests.filter((r) => r.id !== id));
+        Alert.alert('Approved', `${request.name} is now approved and can log in.`);
+      } else {
+        await rejectUser(id);
+        setMembershipRequests(membershipRequests.filter((r) => r.id !== id));
+        Alert.alert('Rejected', 'Membership request rejected.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Action failed');
     }
   };
 

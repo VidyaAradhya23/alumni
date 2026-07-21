@@ -41,6 +41,7 @@ const DashboardScreen = ({ navigation }) => {
   const [searchText, setSearchText] = useState('');
   const [userInstitution, setUserInstitution] = useState('Our Network');
   const [userName, setUserName] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Modal States
   const [activeModal, setActiveModal] = useState(null);
@@ -71,6 +72,7 @@ const DashboardScreen = ({ navigation }) => {
       const userInfoString = await AsyncStorage.getItem('userInfo');
       if (userInfoString) {
         const userInfo = JSON.parse(userInfoString);
+        setCurrentUser(userInfo);
         if (userInfo.institution) {
           setUserInstitution(userInfo.institution);
         }
@@ -343,22 +345,21 @@ const DashboardScreen = ({ navigation }) => {
                   <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>{userName ? userName.substring(0, 2).toUpperCase() : 'ME'}</Text>
                 </View>
                 <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{userName || 'Alumni Member'}</Text>
-                <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>Alumni Developer{'\n'}@ {userInstitution}</Text>
+                <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 }}>
+                  {currentUser?.designation || 'Alumni Member'}
+                  {currentUser?.company || currentUser?.institution ? `\n@ ${currentUser.company || currentUser.institution}` : ''}
+                </Text>
                 
                 <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />
                 
                 <View style={{ width: '100%', gap: 12 }}>
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Ionicons name="bookmark-outline" size={18} color={theme.textSecondary} />
-                    <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>Saved Items</Text>
+                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: theme.textSecondary, fontWeight: '600', fontSize: 13 }}>Connections</Text>
+                    <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>{Object.keys(followedSuggestions).length}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Ionicons name="calendar-outline" size={18} color={theme.textSecondary} />
-                    <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>My Events</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Ionicons name="people-outline" size={18} color={theme.textSecondary} />
-                    <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>My Network</Text>
+                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: theme.textSecondary, fontWeight: '600', fontSize: 13 }}>My Events</Text>
+                    <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>{eventsAndJobs.length > 0 ? eventsAndJobs.length : 0}</Text>
                   </TouchableOpacity>
                 </View>
               </View>

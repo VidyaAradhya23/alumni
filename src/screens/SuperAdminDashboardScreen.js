@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getPosts, getEvents } from '../services/authService';
 
 // ==========================================
 // DUMMY DATABASE / SEED DATA
@@ -243,6 +244,22 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
   const [imports, setImports] = useState(INITIAL_IMPORTS);
   const [networkSettings, setNetworkSettings] = useState(INITIAL_NETWORK_SETTINGS);
+  const [actualStats, setActualStats] = useState({ posts: 0, events: 0 });
+
+  useEffect(() => {
+    const fetchSuperAdminData = async () => {
+      try {
+        const [postsData, eventsData] = await Promise.allSettled([getPosts(), getEvents()]);
+        setActualStats({
+          posts: postsData.status === 'fulfilled' && postsData.value ? postsData.value.length : 0,
+          events: eventsData.status === 'fulfilled' && eventsData.value ? eventsData.value.length : 0,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSuperAdminData();
+  }, []);
 
   // News Feed & Dropdown States
   const [postsList, setPostsList] = useState(MOCK_POSTS);
@@ -2555,129 +2572,162 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
   const isMainScreen = activeModule === null || activeModule === 'dashboard_home';
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 1024, flex: 1 } : { flex: 1 };
+  const isDesktop = isWeb && width >= 1024;
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: isDesktop ? 1200 : 1024, flex: 1, flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 24 : 0, padding: isDesktop ? 24 : 0 } : { flex: 1 };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
       <View style={webContainerStyle}>
 
-      {/* Header */}
-      {!isMainScreen ? (
-        <View style={styles.headerAdminStyle}>
-          <TouchableOpacity onPress={handleGoBack} style={styles.headerIconBtnAdminStyle}>
-            <Ionicons name="arrow-back" size={24} color="#002144" />
-          </TouchableOpacity>
-          
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>{currentModuleData?.title}</Text>
-            <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>Super Admin Panel</Text>
-          </View>
-
-          <View style={styles.headerIconsAdminStyle}>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.headerAdminStyle}>
-          <TouchableOpacity
-            style={styles.headerAvatarAdminStyle}
-            activeOpacity={0.8}
-            onPress={() => navigation && navigation.navigate('AdminProfile')}
-          >
-            <Text style={styles.headerAvatarTextAdminStyle}>SA</Text>
-          </TouchableOpacity>
-
-          {activeModule === 'dashboard_home' ? (
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>Super Admin Dashboard</Text>
-              <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>System Status Overview</Text>
+        {/* Header - shown only on Mobile/Tablet or if we need a top bar */}
+        {!isDesktop && (
+          !isMainScreen ? (
+            <View style={styles.headerAdminStyle}>
+              <TouchableOpacity onPress={handleGoBack} style={styles.headerIconBtnAdminStyle}>
+                <Ionicons name="arrow-back" size={24} color="#002144" />
+              </TouchableOpacity>
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>{currentModuleData?.title}</Text>
+                <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>Super Admin Panel</Text>
+              </View>
+              <View style={styles.headerIconsAdminStyle}>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Messages')}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Notifications')}>
+                  <Ionicons name="notifications-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
-            <View style={styles.searchBarAdminStyle}>
-              <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
-              <TextInput
-                style={styles.searchInputAdminStyle}
-                placeholder="Search Panel..."
-                placeholderTextColor="#94A3B8"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
+            <View style={styles.headerAdminStyle}>
+              <TouchableOpacity style={styles.headerAvatarAdminStyle} activeOpacity={0.8} onPress={() => navigation && navigation.navigate('AdminProfile')}>
+                <Text style={styles.headerAvatarTextAdminStyle}>SA</Text>
+              </TouchableOpacity>
+              {activeModule === 'dashboard_home' ? (
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>Super Admin Dashboard</Text>
+                  <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>System Status Overview</Text>
+                </View>
+              ) : (
+                <View style={styles.searchBarAdminStyle}>
+                  <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
+                  <TextInput
+                    style={styles.searchInputAdminStyle}
+                    placeholder="Search Panel..."
+                    placeholderTextColor="#94A3B8"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </View>
+              )}
+              <View style={styles.headerIconsAdminStyle}>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Messages')}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Notifications')}>
+                  <Ionicons name="notifications-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )
+        )}
+
+        {/* Left Column (Desktop Only) */}
+        {isDesktop && (
+          <View style={{ flex: 3 }}>
+             <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, elevation: 2, borderWidth: 1, borderColor: theme.border, alignItems: 'center', marginBottom: 24 }}>
+               <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#D97706', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                 <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>SA</Text>
+               </View>
+               <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Super Admin</Text>
+               <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6 }}>Global Administrator</Text>
+               <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />
+               <View style={{ width: '100%', gap: 12 }}>
+                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                   <Ionicons name="settings-outline" size={18} color={theme.textSecondary} />
+                   <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>Global Settings</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} onPress={() => setActiveModule('administrator')}>
+                   <Ionicons name="shield-checkmark-outline" size={18} color={theme.textSecondary} />
+                   <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>Permissions</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
+          </View>
+        )}
+
+        {/* Main Content Area */}
+        <View style={{ flex: isDesktop ? 6 : 1 }}>
+          {activeModule === null ? (
+            <ScrollView contentContainerStyle={styles.panelContainer} showsVerticalScrollIndicator={false}>
+              <InstitutionSelector />
+              <Text style={styles.sectionHeaderTitle}>Administration Modules</Text>
+              <View style={styles.gridContainer}>
+                {filteredPanelItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.gridCard, { backgroundColor: item.color, width: width > 768 && !isDesktop ? '31%' : '48%' }]}
+                    onPress={() => { setActiveModule(item.moduleName); setActiveSubTab('1'); }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.gridIconBg, { backgroundColor: theme.card }]}>
+                      <Ionicons name={item.icon} size={24} color={item.iconColor} />
+                    </View>
+                    <Text style={styles.gridCardTitle}>{item.title}</Text>
+                    <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          ) : (
+            <View style={styles.flexContainer}>
+              {renderModuleContent()}
             </View>
           )}
-
-          <View style={styles.headerIconsAdminStyle}>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-          </View>
         </View>
-      )}
 
-      {/* Main Content Area */}
-      {activeModule === null ? (
-        <ScrollView contentContainerStyle={styles.panelContainer} showsVerticalScrollIndicator={false}>
-          {/* Active Campus Selector at the top */}
-          <InstitutionSelector />
-
-          {/* 1st Scroll: Administration Modules */}
-          <Text style={styles.sectionHeaderTitle}>Administration Modules</Text>
-          {/* Main Grid Options */}
-          <View style={styles.gridContainer}>
-            {filteredPanelItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.gridCard, 
-                  { 
-                    backgroundColor: item.color, 
-                    width: width > 1024 ? '23%' : width > 768 ? '31%' : '48%' 
-                  }
-                ]}
-                onPress={() => {
-                  setActiveModule(item.moduleName);
-                  setActiveSubTab('1');
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.gridIconBg, { backgroundColor: theme.card }]}>
-                  <Ionicons name={item.icon} size={24} color={item.iconColor} />
+        {/* Right Column (Desktop Only) */}
+        {isDesktop && (
+          <View style={{ flex: 3.5 }}>
+            <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, elevation: 2, borderWidth: 1, borderColor: theme.border }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 16 }}>Global Stats</Text>
+              
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E0F2FE', marginRight: 12 }}>
+                  <Ionicons name="business-outline" size={20} color="#0284C7" />
                 </View>
-                <Text style={styles.gridCardTitle}>{item.title}</Text>
-                <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
-              </TouchableOpacity>
-            ))}
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{INSTITUTIONS.length}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Institutions</Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#DCFCE7', marginRight: 12 }}>
+                  <Ionicons name="newspaper-outline" size={20} color="#16A34A" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{actualStats.posts}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Total Posts</Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F9FF', marginRight: 12 }}>
+                  <Ionicons name="calendar-outline" size={20} color="#003366" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{actualStats.events}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Total Events</Text>
+                </View>
+              </View>
+
+            </View>
           </View>
-        </ScrollView>
-      ) : (
-        <View style={styles.flexContainer}>
-          {renderModuleContent()}
-        </View>
-      )}
+        )}
+
       </View>
     </SafeAreaView>
   );

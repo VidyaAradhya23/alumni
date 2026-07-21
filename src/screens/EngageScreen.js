@@ -4,7 +4,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPosts, createPost, reportItem } from '../services/postService';
-import { blockUser } from '../services/authService';
+import { blockUser, getSuggestions, getEvents, getFollowing, toggleFollowUser } from '../services/authService';
 
 const EngageScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -34,26 +34,65 @@ const EngageScreen = ({ navigation }) => {
   const [blockedUsers, setBlockedUsers] = useState(new Set());
   const [currentUser, setCurrentUser] = useState(null);
 
-  const fetchPosts = useCallback(async () => {
+  const [suggestions, setSuggestions] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [followedSuggestions, setFollowedSuggestions] = useState({});
+
+  const fetchAllData = useCallback(async () => {
     try {
-      const data = await getPosts();
+      const [postsRes, suggRes, eventsRes, followRes] = await Promise.allSettled([
+        getPosts(),
+        getSuggestions(),
+        getEvents(),
+        getFollowing()
+      ]);
       
-      const formatted = data
-        .filter(p => !blockedUsers.has(p.user._id))
-        .map(p => ({
-        id: p._id,
-        user_id: p.user._id,
-        user: p.user.name || 'Unknown User',
-        subtitle: p.user.institution || 'Institution',
-        avatar: p.user.name ? p.user.name.substring(0,2).toUpperCase() : 'UU',
-        image: p.image_url,
-        likes: 0,
-        time: new Date(p.created_at).toLocaleDateString(),
-        content: p.content
-      }));
-      setPostsList(formatted);
+      if (postsRes.status === 'fulfilled' && postsRes.value) {
+        const formatted = postsRes.value
+          .filter(p => !blockedUsers.has(p.user._id))
+          .map(p => ({
+          id: p._id,
+          user_id: p.user._id,
+          user: p.user.name || 'Unknown User',
+          subtitle: p.user.institution || 'Institution',
+          avatar: p.user.name ? p.user.name.substring(0,2).toUpperCase() : 'UU',
+          image: p.image_url,
+          likes: 0,
+          time: new Date(p.created_at).toLocaleDateString(),
+          content: p.content
+        }));
+        setPostsList(formatted);
+      }
+
+      if (suggRes.status === 'fulfilled' && suggRes.value) {
+        const formatted = suggRes.value.map(s => ({
+          id: s._id,
+          name: s.name,
+          avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+          subtitle: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || s.institution || ''}`.trim(),
+        }));
+        setSuggestions(formatted);
+      }
+
+      if (eventsRes.status === 'fulfilled' && eventsRes.value) {
+        const formatted = eventsRes.value.map(e => ({
+          id: e._id,
+          title: e.title,
+          date: e.date ? `${new Date(e.date).toLocaleDateString()}` : '',
+          location: e.location || 'Online',
+          image: e.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=300&h=200&q=80',
+        }));
+        setEvents(formatted);
+      }
+
+      if (followRes.status === 'fulfilled' && followRes.value) {
+        const initialFollowed = {};
+        followRes.value.forEach(u => { initialFollowed[u._id] = true; });
+        setFollowedSuggestions(initialFollowed);
+      }
+
     } catch (err) {
-      console.error('Error fetching posts:', err.message);
+      console.error('Error fetching data:', err.message);
     }
   }, [blockedUsers]);
 
@@ -63,7 +102,7 @@ const EngageScreen = ({ navigation }) => {
       if (userStr) {
         setCurrentUser(JSON.parse(userStr));
       }
-      await fetchPosts();
+      await fetchAllData();
     };
 
     const unsubscribe = navigation.addListener('focus', () => {
@@ -73,7 +112,7 @@ const EngageScreen = ({ navigation }) => {
     });
     init();
     return unsubscribe;
-  }, [navigation, fetchPosts]);
+  }, [navigation, fetchAllData]);
 
   const handleDismiss = () => {
     setActionSheetVisible(false);
@@ -99,18 +138,22 @@ const EngageScreen = ({ navigation }) => {
 
       setPostText('');
       setCurrentView('feed');
-      fetchPosts();
+      fetchAllData();
       Alert.alert('Success', 'Your post has been shared successfully!');
     } catch (err) {
       Alert.alert('Error', err.message);
     }
   };
 
-  const suggestions = [];
-
-  const events = [];
-
-  const [followedSuggestions, setFollowedSuggestions] = useState({});
+  const toggleSuggestionFollow = async (id) => {
+    try {
+      setFollowedSuggestions(prev => ({ ...prev, [id]: !prev[id] }));
+      await toggleFollowUser(id);
+    } catch (err) {
+      setFollowedSuggestions(prev => ({ ...prev, [id]: !prev[id] }));
+      console.error('Follow error', err);
+    }
+  };
 
   const toggleLike = (id) => setLikedPosts(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -324,7 +367,7 @@ const EngageScreen = ({ navigation }) => {
                       <Text style={styles.suggestionName}>{s.name}</Text>
                       <TouchableOpacity 
                         style={[styles.followSmallBtn, followedSuggestions[s.id] && styles.followedBtn]}
-                        onPress={() => setFollowedSuggestions(prev => ({...prev, [s.id]: !prev[s.id]}))}
+                        onPress={() => toggleSuggestionFollow(s.id)}
                       >
                         <Text style={[styles.followSmallText, followedSuggestions[s.id] && styles.followedText]}>{followedSuggestions[s.id] ? 'Following' : 'Follow'}</Text>
                       </TouchableOpacity>
@@ -352,7 +395,7 @@ const EngageScreen = ({ navigation }) => {
             <Text style={[styles.suggestionName, { flex: 1, textAlign: 'left', marginBottom: 0 }]}>{s.name}</Text>
             <TouchableOpacity 
               style={[styles.followSmallBtn, followedSuggestions[s.id] && styles.followedBtn]}
-              onPress={() => setFollowedSuggestions(prev => ({...prev, [s.id]: !prev[s.id]}))}
+              onPress={() => toggleSuggestionFollow(s.id)}
             >
               <Text style={[styles.followSmallText, followedSuggestions[s.id] && styles.followedText]}>{followedSuggestions[s.id] ? 'Following' : 'Follow'}</Text>
             </TouchableOpacity>
@@ -364,20 +407,15 @@ const EngageScreen = ({ navigation }) => {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Events</Text>
         </View>
-        <View style={[styles.joinEventCard, { borderWidth: 0, paddingHorizontal: 0, paddingVertical: 8, marginBottom: 0 }]}>
-          <View style={[styles.joinEventImage, { width: 50, height: 50 }]} />
-          <View style={styles.joinEventInfo}>
-            <Text style={styles.joinEventTitle}>Alumni Meetup 2025</Text>
-            <Text style={styles.joinEventDate}>Oct 12, 2025 • Virtual</Text>
+        {events.slice(0, 3).map(e => (
+          <View key={e.id} style={[styles.joinEventCard, { borderWidth: 0, paddingHorizontal: 0, paddingVertical: 8, marginBottom: 0 }]}>
+            <Image source={{ uri: e.image }} style={[styles.joinEventImage, { width: 50, height: 50 }]} />
+            <View style={styles.joinEventInfo}>
+              <Text style={styles.joinEventTitle}>{e.title}</Text>
+              <Text style={styles.joinEventDate}>{e.date}</Text>
+            </View>
           </View>
-        </View>
-        <View style={[styles.joinEventCard, { borderWidth: 0, paddingHorizontal: 0, paddingVertical: 8, marginBottom: 0 }]}>
-          <View style={[styles.joinEventImage, { width: 50, height: 50 }]} />
-          <View style={styles.joinEventInfo}>
-            <Text style={styles.joinEventTitle}>Startup Pitch Day</Text>
-            <Text style={styles.joinEventDate}>Nov 5, 2025 • Bengaluru</Text>
-          </View>
-        </View>
+        ))}
       </View>
     </View>
   ) : null;

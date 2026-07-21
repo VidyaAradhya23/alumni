@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getPosts, getEvents } from '../services/authService';
 
 // ==========================================
 // DUMMY DATABASE / SEED DATA
@@ -96,41 +97,13 @@ const checkDatabaseVerification = (name, batchYear, joiningYear, institution) =>
   return { verified: true, matchRecord: match };
 };
 
-const INITIAL_MEMBERSHIP_REQUESTS = [
-  { id: '1', name: 'Srinivas Murthy', institution: 'RVCE', branch: 'BE, Mechanical', year: '2020', email: 'srinivas.m@example.com', phone: '+91 98456 12345', proof: 'Degree Certificate ID: 948210', status: 'pending', adminAction: null, details: { company: 'Tata Motors', designation: 'Senior Engineer', graduationYear: 2020, linkedIn: 'linkedin.com/in/srinivas-m' } },
-  { id: '2', name: 'Priya Sharma', institution: 'RVCE', branch: 'MBA', year: '2021', email: 'priya.sharma@example.com', phone: '+91 87654 32100', proof: 'Alumni ID Card No: RV-9481', status: 'approved', adminAction: 'Approved by Dr. Ramesh Kumar', details: { company: 'Deloitte', designation: 'Consultant', graduationYear: 2021, linkedIn: 'linkedin.com/in/priya-sharma' } },
-  { id: '3', name: 'Amit Kulkarni', institution: 'Institution', branch: 'BE, CSE', year: '2019', email: 'amit.k@example.com', phone: '+91 99887 76655', proof: 'Marksheet Upload: MS_2019_CSE', status: 'rejected', adminAction: 'Rejected by Suresh Babu - Incomplete documents', details: { company: 'Infosys', designation: 'Tech Lead', graduationYear: 2019, linkedIn: 'linkedin.com/in/amit-k' } },
-  { id: '4', name: 'Deepa Rao', institution: 'RVPU', branch: 'Commerce', year: '2018', email: 'deepa.r@example.com', phone: '+91 77889 90011', proof: 'Transfer Certificate No: PU-7823', status: 'pending', adminAction: null, details: { company: 'KPMG', designation: 'Audit Associate', graduationYear: 2018, linkedIn: 'linkedin.com/in/deepa-rao' } },
-  { id: '5', name: 'Kiran Hegde', institution: 'RVIS', branch: 'PCMB', year: '2017', email: 'kiran.h@example.com', phone: '+91 88776 65544', proof: 'School Leaving Certificate', status: 'approved', adminAction: 'Approved by Vikram Joshi', details: { company: 'Amazon', designation: 'SDE-2', graduationYear: 2017, linkedIn: 'linkedin.com/in/kiran-hegde' } },
-];
+const INITIAL_MEMBERSHIP_REQUESTS = [];
 
-const INITIAL_PLACEMENTS = [
-  { id: '1', company: 'Cisco Systems', industry: 'Computer Networking', count: 78, institution: 'RVCE' },
-  { id: '2', company: 'Accenture', industry: 'IT Services', count: 62, institution: 'RVCE' },
-  { id: '3', company: 'Qualcomm', industry: 'Semiconductors', count: 61, institution: 'RVCE' },
-  { id: '4', company: 'Infosys', industry: 'IT Services', count: 45, institution: 'Institution' },
-  { id: '5', company: 'Wipro', industry: 'IT Services', count: 38, institution: 'Institution' },
-  { id: '6', company: 'TCS', industry: 'IT Services', count: 32, institution: 'RVPU' },
-  { id: '7', company: 'IBM', industry: 'IT Services', count: 28, institution: 'RVCE' },
-  { id: '8', company: 'Amazon', industry: 'E-Commerce/Tech', count: 25, institution: 'RVIS' },
-];
+const INITIAL_PLACEMENTS = [];
 
-const INITIAL_ACTIVITIES = [
-  { id: '1', type: 'Email Interaction', description: 'Welcome email sent to new admin Anitha Shetty', institution: 'RVCE', category: 'Welcome Mail', date: '17/06/2026' },
-  { id: '2', type: 'Admin Action', description: 'Approved membership for Priya Sharma', institution: 'RVCE', category: 'Membership', date: '16/06/2026' },
-  { id: '3', type: 'Placement Update', description: 'Added Infosys placement data - 45 alumni', institution: 'Institution', category: 'Placement Tool', date: '15/06/2026' },
-  { id: '4', type: 'Spam Action', description: 'Suspended account of Rahul Menon for fake profile', institution: 'RVPU', category: 'Spam/Report', date: '14/06/2026' },
-  { id: '5', type: 'Bulk Import', description: 'Imported 250 alumni records from CSV', institution: 'RVCE', category: 'Bulk Import', date: '13/06/2026' },
-  { id: '6', type: 'Data Export', description: 'Exported batch 2020-2023 alumni data', institution: 'Institution', category: 'Data Export', date: '12/06/2026' },
-  { id: '7', type: 'Network Settings', description: 'Updated branding colors and logo', institution: 'RVIS', category: 'Network Settings', date: '11/06/2026' },
-  { id: '8', type: 'Email Campaign', description: 'Sent reunion invitation to 1200 alumni', institution: 'RVCE', category: 'Events', date: '10/06/2026' },
-];
+const INITIAL_ACTIVITIES = [];
 
-const INITIAL_IMPORTS = [
-  { id: '1', fileName: 'rvce_alumni_2020.csv', institution: 'RVCE', records: 250, successful: 245, failed: 5, date: '13/06/2026', status: 'Completed' },
-  { id: '2', fileName: 'institution_batch2019.xlsx', institution: 'Institution', records: 180, successful: 180, failed: 0, date: '10/06/2026', status: 'Completed' },
-  { id: '3', fileName: 'rvpu_science_stream.csv', institution: 'RVPU', records: 120, successful: 98, failed: 22, date: '05/06/2026', status: 'Partial' },
-];
+const INITIAL_IMPORTS = [];
 
 const INITIAL_NETWORK_SETTINGS = {
   'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#4F46E5', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },
@@ -205,6 +178,22 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
   const [imports, setImports] = useState(INITIAL_IMPORTS);
   const [networkSettings, setNetworkSettings] = useState(INITIAL_NETWORK_SETTINGS);
+  const [actualStats, setActualStats] = useState({ posts: 0, events: 0 });
+
+  useEffect(() => {
+    const fetchSuperAdminData = async () => {
+      try {
+        const [postsData, eventsData] = await Promise.allSettled([getPosts(), getEvents()]);
+        setActualStats({
+          posts: postsData.status === 'fulfilled' && postsData.value ? postsData.value.length : 0,
+          events: eventsData.status === 'fulfilled' && eventsData.value ? eventsData.value.length : 0,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSuperAdminData();
+  }, []);
 
   // News Feed & Dropdown States
   const [postsList, setPostsList] = useState(MOCK_POSTS);
@@ -2517,129 +2506,162 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
   const isMainScreen = activeModule === null || activeModule === 'dashboard_home';
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 1024, flex: 1 } : { flex: 1 };
+  const isDesktop = isWeb && width >= 1024;
+  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: isDesktop ? 1200 : 1024, flex: 1, flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 24 : 0, padding: isDesktop ? 24 : 0 } : { flex: 1 };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor="#FFFFFF" />
       <View style={webContainerStyle}>
 
-      {/* Header */}
-      {!isMainScreen ? (
-        <View style={styles.headerAdminStyle}>
-          <TouchableOpacity onPress={handleGoBack} style={styles.headerIconBtnAdminStyle}>
-            <Ionicons name="arrow-back" size={24} color="#002144" />
-          </TouchableOpacity>
-          
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>{currentModuleData?.title}</Text>
-            <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>Super Admin Panel</Text>
-          </View>
-
-          <View style={styles.headerIconsAdminStyle}>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.headerAdminStyle}>
-          <TouchableOpacity
-            style={styles.headerAvatarAdminStyle}
-            activeOpacity={0.8}
-            onPress={() => navigation && navigation.navigate('AdminProfile')}
-          >
-            <Text style={styles.headerAvatarTextAdminStyle}>SA</Text>
-          </TouchableOpacity>
-
-          {activeModule === 'dashboard_home' ? (
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>Super Admin Dashboard</Text>
-              <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>System Status Overview</Text>
+        {/* Header - shown only on Mobile/Tablet or if we need a top bar */}
+        {!isDesktop && (
+          !isMainScreen ? (
+            <View style={styles.headerAdminStyle}>
+              <TouchableOpacity onPress={handleGoBack} style={styles.headerIconBtnAdminStyle}>
+                <Ionicons name="arrow-back" size={24} color="#002144" />
+              </TouchableOpacity>
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>{currentModuleData?.title}</Text>
+                <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>Super Admin Panel</Text>
+              </View>
+              <View style={styles.headerIconsAdminStyle}>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Messages')}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Notifications')}>
+                  <Ionicons name="notifications-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
-            <View style={styles.searchBarAdminStyle}>
-              <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
-              <TextInput
-                style={styles.searchInputAdminStyle}
-                placeholder="Search Panel..."
-                placeholderTextColor="#94A3B8"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
+            <View style={styles.headerAdminStyle}>
+              <TouchableOpacity style={styles.headerAvatarAdminStyle} activeOpacity={0.8} onPress={() => navigation && navigation.navigate('AdminProfile')}>
+                <Text style={styles.headerAvatarTextAdminStyle}>SA</Text>
+              </TouchableOpacity>
+              {activeModule === 'dashboard_home' ? (
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: '#4F46E5' }}>Super Admin Dashboard</Text>
+                  <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500' }}>System Status Overview</Text>
+                </View>
+              ) : (
+                <View style={styles.searchBarAdminStyle}>
+                  <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 6 }} />
+                  <TextInput
+                    style={styles.searchInputAdminStyle}
+                    placeholder="Search Panel..."
+                    placeholderTextColor="#94A3B8"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </View>
+              )}
+              <View style={styles.headerIconsAdminStyle}>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Messages')}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerIconBtnAdminStyle} onPress={() => navigation && navigation.navigate('Notifications')}>
+                  <Ionicons name="notifications-outline" size={24} color="#003366" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )
+        )}
+
+        {/* Left Column (Desktop Only) */}
+        {isDesktop && (
+          <View style={{ flex: 3 }}>
+             <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, elevation: 2, borderWidth: 1, borderColor: theme.border, alignItems: 'center', marginBottom: 24 }}>
+               <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#D97706', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                 <Text style={{ fontSize: 24, fontWeight: '700', color: theme.card }}>SA</Text>
+               </View>
+               <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Super Admin</Text>
+               <Text style={{ fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 6 }}>Global Administrator</Text>
+               <View style={{ width: '100%', height: 1, backgroundColor: theme.border, marginVertical: 16 }} />
+               <View style={{ width: '100%', gap: 12 }}>
+                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                   <Ionicons name="settings-outline" size={18} color={theme.textSecondary} />
+                   <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>Global Settings</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} onPress={() => setActiveModule('administrator')}>
+                   <Ionicons name="shield-checkmark-outline" size={18} color={theme.textSecondary} />
+                   <Text style={{ color: theme.text, fontWeight: '600', fontSize: 14 }}>Permissions</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
+          </View>
+        )}
+
+        {/* Main Content Area */}
+        <View style={{ flex: isDesktop ? 6 : 1 }}>
+          {activeModule === null ? (
+            <ScrollView contentContainerStyle={styles.panelContainer} showsVerticalScrollIndicator={false}>
+              <InstitutionSelector />
+              <Text style={styles.sectionHeaderTitle}>Administration Modules</Text>
+              <View style={styles.gridContainer}>
+                {filteredPanelItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.gridCard, { backgroundColor: item.color, width: width > 768 && !isDesktop ? '31%' : '48%' }]}
+                    onPress={() => { setActiveModule(item.moduleName); setActiveSubTab('1'); }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.gridIconBg, { backgroundColor: theme.card }]}>
+                      <Ionicons name={item.icon} size={24} color={item.iconColor} />
+                    </View>
+                    <Text style={styles.gridCardTitle}>{item.title}</Text>
+                    <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          ) : (
+            <View style={styles.flexContainer}>
+              {renderModuleContent()}
             </View>
           )}
-
-          <View style={styles.headerIconsAdminStyle}>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconBtnAdminStyle}
-              onPress={() => navigation && navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#003366" />
-              <View style={styles.dotAdminStyle} />
-            </TouchableOpacity>
-          </View>
         </View>
-      )}
 
-      {/* Main Content Area */}
-      {activeModule === null ? (
-        <ScrollView contentContainerStyle={styles.panelContainer} showsVerticalScrollIndicator={false}>
-          {/* Active Campus Selector at the top */}
-          <InstitutionSelector />
-
-          {/* 1st Scroll: Administration Modules */}
-          <Text style={styles.sectionHeaderTitle}>Administration Modules</Text>
-          {/* Main Grid Options */}
-          <View style={styles.gridContainer}>
-            {filteredPanelItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.gridCard, 
-                  { 
-                    backgroundColor: item.color, 
-                    width: width > 1024 ? '23%' : width > 768 ? '31%' : '48%' 
-                  }
-                ]}
-                onPress={() => {
-                  setActiveModule(item.moduleName);
-                  setActiveSubTab('1');
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.gridIconBg, { backgroundColor: theme.card }]}>
-                  <Ionicons name={item.icon} size={24} color={item.iconColor} />
+        {/* Right Column (Desktop Only) */}
+        {isDesktop && (
+          <View style={{ flex: 3.5 }}>
+            <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, elevation: 2, borderWidth: 1, borderColor: theme.border }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 16 }}>Global Stats</Text>
+              
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E0F2FE', marginRight: 12 }}>
+                  <Ionicons name="business-outline" size={20} color="#0284C7" />
                 </View>
-                <Text style={styles.gridCardTitle}>{item.title}</Text>
-                <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
-              </TouchableOpacity>
-            ))}
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{INSTITUTIONS.length}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Institutions</Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#DCFCE7', marginRight: 12 }}>
+                  <Ionicons name="newspaper-outline" size={20} color="#16A34A" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{actualStats.posts}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Total Posts</Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F9FF', marginRight: 12 }}>
+                  <Ionicons name="calendar-outline" size={20} color="#003366" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>{actualStats.events}</Text>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary }}>Total Events</Text>
+                </View>
+              </View>
+
+            </View>
           </View>
-        </ScrollView>
-      ) : (
-        <View style={styles.flexContainer}>
-          {renderModuleContent()}
-        </View>
-      )}
+        )}
+
       </View>
     </SafeAreaView>
   );

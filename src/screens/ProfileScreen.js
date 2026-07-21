@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, useWindowDimensions, Alert, StatusBar, Modal, TextInput, Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, changePassword, deleteAccount } from '../services/authService';
+import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser } from '../services/authService';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -34,9 +35,12 @@ const ProfileScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('post'); // 'post' | 'reshare' | 'saved' | 'tags'
   const [listModalType, setListModalType] = useState(null); // 'connections' | 'following'
   
-  // Profile Data State
+  // Real data states for connections and following
+  const [connections, setConnections] = useState([]);
+  const [following, setFollowing] = useState([]);
+
   const [profileData, setProfileData] = useState({
-    username: 'abhishek_institution',
+    username: 'loading',
     name: 'Loading...',
     branch: 'Loading...',
     batch: 'Loading...',
@@ -48,7 +52,8 @@ const ProfileScreen = ({ navigation }) => {
     avatar: '..'
   });
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     const fetchProfile = async () => {
       try {
         const data = await getProfile();
@@ -61,15 +66,76 @@ const ProfileScreen = ({ navigation }) => {
             batch: data.batch_year || 'Not specified',
             bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
             linkedin: data.linkedin || '',
-            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU'
+            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU',
           }));
         }
       } catch (e) {
         console.error('Error fetching profile', e);
       }
     };
+
+    const fetchConnections = async () => {
+      try {
+        const [followersData, followingData] = await Promise.all([
+          getFollowers(),
+          getFollowing()
+        ]);
+        
+        if (followersData) {
+          const formattedFollowers = followersData.map(s => ({
+            id: s._id,
+            name: s.name,
+            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+          }));
+          setConnections(formattedFollowers);
+        }
+        
+        if (followingData) {
+          const formattedFollowing = followingData.map(s => ({
+            id: s._id,
+            name: s.name,
+            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+          }));
+          setFollowing(formattedFollowing);
+        }
+
+        setProfileData(prev => ({
+          ...prev,
+          followers: followersData ? followersData.length.toString() : '0',
+          following: followingData ? followingData.length.toString() : '0',
+        }));
+      } catch (e) {
+        console.error('Error fetching connections', e);
+      }
+    };
+
+    const fetchUserPosts = async () => {
+      try {
+        const postsData = await getPosts();
+        if (postsData) {
+          // Count posts by current user (we'll filter after getting profile)
+          const userInfoStr = await AsyncStorage.getItem('userInfo');
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr);
+            const myPosts = postsData.filter(p => p.user?.name === userInfo.name || p.user?._id === userInfo._id);
+            setProfileData(prev => ({
+              ...prev,
+              posts: myPosts.length.toString(),
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching user posts', e);
+      }
+    };
+
     fetchProfile();
-  }, []);
+    fetchConnections();
+    fetchUserPosts();
+  }, [])
+  );
 
   // Profile Editing States
   const [editName, setEditName] = useState(profileData.name);
@@ -94,7 +160,6 @@ const ProfileScreen = ({ navigation }) => {
   const posts = [];
   const mockTags = [];
   const mockSaved = [];
-  const mockConnections = [];
   const mockReshares = [];
 
   const handleSettings = () => {
@@ -709,16 +774,32 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             
             <ScrollView style={{ padding: 16 }}>
-              {mockConnections.map(user => (
+              {(listModalType === 'following' ? following : connections).map(user => (
                 <View key={user.id} style={styles.connectionItem}>
                   <View style={styles.connectionAvatar}>
                     <Text style={styles.connectionAvatarText}>{user.avatar}</Text>
                   </View>
                   <View style={styles.connectionInfo}>
                     <Text style={styles.connectionName}>{user.name}</Text>
-                    <Text style={styles.connectionUsername}>{user.username}</Text>
+                    <Text style={styles.connectionUsername}>{user.title}</Text>
                   </View>
-                  <TouchableOpacity style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}>
+                  <TouchableOpacity 
+                    style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}
+                    onPress={async () => {
+                      try {
+                        await toggleFollowUser(user.id);
+                        if (listModalType === 'following') {
+                          setFollowing(prev => prev.filter(u => u.id !== user.id));
+                          setProfileData(prev => ({...prev, following: (parseInt(prev.following) - 1).toString()}));
+                        } else {
+                          setConnections(prev => prev.filter(u => u.id !== user.id));
+                          setProfileData(prev => ({...prev, followers: (parseInt(prev.followers) - 1).toString()}));
+                        }
+                      } catch (err) {
+                        console.error('Error toggling follow', err);
+                      }
+                    }}
+                  >
                     <Text style={[styles.connectionBtnText, listModalType === 'following' && styles.followingBtnText]}>
                       {listModalType === 'connections' ? 'Remove' : 'Following'}
                     </Text>

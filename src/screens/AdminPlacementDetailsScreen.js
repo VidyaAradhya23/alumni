@@ -12,13 +12,7 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const INITIAL_ALUMNI_MASTER = [
-  { id: '1', name: 'Karthik Nagaraju', degree: 'M.Tech \'18', title: 'Sr Engineering Technical Leader at Cisco Systems, Ban...', location: 'Bengaluru', connected: false },
-  { id: '2', name: 'Uday A S', degree: 'BE \'23', title: 'Software Engineer at Cisco', location: 'Bengaluru', connected: false },
-  { id: '3', name: 'G.Y Rohith', degree: 'BE \'16', title: 'Product Engineer | NPD/NPI Operations at Cisco Syste...', location: 'Bengaluru', connected: true },
-  { id: '4', name: 'ASHWATH NARAYAN RAO', degree: 'BE/B.Tech \'22', title: 'Software engineer at Cisco, Bangalore', location: 'Bengaluru', connected: false },
-  { id: '5', name: 'Nithin ganimaneni', degree: 'BE/B.Tech \'22', title: 'Hardware Engineer at Cisco', location: 'Bengaluru', connected: false },
-];
+const INITIAL_ALUMNI_MASTER = [];
 
 export default function AdminPlacementDetailsScreen({ navigation, route }) {
   const { companyName } = route.params || { companyName: 'Company' };

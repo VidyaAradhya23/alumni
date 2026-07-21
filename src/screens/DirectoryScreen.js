@@ -22,7 +22,7 @@ const DirectoryScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
-  const [activeTab, setActiveTab] = useState('directory');
+  const [activeTab, setActiveTab] = useState('request');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(connectionRequests);
 
@@ -34,12 +34,7 @@ const DirectoryScreen = ({ navigation }) => {
   const [selectedGroups, setSelectedGroups] = useState(['announcement']);
   const [userCommunities, setUserCommunities] = useState([]);
 
-  const availableGroups = [
-    { id: 'announcement', name: 'Announcements', icon: 'megaphone', desc: 'Send news and updates to all members' },
-    { id: 'batch', name: 'Batch & Graduation Chat', icon: 'school', desc: 'Connect with peers from your year' },
-    { id: 'jobs', name: 'Jobs & Internships Group', icon: 'briefcase', desc: 'Referrals, listings, and interview prep' },
-    { id: 'tech', name: 'Tech & Research Hub', icon: 'code-working', desc: 'Discussions on AI, dev, and engineering' },
-  ];
+  const availableGroups = [];
 
   const handleAccept = (id) => {
     setRequests((prev) => prev.filter((r) => r.id !== id));
@@ -426,15 +421,7 @@ const DirectoryScreen = ({ navigation }) => {
 
       {/* ───── Tab Bar ───── */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'directory' && styles.activeTab]}
-          onPress={() => setActiveTab('directory')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, activeTab === 'directory' && styles.activeTabText]}>
-            Directory
-          </Text>
-        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'request' && styles.activeTab]}
           onPress={() => setActiveTab('request')}
@@ -456,9 +443,7 @@ const DirectoryScreen = ({ navigation }) => {
       </View>
 
       {/* ───── Tab Content ───── */}
-      {activeTab === 'directory' ? (
-        isDesktop ? renderWebDirectoryTab() : renderDirectoryTab()
-      ) : activeTab === 'request' ? (
+      {activeTab === 'request' || activeTab === 'directory' ? (
         renderRequestTab()
       ) : (
         renderCommunityTab()

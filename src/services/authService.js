@@ -15,6 +15,11 @@ export const checkEmailExists = async (email) => {
     return data.exists; // returns boolean
 };
 
+export const sendOtp = async (email) => {
+    const { data } = await api.post('/auth/send-otp', { email });
+    return data;
+};
+
 export const getProfile = async () => {
     const { data } = await api.get('/auth/profile');
     return data;
@@ -53,5 +58,50 @@ export const blockUser = async (blockedId) => {
 
 export const unblockUser = async (blockedId) => {
     const { data } = await api.delete(`/blocks/${blockedId}`);
+    return data;
+};
+
+export const getSuggestions = async () => {
+    const { data } = await api.get('/auth/suggestions');
+    return data;
+};
+
+export const toggleFollowUser = async (userId) => {
+    const { data } = await api.post(`/auth/follow/${userId}`);
+    return data;
+};
+
+export const getFollowers = async () => {
+    const { data } = await api.get('/auth/followers');
+    return data;
+};
+
+export const getFollowing = async () => {
+    const { data } = await api.get('/auth/following');
+    return data;
+};
+
+export const getNotifications = async () => {
+    const { data } = await api.get('/auth/notifications');
+    return data;
+};
+
+export const markNotificationsRead = async (id = 'all') => {
+    const { data } = await api.put(`/auth/notifications/${id}/read`);
+    return data;
+};
+
+export const getPosts = async () => {
+    const { data } = await api.get('/posts');
+    return data;
+};
+
+export const toggleLikePost = async (postId) => {
+    const { data } = await api.put(`/posts/${postId}/like`);
+    return data;
+};
+
+export const getEvents = async () => {
+    const { data } = await api.get('/events');
     return data;
 };

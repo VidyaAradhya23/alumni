@@ -2,8 +2,10 @@ const User = require('../models/User');
 const StudentData = require('../models/StudentData');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { sendWelcomeEmail } = require('../utils/sendEmail');
+const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
 const crypto = require('crypto');
+const OTP = require('../models/OTP');
+const Notification = require('../models/Notification');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -24,14 +26,51 @@ exports.checkEmailExists = async (req, res) => {
     }
 };
 
+// @desc    Send OTP to email
+// @route   POST /api/auth/send-otp
+exports.sendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+        
+        const emailClean = email.trim().toLowerCase();
+        const userExists = await User.findOne({ email: emailClean });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists with this email' });
+        }
+
+        const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
+        
+        // Remove existing OTP for this email if any
+        await OTP.deleteMany({ email: emailClean });
+        
+        await OTP.create({ email: emailClean, otp });
+        
+        const emailSent = await sendOtpEmail(emailClean, otp);
+        if (!emailSent) {
+            return res.status(500).json({ message: 'Failed to send OTP email' });
+        }
+
+        res.json({ message: 'OTP sent successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 exports.registerUser = async (req, res) => {
-    const { name, email, password, institution, branch, batchYear, department, joiningYear, role } = req.body;
+    const { name, email, password, institution, branch, batchYear, department, joiningYear, role, otp } = req.body;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email.trim())) {
         return res.status(400).json({ message: 'Email address is not valid' });
+    }
+    
+    if (!otp) {
+        return res.status(400).json({ message: 'OTP is required' });
     }
 
     if (!password || password.length < 8) {
@@ -49,6 +88,12 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Verify OTP
+        const validOtp = await OTP.findOne({ email: email.trim().toLowerCase(), otp });
+        if (!validOtp) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
         const user = await User.create({
             name,
             email: email.trim().toLowerCase(),
@@ -62,6 +107,9 @@ exports.registerUser = async (req, res) => {
             is_approved: false, // Default to false pending admin approval
             isVerifiedByMediacell: false
         });
+        
+        // Delete OTP after successful registration
+        await OTP.deleteMany({ email: email.trim().toLowerCase() });
 
         // Fire and forget welcome email
         sendWelcomeEmail(user.email, user.name);
@@ -287,6 +335,28 @@ exports.deleteAccount = async (req, res) => {
     }
 };
 
+// @desc    Get alumni suggestions (same institution, excluding self)
+// @route   GET /api/auth/suggestions
+exports.getSuggestions = async (req, res) => {
+    try {
+        const currentUser = await User.findById(req.user._id);
+        const query = {
+            _id: { $ne: req.user._id },
+            is_approved: true,
+        };
+        // If the current user has an institution, filter by it
+        if (currentUser.institution) {
+            query.institution = currentUser.institution;
+        }
+        const suggestions = await User.find(query)
+            .select('name email institution department batchYear company designation avatar_url')
+            .limit(10);
+        res.json(suggestions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get all users (Directory)
 // @route   GET /api/auth/users
 exports.getUsers = async (req, res) => {
@@ -360,4 +430,102 @@ exports.linkedinAuthCallback = async (req, res) => {
     // ... skipping the full linkedin implementation for brevity, keeping existing structure
     // Since this is a specialized oauth route, we'll keep it simple for now or copy the original.
     res.status(501).json({ message: 'LinkedIn OAuth callback not fully migrated yet.' });
+};
+
+// @desc    Toggle Follow a User
+// @route   POST /api/auth/follow/:id
+exports.toggleFollow = async (req, res) => {
+    try {
+        const targetUserId = req.params.id;
+        const currentUserId = req.user._id;
+
+        if (targetUserId === currentUserId.toString()) {
+            return res.status(400).json({ message: "You cannot follow yourself" });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        const targetUser = await User.findById(targetUserId);
+
+        if (!targetUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isFollowing = currentUser.following.some(id => id.toString() === targetUserId.toString());
+
+        if (isFollowing) {
+            // Unfollow
+            currentUser.following = currentUser.following.filter(id => id.toString() !== targetUserId);
+            targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentUserId.toString());
+        } else {
+            // Follow
+            currentUser.following.push(targetUserId);
+            targetUser.followers.push(currentUserId);
+            
+            // Send Notification
+            await Notification.create({
+                recipient: targetUserId,
+                sender: currentUserId,
+                type: 'follow',
+                title: 'New Follower',
+                message: `${currentUser.name} started following you.`
+            });
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        res.json({ message: isFollowing ? 'Unfollowed successfully' : 'Followed successfully', isFollowing: !isFollowing });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Followers
+// @route   GET /api/auth/followers
+exports.getFollowers = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('followers', 'name institution batchYear branch department avatar_url role');
+        res.json(user.followers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Following
+// @route   GET /api/auth/following
+exports.getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('following', 'name institution batchYear branch department avatar_url role');
+        res.json(user.following);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Notifications
+// @route   GET /api/auth/notifications
+exports.getNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ recipient: req.user._id })
+            .populate('sender', 'name avatar_url')
+            .sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Mark Notification as Read
+// @route   PUT /api/auth/notifications/:id/read
+exports.markNotificationsRead = async (req, res) => {
+    try {
+        if (req.params.id === 'all') {
+            await Notification.updateMany({ recipient: req.user._id, isRead: false }, { isRead: true });
+        } else {
+            await Notification.findByIdAndUpdate(req.params.id, { isRead: true });
+        }
+        res.json({ message: 'Marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };

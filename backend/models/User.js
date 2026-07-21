@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ['Alumni', 'Admin', 'Super Admin'], default: 'Alumni' },
     is_approved: { type: Boolean, default: false },
     isVerifiedByMediacell: { type: Boolean, default: false },
+    followers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     verified: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     authProvider: { type: String, default: 'local' },

@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing } from '../services/authService';
+import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -36,8 +36,7 @@ const DashboardScreen = ({ navigation }) => {
   
   const [likedPosts, setLikedPosts] = useState({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
-  const [followedUsers, setFollowedUsers] = useState({});
-  const [followedSuggestions, setFollowedSuggestions] = useState({});
+  const [followingMap, setFollowingMap] = useState({});
   const [searchText, setSearchText] = useState('');
   const [userInstitution, setUserInstitution] = useState('Our Network');
   const [userName, setUserName] = useState('');
@@ -101,6 +100,7 @@ const DashboardScreen = ({ navigation }) => {
           const formatted = postsData.value.map(p => ({
             id: p._id,
             user: p.user?.name || 'Alumni',
+            authorId: p.user?._id || null,
             role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
             avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
             content: p.content,
@@ -141,7 +141,7 @@ const DashboardScreen = ({ navigation }) => {
           followingData.forEach(user => {
             initialFollowed[user._id] = true;
           });
-          setFollowedSuggestions(initialFollowed);
+          setFollowingMap(initialFollowed);
         }
 
       } catch (err) {
@@ -171,26 +171,37 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   // ─── Handlers ──────────────────────────────────────────
-  const toggleLike = (postId) => {
-    setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  const toggleLike = async (postId) => {
+    try {
+      setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+      await toggleLikePost(postId);
+    } catch (error) {
+      setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+      console.error('Error toggling like:', error);
+    }
   };
 
   const toggleBookmark = (postId) => {
     setBookmarkedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const toggleFollow = (postId) => {
-    setFollowedUsers((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  const toggleFollow = async (authorId) => {
+    if (!authorId) return;
+    try {
+      setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+      await toggleFollowUser(authorId);
+    } catch (error) {
+      setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+      console.error('Error toggling follow:', error);
+    }
   };
 
   const toggleSuggestionFollow = async (id) => {
     try {
-      // Optimistic update
-      setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+      setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       await toggleFollowUser(id);
     } catch (error) {
-      // Revert on error
-      setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+      setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       console.error('Error toggling follow:', error);
     }
   };
@@ -220,10 +231,10 @@ const DashboardScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.followBtn}
           activeOpacity={0.7}
-          onPress={() => toggleFollow(post.id)}
+          onPress={() => toggleFollow(post.authorId)}
         >
           <Text style={styles.followBtnText}>
-            {followedUsers[post.id] ? 'Following' : '+ Follow'}
+            {followingMap[post.authorId] ? 'Following' : '+ Follow'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -355,7 +366,7 @@ const DashboardScreen = ({ navigation }) => {
                 <View style={{ width: '100%', gap: 12 }}>
                   <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={{ color: theme.textSecondary, fontWeight: '600', fontSize: 13 }}>Connections</Text>
-                    <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>{Object.keys(followedSuggestions).length}</Text>
+                        <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>{Object.keys(followingMap).filter(k => followingMap[k]).length}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={{ color: theme.textSecondary, fontWeight: '600', fontSize: 13 }}>My Events</Text>
@@ -409,10 +420,10 @@ const DashboardScreen = ({ navigation }) => {
                       <Text style={{ fontSize: 12, color: theme.textSecondary }}>{s.subtitle}</Text>
                     </View>
                     <TouchableOpacity 
-                      style={[styles.suggestionFollowBtn, followedSuggestions[s.id] && styles.suggestionFollowBtnActive, { paddingHorizontal: 12, paddingVertical: 6 }]}
+                      style={[styles.suggestionFollowBtn, followingMap[s.id] && styles.suggestionFollowBtnActive, { paddingHorizontal: 12, paddingVertical: 6 }]}
                       onPress={() => toggleSuggestionFollow(s.id)}
                     >
-                      <Text style={[styles.suggestionFollowText, followedSuggestions[s.id] && styles.suggestionFollowTextActive]}>{followedSuggestions[s.id] ? 'Following' : 'Follow'}</Text>
+                      <Text style={[styles.suggestionFollowText, followingMap[s.id] && styles.suggestionFollowTextActive]}>{followingMap[s.id] ? 'Following' : 'Follow'}</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -460,11 +471,11 @@ const DashboardScreen = ({ navigation }) => {
                     <Text style={styles.suggestionName} numberOfLines={1}>{s.name}</Text>
                     <Text style={styles.suggestSubText}>{s.subtitle}</Text>
                     <TouchableOpacity
-                      style={[styles.suggestionFollowBtn, followedSuggestions[s.id] && styles.suggestionFollowBtnActive]}
+                      style={[styles.suggestionFollowBtn, followingMap[s.id] && styles.suggestionFollowBtnActive]}
                       onPress={() => toggleSuggestionFollow(s.id)}
                     >
-                      <Text style={[styles.suggestionFollowText, followedSuggestions[s.id] && styles.suggestionFollowTextActive]}>
-                        {followedSuggestions[s.id] ? 'Following' : 'Follow'}
+                      <Text style={[styles.suggestionFollowText, followingMap[s.id] && styles.suggestionFollowTextActive]}>
+                        {followingMap[s.id] ? 'Following' : 'Follow'}
                       </Text>
                     </TouchableOpacity>
                   </View>

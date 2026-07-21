@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { register, sendOtp } from '../services/authService';
 
-const OTPVerificationScreen = ({ navigation }) => {
+const OTPVerificationScreen = ({ route, navigation }) => {
+  const { formData } = route.params || {};
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
@@ -50,23 +52,53 @@ const OTPVerificationScreen = ({ navigation }) => {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (timer === 0) {
-      setTimer(30);
-      alert('A new OTP has been sent to your registered contact.');
+      try {
+        await sendOtp(formData.email);
+        setTimer(30);
+        alert('A new OTP has been sent to your registered contact.');
+      } catch (error) {
+        alert('Failed to resend OTP');
+      }
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.some(d => !d)) {
       alert('Please enter all 4 digits');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    
+    try {
+      const otpString = otp.join('');
+      await register({
+        ...formData,
+        otp: otpString
+      });
+      alert('Account verified and created successfully!');
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      let errorMsg = 'Verification failed';
+      if (error) {
+        if (typeof error === 'string') {
+          errorMsg = error;
+        } else if (error.message && typeof error.message === 'string') {
+          errorMsg = error.message;
+          if (errorMsg.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(errorMsg);
+              errorMsg = parsed.message || parsed.error || errorMsg;
+            } catch (e) {}
+          }
+        }
+      }
+      alert(errorMsg);
+    } finally {
       setLoading(false);
-      navigation.navigate('ProfileSetup');
-    }, 1500);
+    }
   };
 
   return (

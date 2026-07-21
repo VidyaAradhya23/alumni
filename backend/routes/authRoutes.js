@@ -5,6 +5,7 @@ const {
     updateUserProfile, 
     getUsers, 
     getSuggestions,
+    sendOtp,
     oauthLogin, 
     linkedinAuthCallback,
     checkEmailExists,
@@ -18,6 +19,7 @@ const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 router.post('/check-email', checkEmailExists);
+router.post('/send-otp', sendOtp);
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/oauth', oauthLogin);

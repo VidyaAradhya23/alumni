@@ -61,6 +61,59 @@ const sendWelcomeEmail = async (userEmail, userName) => {
     }
 };
 
+const sendOtpEmail = async (userEmail, otp) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_PORT == 465,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+        });
+
+        const htmlTemplate = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #003366; padding: 24px; text-align: center;">
+                    <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">Verify Your Email</h1>
+                </div>
+                <div style="padding: 32px; background-color: #FFFFFF;">
+                    <p style="font-size: 16px; color: #334155; line-height: 1.6;">
+                        Hi there,
+                    </p>
+                    <p style="font-size: 16px; color: #334155; line-height: 1.6;">
+                        Thank you for registering. Please use the verification code below to complete your registration.
+                    </p>
+                    <div style="text-align: center; margin: 32px 0;">
+                        <span style="background-color: #F8FAFC; color: #003366; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 32px; letter-spacing: 4px; border: 1px solid #E2E8F0; display: inline-block;">
+                            ${otp}
+                        </span>
+                    </div>
+                    <p style="font-size: 14px; color: #64748B; line-height: 1.5; margin-top: 32px; text-align: center;">
+                        This code will expire in 5 minutes. If you didn't request this, you can safely ignore this email.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        const mailOptions = {
+            from: process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>',
+            to: userEmail,
+            subject: 'Your Verification Code',
+            html: htmlTemplate,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('OTP email sent successfully: %s', info.messageId);
+        return true;
+    } catch (error) {
+        console.error('Error sending OTP email:', error);
+        return false;
+    }
+};
+
 module.exports = {
-    sendWelcomeEmail
+    sendWelcomeEmail,
+    sendOtpEmail
 };

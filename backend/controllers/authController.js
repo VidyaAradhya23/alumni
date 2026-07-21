@@ -2,8 +2,9 @@ const User = require('../models/User');
 const StudentData = require('../models/StudentData');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { sendWelcomeEmail } = require('../utils/sendEmail');
+const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
 const crypto = require('crypto');
+const OTP = require('../models/OTP');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -24,14 +25,51 @@ exports.checkEmailExists = async (req, res) => {
     }
 };
 
+// @desc    Send OTP to email
+// @route   POST /api/auth/send-otp
+exports.sendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+        
+        const emailClean = email.trim().toLowerCase();
+        const userExists = await User.findOne({ email: emailClean });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists with this email' });
+        }
+
+        const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
+        
+        // Remove existing OTP for this email if any
+        await OTP.deleteMany({ email: emailClean });
+        
+        await OTP.create({ email: emailClean, otp });
+        
+        const emailSent = await sendOtpEmail(emailClean, otp);
+        if (!emailSent) {
+            return res.status(500).json({ message: 'Failed to send OTP email' });
+        }
+
+        res.json({ message: 'OTP sent successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 exports.registerUser = async (req, res) => {
-    const { name, email, password, institution, branch, batchYear, department, joiningYear, role } = req.body;
+    const { name, email, password, institution, branch, batchYear, department, joiningYear, role, otp } = req.body;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email.trim())) {
         return res.status(400).json({ message: 'Email address is not valid' });
+    }
+    
+    if (!otp) {
+        return res.status(400).json({ message: 'OTP is required' });
     }
 
     if (!password || password.length < 8) {
@@ -49,6 +87,12 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Verify OTP
+        const validOtp = await OTP.findOne({ email: email.trim().toLowerCase(), otp });
+        if (!validOtp) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
         const user = await User.create({
             name,
             email: email.trim().toLowerCase(),
@@ -62,6 +106,9 @@ exports.registerUser = async (req, res) => {
             is_approved: false, // Default to false pending admin approval
             isVerifiedByMediacell: false
         });
+        
+        // Delete OTP after successful registration
+        await OTP.deleteMany({ email: email.trim().toLowerCase() });
 
         // Fire and forget welcome email
         sendWelcomeEmail(user.email, user.name);

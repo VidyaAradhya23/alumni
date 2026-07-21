@@ -15,6 +15,11 @@ export const checkEmailExists = async (email) => {
     return data.exists; // returns boolean
 };
 
+export const sendOtp = async (email) => {
+    const { data } = await api.post('/auth/send-otp', { email });
+    return data;
+};
+
 export const getProfile = async () => {
     const { data } = await api.get('/auth/profile');
     return data;

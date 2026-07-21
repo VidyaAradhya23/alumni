@@ -18,7 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import api, { API_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { register, checkEmailExists } from '../services/authService';
+import { register, checkEmailExists, sendOtp } from '../services/authService';
 
 WebBrowser.maybeCompleteAuthSession();
 const institutions = [
@@ -246,7 +246,10 @@ const RegisterScreen = ({ navigation }) => {
         return;
       }
 
-      await register({
+      await sendOtp(emailClean);
+
+      alert('Verification code sent to your email.');
+      navigation.navigate('OTPVerification', { formData: {
         name,
         email: emailClean,
         password,
@@ -255,10 +258,7 @@ const RegisterScreen = ({ navigation }) => {
         department: branch,
         batchYear,
         joiningYear
-      });
-
-      alert('Account created successfully! Check your email for verification.');
-      navigation.navigate('Login');
+      }});
     } catch (error) {
       console.error('Registration error:', error);
       let errorMsg = 'Registration failed';

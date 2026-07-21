@@ -1,5 +1,6 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 // @desc    Send a message
 // @route   POST /api/messages/:userId
@@ -14,7 +15,7 @@ exports.sendMessage = async (req, res) => {
         const message = await Message.create({
             sender: senderId,
             receiver: receiverId,
-            text
+            text: encrypt(text)
         });
 
         res.status(201).json(message);
@@ -42,8 +43,15 @@ exports.getConversation = async (req, res) => {
             { sender: otherUserId, receiver: currentUserId, read: false },
             { $set: { read: true } }
         );
+        
+        // Decrypt messages before sending to client
+        const decryptedMessages = messages.map(msg => {
+            const msgObj = msg.toObject();
+            msgObj.text = decrypt(msgObj.text);
+            return msgObj;
+        });
 
-        res.json(messages);
+        res.json(decryptedMessages);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -72,9 +80,13 @@ exports.getChatHistory = async (req, res) => {
             const otherUserIdStr = otherUser._id.toString();
 
             if (!chatsMap.has(otherUserIdStr)) {
+                // Decrypt the last message preview
+                const msgObj = msg.toObject();
+                msgObj.text = decrypt(msgObj.text);
+
                 chatsMap.set(otherUserIdStr, {
                     user: otherUser,
-                    lastMessage: msg,
+                    lastMessage: msgObj,
                     unreadCount: (!isSender && !msg.read) ? 1 : 0
                 });
             } else {

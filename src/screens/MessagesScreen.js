@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, TextI
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions } from '../services/authService';
+import { getChatHistory } from '../services/messageService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const initialChats = [];
 
@@ -11,8 +13,22 @@ const MessagesScreen = ({ navigation }) => {
   const styles = getStyles(theme);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [chatList, setChatList] = useState(initialChats);
+  const [chatList, setChatList] = useState([]);
   const [suggestionsList, setSuggestionsList] = useState([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchHistory = async () => {
+        try {
+          const history = await getChatHistory();
+          if (history) setChatList(history);
+        } catch(err) {
+          console.log('Error fetching chat history:', err);
+        }
+      };
+      fetchHistory();
+    }, [])
+  );
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -30,11 +46,12 @@ const MessagesScreen = ({ navigation }) => {
     fetchSuggestions();
   }, []);
 
-  const filteredChats = chatList.filter(chat => 
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredChats = chatList.filter(chat => {
+    const nameMatch = chat.user?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const roleMatch = chat.user?.degree?.toLowerCase().includes(searchQuery.toLowerCase());
+    const msgMatch = chat.lastMessage?.text?.toLowerCase().includes(searchQuery.toLowerCase());
+    return nameMatch || roleMatch || msgMatch;
+  });
 
   const [composeModalVisible, setComposeModalVisible] = useState(false);
   const [composeSearch, setComposeSearch] = useState('');
@@ -117,44 +134,54 @@ const MessagesScreen = ({ navigation }) => {
       ) : (
         <FlatList
           data={filteredChats}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.user?._id || item.user?.id || Math.random().toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={styles.chatItem} 
               activeOpacity={0.7}
               onPress={() => {
-                const updated = chatList.map(c => c.id === item.id ? { ...c, unread: 0 } : c);
+                const updated = chatList.map(c => c.user._id === item.user._id ? { ...c, unreadCount: 0 } : c);
                 setChatList(updated);
-                navigation.navigate('Chat', { user: item });
+                navigation.navigate('Chat', { 
+                  user: {
+                    id: item.user._id,
+                    name: item.user.name,
+                    role: item.user.degree || 'Alumni',
+                    initials: (item.user.name || '?').charAt(0).toUpperCase()
+                  }
+                });
               }}
             >
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.initials}</Text>
+                  <Text style={styles.avatarText}>{(item.user?.name || '?').charAt(0).toUpperCase()}</Text>
                 </View>
-                {item.online && <View style={styles.onlineDot} />}
+                {/* Optional online indicator */}
+                <View style={styles.onlineDot} />
               </View>
               
               <View style={styles.chatInfo}>
                 <View style={styles.chatHeader}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={[styles.time, item.unread > 0 && styles.unreadTime]}>{item.time}</Text>
+                  <Text style={styles.name}>{item.user?.name}</Text>
+                  <Text style={[styles.time, item.unreadCount > 0 && styles.unreadTime]}>
+                    {item.lastMessage?.createdAt ? new Date(item.lastMessage.createdAt).toLocaleDateString() : ''}
+                  </Text>
                 </View>
-                <Text style={styles.role}>{item.role}</Text>
+                <Text style={styles.role}>{item.user?.degree || 'Alumni'}</Text>
                 <View style={styles.messageRow}>
                   <Text 
                     style={[
                       styles.lastMessage, 
-                      item.unread > 0 && styles.unreadLastMessage
+                      item.unreadCount > 0 && styles.unreadLastMessage
                     ]} 
                     numberOfLines={1}
                   >
-                    {item.lastMessage}
+                    {item.lastMessage?.text}
                   </Text>
-                  {item.unread > 0 && (
+                  {item.unreadCount > 0 && (
                     <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadText}>{item.unread}</Text>
+                      <Text style={styles.unreadText}>{item.unreadCount}</Text>
                     </View>
                   )}
                 </View>

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getConversation, sendMessage as sendApiMessage } from '../services/messageService';
 
 const ChatScreen = ({ route, navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -12,29 +13,49 @@ const ChatScreen = ({ route, navigation }) => {
   // Default fallback if someone opens this without a user
   const chatUser = user || { name: 'Unknown User', role: 'Alumni', initials: '?' };
 
-  const [messages, setMessages] = useState([
-    { 
-      id: '1', 
-      text: chatUser.lastMessage || 'Hello! How can I help you today?', 
-      sender: 'them', 
-      time: chatUser.time || 'Just now' 
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
 
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
-    setMessages([...messages, { id: Date.now().toString(), text: inputText.trim(), sender: 'me', time: 'Now' }]);
+  useEffect(() => {
+    const fetchMsgs = async () => {
+      if (!chatUser.id) return;
+      try {
+        const msgs = await getConversation(chatUser.id);
+        if (msgs) setMessages(msgs);
+      } catch(err) {
+        console.log('Failed to load chat:', err);
+      }
+    };
+    fetchMsgs();
+  }, [chatUser.id]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !chatUser.id) return;
+    const textToSend = inputText.trim();
     setInputText('');
     
-    // Simulate auto-reply after 1 second
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: Date.now().toString() + '1', text: 'Thanks for reaching out! I will get back to you shortly.', sender: 'them', time: 'Now' }]);
-    }, 1000);
+    // Optimistic UI update
+    const optimisticMsg = { 
+      _id: Date.now().toString(), 
+      text: textToSend, 
+      sender: 'me', // placeholder for me
+      createdAt: new Date().toISOString()
+    };
+    setMessages([...messages, optimisticMsg]);
+    
+    try {
+      const realMsg = await sendApiMessage(chatUser.id, textToSend);
+      // Replace optimistic msg with real one if needed, or just let it be
+      setMessages(prev => prev.map(m => m._id === optimisticMsg._id ? realMsg : m));
+    } catch(err) {
+      console.log('Failed to send msg:', err);
+    }
   };
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender === 'me';
+    // If the sender matches the OTHER user's ID, it's from them.
+    // Otherwise (or if it's our optimistic 'me' string), it's from us.
+    const isMe = item.sender === 'me' || (item.sender !== chatUser.id && item.sender?._id !== chatUser.id);
     return (
       <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
         {!isMe && (
@@ -44,7 +65,9 @@ const ChatScreen = ({ route, navigation }) => {
         )}
         <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
           <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
-          <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>{item.time}</Text>
+          <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
+            {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+          </Text>
         </View>
       </View>
     );
@@ -55,45 +78,6 @@ const ChatScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={webContainerStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              navigation.navigate('Messages');
-            }
-          }} 
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color="#002144" />
-        </TouchableOpacity>
-        <View style={styles.headerUserInfo}>
-          <Text style={styles.headerName}>{chatUser.name}</Text>
-          <Text style={styles.headerRole}>{chatUser.role}</Text>
-        </View>
-        <TouchableOpacity style={styles.infoButton}>
-          <Ionicons name="information-circle-outline" size={24} color="#003366" />
-        </TouchableOpacity>
-      </View>
-
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoid} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <FlatList
-          data={messages}
-          keyExtractor={item => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messageList}
-          showsVerticalScrollIndicator={false}
-        />
-
-        {/* Input Area */}
         <View style={styles.inputArea}>
           <TouchableOpacity style={styles.attachBtn}>
             <Ionicons name="add" size={26} color="#64748B" />

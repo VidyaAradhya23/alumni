@@ -13,7 +13,12 @@ const {
     changePassword,
     forgotPassword,
     resetPassword,
-    deleteAccount
+    deleteAccount,
+    toggleFollow,
+    getFollowers,
+    getFollowing,
+    getNotifications,
+    markNotificationsRead
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
@@ -33,5 +38,12 @@ router.put('/change-password', protect, changePassword);
 router.delete('/account', protect, deleteAccount);
 router.get('/users', protect, getUsers);
 router.get('/suggestions', protect, getSuggestions);
+
+router.post('/follow/:id', protect, toggleFollow);
+router.get('/followers', protect, getFollowers);
+router.get('/following', protect, getFollowing);
+
+router.get('/notifications', protect, getNotifications);
+router.put('/notifications/:id/read', protect, markNotificationsRead);
 
 module.exports = router;

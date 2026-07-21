@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollVi
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, changePassword, deleteAccount, getSuggestions, getPosts } from '../services/authService';
+import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser } from '../services/authService';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -74,22 +74,36 @@ const ProfileScreen = ({ navigation }) => {
 
     const fetchConnections = async () => {
       try {
-        const suggestionsData = await getSuggestions();
-        if (suggestionsData && suggestionsData.length > 0) {
-          const formatted = suggestionsData.map(s => ({
+        const [followersData, followingData] = await Promise.all([
+          getFollowers(),
+          getFollowing()
+        ]);
+        
+        if (followersData) {
+          const formattedFollowers = followersData.map(s => ({
             id: s._id,
             name: s.name,
             title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
             avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
           }));
-          setConnections(formatted);
-          setFollowing(formatted.slice(0, Math.ceil(formatted.length / 2)));
-          setProfileData(prev => ({
-            ...prev,
-            followers: formatted.length.toString(),
-            following: Math.ceil(formatted.length / 2).toString(),
-          }));
+          setConnections(formattedFollowers);
         }
+        
+        if (followingData) {
+          const formattedFollowing = followingData.map(s => ({
+            id: s._id,
+            name: s.name,
+            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+          }));
+          setFollowing(formattedFollowing);
+        }
+
+        setProfileData(prev => ({
+          ...prev,
+          followers: followersData ? followersData.length.toString() : '0',
+          following: followingData ? followingData.length.toString() : '0',
+        }));
       } catch (e) {
         console.error('Error fetching connections', e);
       }
@@ -766,7 +780,23 @@ const ProfileScreen = ({ navigation }) => {
                     <Text style={styles.connectionName}>{user.name}</Text>
                     <Text style={styles.connectionUsername}>{user.title}</Text>
                   </View>
-                  <TouchableOpacity style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}>
+                  <TouchableOpacity 
+                    style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}
+                    onPress={async () => {
+                      try {
+                        await toggleFollowUser(user.id);
+                        if (listModalType === 'following') {
+                          setFollowing(prev => prev.filter(u => u.id !== user.id));
+                          setProfileData(prev => ({...prev, following: (parseInt(prev.following) - 1).toString()}));
+                        } else {
+                          setConnections(prev => prev.filter(u => u.id !== user.id));
+                          setProfileData(prev => ({...prev, followers: (parseInt(prev.followers) - 1).toString()}));
+                        }
+                      } catch (err) {
+                        console.error('Error toggling follow', err);
+                      }
+                    }}
+                  >
                     <Text style={[styles.connectionBtnText, listModalType === 'following' && styles.followingBtnText]}>
                       {listModalType === 'connections' ? 'Remove' : 'Following'}
                     </Text>

@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getSuggestions, getPosts, getEvents } from '../services/authService';
+import { getSuggestions, getPosts, getEvents, toggleFollowUser } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -168,8 +168,16 @@ const DashboardScreen = ({ navigation }) => {
     setFollowedUsers((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const toggleSuggestionFollow = (id) => {
-    setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleSuggestionFollow = async (id) => {
+    try {
+      // Optimistic update
+      setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+      await toggleFollowUser(id);
+    } catch (error) {
+      // Revert on error
+      setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+      console.error('Error toggling follow:', error);
+    }
   };
 
   const handleShare = async (post) => {

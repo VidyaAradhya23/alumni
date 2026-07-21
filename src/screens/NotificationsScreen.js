@@ -1,91 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, StatusBar, ScrollView , Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-
-const initialNotifications = [
-  // Today
-  {
-    id: '1',
-    type: 'connection',
-    title: 'New Connection Request',
-    message: 'Aditya (Batch 2021) wants to connect with you.',
-    time: '2m ago',
-    icon: 'people-outline',
-    color: '#E0F2FE',
-    iconColor: '#0284C7',
-    unread: true,
-    section: 'Today'
-  },
-  {
-    id: '2',
-    type: 'job',
-    title: 'New Job Alert',
-    message: 'Google posted a new Senior SDE role matching your profile.',
-    time: '1h ago',
-    icon: 'briefcase-outline',
-    color: '#FEF3C7',
-    iconColor: '#D97706',
-    unread: true,
-    section: 'Today'
-  },
-  // Yesterday
-  {
-    id: '3',
-    type: 'event',
-    title: 'Event Reminder',
-    message: 'Annual Alumni Meet starts in 2 days. Have you registered?',
-    time: 'Yesterday',
-    icon: 'calendar-outline',
-    color: '#F3E8FF',
-    iconColor: '#9333EA',
-    unread: false,
-    section: 'Yesterday'
-  },
-  // Earlier
-  {
-    id: '4',
-    type: 'referral',
-    title: 'Referral Update',
-    message: 'Your referral for Sanjay at Microsoft has been accepted.',
-    time: '3d ago',
-    icon: 'checkmark-circle-outline',
-    color: '#DCFCE7',
-    iconColor: '#16A34A',
-    unread: false,
-    section: 'Earlier'
-  },
-  {
-    id: '5',
-    type: 'announcement',
-    title: 'Official Announcement',
-    message: 'Institution campus tour for the Batch of 1998 scheduled for July.',
-    time: '5d ago',
-    icon: 'megaphone-outline',
-    color: '#FFEDD5',
-    iconColor: '#EA580C',
-    unread: false,
-    section: 'Earlier'
-  }
-];
+import { getNotifications, markNotificationsRead } from '../services/authService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const NotificationsScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
-  const [notificationsList, setNotificationsList] = useState(initialNotifications);
+  const [notificationsList, setNotificationsList] = useState([]);
 
-  const handleMarkAllRead = () => {
-    const updated = notificationsList.map(item => ({ ...item, unread: false }));
-    setNotificationsList(updated);
+  const fetchNotifications = async () => {
+    try {
+      const data = await getNotifications();
+      if (data) {
+        // Map backend data to frontend format
+        const formatted = data.map(n => ({
+          id: n._id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          time: getTimeAgo(n.createdAt),
+          icon: getIconForType(n.type),
+          color: getColorForType(n.type),
+          iconColor: getIconColorForType(n.type),
+          unread: !n.isRead,
+          section: getSectionFromDate(n.createdAt)
+        }));
+        setNotificationsList(formatted);
+      }
+    } catch (e) {
+      console.error('Error fetching notifications:', e);
+    }
   };
 
-  const handleNotificationPress = (item) => {
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [])
+  );
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markNotificationsRead('all');
+      setNotificationsList(prev => prev.map(item => ({ ...item, unread: false })));
+    } catch (e) {
+      console.error('Error marking all as read:', e);
+    }
+  };
+
+  const handleNotificationPress = async (item) => {
     if (item.unread) {
-      const updated = notificationsList.map(n => 
-        n.id === item.id ? { ...n, unread: false } : n
-      );
-      setNotificationsList(updated);
+      try {
+        await markNotificationsRead(item.id);
+        setNotificationsList(prev => prev.map(n => 
+          n.id === item.id ? { ...n, unread: false } : n
+        ));
+      } catch (e) {
+        console.error('Error marking as read:', e);
+      }
     }
 
     if (item.type === 'job') {
@@ -97,6 +71,73 @@ const NotificationsScreen = ({ navigation }) => {
     }
   };
 
+  // Helper functions for mapping types
+  const getIconForType = (type) => {
+    switch (type) {
+      case 'follow': return 'person-add-outline';
+      case 'connection': return 'people-outline';
+      case 'job': return 'briefcase-outline';
+      case 'event': return 'calendar-outline';
+      case 'referral': return 'checkmark-circle-outline';
+      case 'announcement': return 'megaphone-outline';
+      default: return 'notifications-outline';
+    }
+  };
+
+  const getColorForType = (type) => {
+    switch (type) {
+      case 'follow': return '#F3E8FF';
+      case 'connection': return '#E0F2FE';
+      case 'job': return '#FEF3C7';
+      case 'event': return '#F3E8FF';
+      case 'referral': return '#DCFCE7';
+      case 'announcement': return '#FFEDD5';
+      default: return '#F1F5F9';
+    }
+  };
+
+  const getIconColorForType = (type) => {
+    switch (type) {
+      case 'follow': return '#9333EA';
+      case 'connection': return '#0284C7';
+      case 'job': return '#D97706';
+      case 'event': return '#9333EA';
+      case 'referral': return '#16A34A';
+      case 'announcement': return '#EA580C';
+      default: return '#64748B';
+    }
+  };
+
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getSectionFromDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return 'Earlier';
+    }
+  };
+
   // Group notifications by section
   const sections = ['Today', 'Yesterday', 'Earlier'];
   const groupedData = sections.map(section => {
@@ -104,7 +145,7 @@ const NotificationsScreen = ({ navigation }) => {
     return { section, data };
   }).filter(group => group.data.length > 0);
 
-    const isWeb = Platform.OS === 'web';
+  const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
   return (
@@ -174,7 +215,7 @@ const NotificationsScreen = ({ navigation }) => {
           <View style={styles.emptyState}>
             <Ionicons name="notifications-off-outline" size={64} color="#CBD5E1" />
             <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySubtitle}>You don&apos;t have any notifications at the moment.</Text>
+            <Text style={styles.emptySubtitle}>You don't have any notifications at the moment.</Text>
           </View>
         )}
       </ScrollView>

@@ -5,6 +5,7 @@ const axios = require('axios');
 const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
 const crypto = require('crypto');
 const OTP = require('../models/OTP');
+const Notification = require('../models/Notification');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -429,4 +430,102 @@ exports.linkedinAuthCallback = async (req, res) => {
     // ... skipping the full linkedin implementation for brevity, keeping existing structure
     // Since this is a specialized oauth route, we'll keep it simple for now or copy the original.
     res.status(501).json({ message: 'LinkedIn OAuth callback not fully migrated yet.' });
+};
+
+// @desc    Toggle Follow a User
+// @route   POST /api/auth/follow/:id
+exports.toggleFollow = async (req, res) => {
+    try {
+        const targetUserId = req.params.id;
+        const currentUserId = req.user._id;
+
+        if (targetUserId === currentUserId.toString()) {
+            return res.status(400).json({ message: "You cannot follow yourself" });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        const targetUser = await User.findById(targetUserId);
+
+        if (!targetUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isFollowing = currentUser.following.includes(targetUserId);
+
+        if (isFollowing) {
+            // Unfollow
+            currentUser.following = currentUser.following.filter(id => id.toString() !== targetUserId);
+            targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentUserId.toString());
+        } else {
+            // Follow
+            currentUser.following.push(targetUserId);
+            targetUser.followers.push(currentUserId);
+            
+            // Send Notification
+            await Notification.create({
+                recipient: targetUserId,
+                sender: currentUserId,
+                type: 'follow',
+                title: 'New Follower',
+                message: `${currentUser.name} started following you.`
+            });
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        res.json({ message: isFollowing ? 'Unfollowed successfully' : 'Followed successfully', isFollowing: !isFollowing });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Followers
+// @route   GET /api/auth/followers
+exports.getFollowers = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('followers', 'name institution batchYear branch department avatar_url role');
+        res.json(user.followers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Following
+// @route   GET /api/auth/following
+exports.getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('following', 'name institution batchYear branch department avatar_url role');
+        res.json(user.following);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Notifications
+// @route   GET /api/auth/notifications
+exports.getNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ recipient: req.user._id })
+            .populate('sender', 'name avatar_url')
+            .sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Mark Notification as Read
+// @route   PUT /api/auth/notifications/:id/read
+exports.markNotificationsRead = async (req, res) => {
+    try {
+        if (req.params.id === 'all') {
+            await Notification.updateMany({ recipient: req.user._id, isRead: false }, { isRead: true });
+        } else {
+            await Notification.findByIdAndUpdate(req.params.id, { isRead: true });
+        }
+        res.json({ message: 'Marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };

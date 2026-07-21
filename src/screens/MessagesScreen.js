@@ -1,50 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, TextInput, StatusBar, Alert, Modal , Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getFollowing } from '../services/authService';
 
-const initialChats = [
-  {
-    id: '1',
-    name: 'Rahul Murthy',
-    role: 'SDE-3 @ Google',
-    lastMessage: "Sure, let's connect this weekend for the referral discussion.",
-    time: '10:30 AM',
-    unread: 2,
-    initials: 'RM',
-    online: true,
-  },
-  {
-    id: '2',
-    name: 'Sneha Kapur',
-    role: 'Product Manager @ MSFT',
-    lastMessage: 'The alumni event was amazing! See you next time.',
-    time: 'Yesterday',
-    unread: 0,
-    initials: 'SK',
-    online: true,
-  },
-  {
-    id: '3',
-    name: 'Placement Cell',
-    role: 'Official Coordinator',
-    lastMessage: 'Please update your professional details for the yearly audit.',
-    time: 'Wed',
-    unread: 0,
-    initials: 'PC',
-    online: false,
-  },
-  {
-    id: '4',
-    name: 'Amit Shah',
-    role: 'Entrepreneur (Batch 2008)',
-    lastMessage: 'Can you mentor some of our junior students in Cloud Architecture?',
-    time: 'Mon',
-    unread: 1,
-    initials: 'AS',
-    online: false,
-  }
-];
+const initialChats = [];
 
 const MessagesScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -52,6 +12,21 @@ const MessagesScreen = ({ navigation }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [chatList, setChatList] = useState(initialChats);
+  const [followingList, setFollowingList] = useState([]);
+
+  useEffect(() => {
+    const fetchFollowing = async () => {
+      try {
+        const res = await getFollowing();
+        if (res && res.data) {
+          setFollowingList(res.data);
+        }
+      } catch(err) {
+        console.log('Error fetching following:', err);
+      }
+    };
+    fetchFollowing();
+  }, []);
 
   const filteredChats = chatList.filter(chat => 
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,6 +36,8 @@ const MessagesScreen = ({ navigation }) => {
 
   const [composeModalVisible, setComposeModalVisible] = useState(false);
   const [composeSearch, setComposeSearch] = useState('');
+
+  const filteredFollowing = followingList.filter(f => f.name && f.name.toLowerCase().includes(composeSearch.toLowerCase()));
 
   const startNewChat = () => {
     if (!composeSearch.trim()) return;
@@ -205,13 +182,41 @@ const MessagesScreen = ({ navigation }) => {
                 onChangeText={setComposeSearch}
                 autoFocus
               />
-              <TouchableOpacity 
-                style={[styles.modalStartBtn, !composeSearch.trim() && { opacity: 0.5 }]} 
-                onPress={startNewChat}
-                disabled={!composeSearch.trim()}
-              >
-                <Text style={styles.modalStartBtnText}>Start Chat</Text>
-              </TouchableOpacity>
+              <FlatList
+                data={filteredFollowing}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => {
+                      const newUser = { 
+                        id: item._id, 
+                        name: item.name, 
+                        role: item.degree || 'Alumni', 
+                        lastMessage: '', 
+                        time: 'Now', 
+                        unread: 0, 
+                        initials: (item.name || '').charAt(0).toUpperCase(), 
+                        online: true 
+                      };
+                      setChatList([newUser, ...chatList]);
+                      setComposeModalVisible(false);
+                      setComposeSearch('');
+                      navigation.navigate('Chat', { user: newUser });
+                    }}
+                  >
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                      <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>{(item.name || '').charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 16, color: '#1E293B', fontWeight: '600' }}>{item.name}</Text>
+                      <Text style={{ fontSize: 13, color: '#64748B' }}>{item.degree || 'Alumni'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={<Text style={{ padding: 12, color: '#94A3B8', textAlign: 'center' }}>No users found.</Text>}
+                style={{ maxHeight: 250, marginTop: 12 }}
+              />
             </View>
           </View>
         </View>

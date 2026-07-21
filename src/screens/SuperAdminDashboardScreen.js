@@ -22,8 +22,6 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getPosts, getEvents } from '../services/authService';
-import { getPendingUsers, approveUser, rejectUser } from '../services/adminService';
-import DirectoryScreen from './DirectoryScreen';
 
 // ==========================================
 // DUMMY DATABASE / SEED DATA
@@ -205,8 +203,6 @@ const panelItems = [
   { id: '4', title: 'Logs/Stats', icon: 'bar-chart-outline', color: '#FFF1F2', iconColor: '#E11D48', moduleName: 'logs_stats', desc: 'Database, visitors, jobs & email charts' },
   { id: '5', title: 'Admin Activities', icon: 'time-outline', color: '#F1F5F9', iconColor: '#475569', moduleName: 'admin_activities', desc: 'Audit log of actions taken by admins' },
   { id: '6', title: 'Master List', icon: 'list-outline', color: '#F0FDF4', iconColor: '#16A34A', moduleName: 'master_list', desc: 'Institutions, locations, batches & companies' },
-  { id: '7', title: 'Alumni Directory', icon: 'people-outline', color: '#F3E8FF', iconColor: '#9333EA', moduleName: 'alumni_directory', desc: 'Browse all alumni with filters' },
-  { id: '8', title: 'Membership Requests', icon: 'checkbox-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'membership_request', desc: 'Approve or reject pending signups' },
 ];
 
 const MOCK_POSTS = [];
@@ -253,35 +249,17 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   useEffect(() => {
     const fetchSuperAdminData = async () => {
       try {
-        const [postsData, eventsData, pendingData] = await Promise.allSettled([
-          getPosts(), 
-          getEvents(),
-          getPendingUsers(selectedInstitution !== 'All' ? selectedInstitution : undefined)
-        ]);
+        const [postsData, eventsData] = await Promise.allSettled([getPosts(), getEvents()]);
         setActualStats({
           posts: postsData.status === 'fulfilled' && postsData.value ? postsData.value.length : 0,
           events: eventsData.status === 'fulfilled' && eventsData.value ? eventsData.value.length : 0,
         });
-        if (pendingData.status === 'fulfilled' && pendingData.value) {
-          // Map backend users to UI expected structure
-          const mappedPending = pendingData.value.map(user => ({
-            id: user._id,
-            name: user.name,
-            branch: user.degree || 'BE',
-            year: user.graduation_year || 'Unknown',
-            email: user.email,
-            institution: user.institution || 'Unknown',
-            proof: 'N/A', // Adjust if proof of enrollment exists
-            status: 'pending'
-          }));
-          setMembershipRequests(mappedPending);
-        }
       } catch (err) {
         console.error(err);
       }
     };
     fetchSuperAdminData();
-  }, [selectedInstitution]);
+  }, []);
 
   // News Feed & Dropdown States
   const [postsList, setPostsList] = useState(MOCK_POSTS);
@@ -1319,41 +1297,26 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
       return r.status === 'rejected';
     });
 
-    const handleApprove = async (id, name) => {
-      try {
-        await approveUser(id);
-        setMembershipRequests((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status: 'approved', adminAction: 'Approved by Super Admin' } : r))
-        );
-        Alert.alert('Approved', `${name}'s request approved.`);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to approve user.');
-      }
+    const handleApprove = (id, name) => {
+      setMembershipRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: 'approved', adminAction: 'Approved by Super Admin' } : r))
+      );
+      Alert.alert('Approved', `${name}'s request approved.`);
     };
 
-    const handleReject = async (id, name) => {
-      try {
-        await rejectUser(id);
-        setMembershipRequests((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status: 'rejected', adminAction: 'Rejected by Super Admin' } : r))
-        );
-        Alert.alert('Rejected', `${name}'s request rejected.`);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to reject user.');
-      }
+    const handleReject = (id, name) => {
+      setMembershipRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: 'rejected', adminAction: 'Rejected by Super Admin' } : r))
+      );
+      Alert.alert('Rejected', `${name}'s request rejected.`);
     };
 
     const handleDeleteAccount = (id, name) => {
       Alert.alert('Delete Profile', `Delete registration request of ${name}?`, [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: async () => {
-          try {
-            await rejectUser(id);
-            setMembershipRequests((prev) => prev.filter((r) => r.id !== id));
-            Alert.alert('Deleted', 'Account request deleted.');
-          } catch (e) {
-            Alert.alert('Error', 'Could not delete account.');
-          }
+        { text: 'Delete', style: 'destructive', onPress: () => {
+          setMembershipRequests((prev) => prev.filter((r) => r.id !== id));
+          Alert.alert('Deleted', 'Account request deleted.');
         }}
       ]);
     };
@@ -2591,8 +2554,6 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
         return renderDataExports();
       case 'admin_activities':
         return renderAdminActivities();
-      case 'alumni_directory':
-        return <DirectoryScreen isEmbedded={true} />;
       default:
         return renderDashboardHome();
     }

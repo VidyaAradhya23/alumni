@@ -18,72 +18,9 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const DUMMY_JOBS = [
-  {
-    id: '1',
-    role: 'Sr Software Engineer',
-    company: 'Paypal',
-    workMode: 'Full-Time',
-    experience: '5+ years',
-    location: 'Bengaluru',
-    views: 124,
-    applied: 38,
-    shared: 14,
-    description: 'We are looking for a Senior Software Engineer to join our payments platform team.',
-    institution: 'RVCE',
-  },
-  {
-    id: '2',
-    role: 'Backend Developer',
-    company: 'Amazon',
-    workMode: 'Remote',
-    experience: '3-5 years',
-    location: 'Remote',
-    views: 89,
-    applied: 22,
-    shared: 8,
-    description: 'Amazon is hiring a Backend Developer to work on our cloud infrastructure services.',
-    institution: 'RVITM',
-  },
-  {
-    id: '3',
-    role: 'Frontend Engineer',
-    company: 'Google',
-    workMode: 'Hybrid',
-    experience: '2+ years',
-    location: 'Hyderabad',
-    views: 156,
-    applied: 45,
-    shared: 25,
-    description: 'Google is seeking a Frontend Engineer to build next-generation web applications.',
-    institution: 'RVPU',
-  },
-];
+const DUMMY_JOBS = [];
 
-const RESUME_DATA = [
-  {
-    id: 'r1',
-    name: 'Sarthak Banka',
-    initials: 'SB',
-    skills: ['C++', 'C', 'JavaScript', 'Node.js', 'Python'],
-    company: 'Qualcomm',
-    role: 'Software Engineer',
-    domain: 'Technology',
-    experience: '1-2 years',
-    description: 'Passionate software engineer with strong fundamentals in systems programming.',
-  },
-  {
-    id: 'r2',
-    name: 'Manjunath N',
-    initials: 'MN',
-    skills: ['B2B Sales', 'Export', 'International Marketing'],
-    company: 'Maverik',
-    role: 'Sr Manager',
-    domain: 'Sales & Marketing',
-    experience: '6-10 years',
-    description: 'Seasoned business development professional with extensive experience in B2B sales.',
-  },
-];
+const RESUME_DATA = [];
 
 const WORK_MODES = ['Full-Time', 'Part-Time', 'Remote', 'Hybrid', 'Contract', 'Internship'];
 

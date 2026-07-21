@@ -56,51 +56,13 @@ const INSTITUTIONS = [
   { id: '27', name: 'Media Cell Institution', shortName: 'MCI', location: 'Bengaluru, Karnataka', established: 2008, totalAlumni: 12, registeredUsers: 0, admins: 1, status: 'Active', color: '#D97706' },
 ];
 
-const INITIAL_ADMINS = [
-  { id: '1', name: 'Dr. Ramesh Kumar', email: 'admin@rvce.edu', password: 'admin123', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 09:30 AM', passwordChangedAt: '15/06/2026' },
-  { id: '2', name: 'Prof. Anitha Shetty', email: 'anitha.s@rvce.edu', password: 'anitha@2026', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '16/06/2026 02:15 PM', passwordChangedAt: '10/06/2026' },
-  { id: '3', name: 'Suresh Babu', email: 'admin@institution.edu', password: 'admin456', institution: 'Institution', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 11:00 AM', passwordChangedAt: '12/06/2026' },
-  { id: '4', name: 'Meera Nair', email: 'admin@rvpu.edu', password: 'admin789', institution: 'RVPU', role: 'Admin', status: 'Active', lastLogin: '14/06/2026 04:45 PM', passwordChangedAt: '01/06/2026' },
-  { id: '5', name: 'Vikram Joshi', email: 'admin@rvis.edu', password: 'admin012', institution: 'RVIS', role: 'Admin', status: 'Inactive', lastLogin: '10/06/2026 10:00 AM', passwordChangedAt: '05/05/2026' },
-];
+const INITIAL_ADMINS = [];
 
-const INITIAL_SPAM_REPORTS = [
-  { id: '1', name: 'Nithin Ganimaneni', institution: 'RVCE', branch: 'BE, CSE', year: '2022', reason: 'Spamming job referrals with affiliate links', reportedBy: 'Karthik Nagaraju', date: '10/06/2026' },
-  { id: '2', name: 'G.Y Rohith', institution: 'RVCE', branch: 'BE, ECE', year: '2016', reason: 'Posting commercial ads in alumni timeline', reportedBy: 'Uday A S', date: '09/06/2026' },
-  { id: '3', name: 'Priya Desai', institution: 'Institution', branch: 'BE, ISE', year: '2020', reason: 'Sending bulk unsolicited messages', reportedBy: 'Admin', date: '11/06/2026' },
-  { id: '4', name: 'Rahul Menon', institution: 'RVPU', branch: 'Science', year: '2019', reason: 'Fake profile with misleading information', reportedBy: 'Meera Nair', date: '08/06/2026' },
-  { id: '5', name: 'Sneha Patil', institution: 'Institution', branch: 'MBA', year: '2021', reason: 'Promoting external MLM schemes', reportedBy: 'Suresh Babu', date: '07/06/2026' },
-];
+const INITIAL_SPAM_REPORTS = [];
 
-const RVCE_VERIFICATION_DB = [
-  { name: 'arjun menon', joining: '2008', leaving: '2011' },
-  { name: 'rahul rao', joining: '2008', leaving: '2011' },
-  { name: 'gururaj', joining: '2008', leaving: '2011' },
-  { name: 'vishwas', joining: '2008', leaving: '2011' },
-  { name: 'vidya', joining: '2008', leaving: '2011' },
-  { name: 'harshitha', joining: '2008', leaving: '2011' },
-  { name: 'arun', joining: '2008', leaving: '2011' },
-  { name: 'hemanth', joining: '2008', leaving: '2011' },
-  { name: 'chaitra', joining: '2008', leaving: '2011' },
-  { name: 'pramod', joining: '2008', leaving: '2011' },
-  { name: 'kavan', joining: '2008', leaving: '2011' },
-  { name: 'prajwal', joining: '2008', leaving: '2011' }
-];
+const RVCE_VERIFICATION_DB = [];
 
-const MEDIA_CELL_VERIFICATION_DB = [
-  { name: 'arjun menon', joining: '2008', leaving: '2011' },
-  { name: 'rahul rao', joining: '2008', leaving: '2011' },
-  { name: 'gururaj', joining: '2008', leaving: '2011' },
-  { name: 'vishwas', joining: '2008', leaving: '2011' },
-  { name: 'vidya', joining: '2008', leaving: '2011' },
-  { name: 'harshitha', joining: '2008', leaving: '2011' },
-  { name: 'arun', joining: '2008', leaving: '2011' },
-  { name: 'hemanth', joining: '2008', leaving: '2011' },
-  { name: 'chaitra', joining: '2008', leaving: '2011' },
-  { name: 'pramod', joining: '2008', leaving: '2011' },
-  { name: 'kavan', joining: '2008', leaving: '2011' },
-  { name: 'prajwal', joining: '2008', leaving: '2011' }
-];
+const MEDIA_CELL_VERIFICATION_DB = [];
 
 const checkDatabaseVerification = (name, batchYear, joiningYear, institution) => {
   if (!name) return { verified: false, reason: 'Name is missing' };

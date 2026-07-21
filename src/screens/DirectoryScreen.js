@@ -14,25 +14,9 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const connectionRequests = [
-  { id: '1', name: 'Ananya Joshi', subtitle: 'CSE \'18 • Product Manager at Microsoft', initials: 'AJ', color: '#4F46E5' },
-  { id: '2', name: 'Rahul Verma', subtitle: 'ECE \'20 • Software Engineer at Apple', initials: 'RV', color: '#1E40AF' },
-  { id: '3', name: 'Priya Sharma', subtitle: 'ISE \'15 • Staff Engineer at Google', initials: 'PS', color: '#7C3AED' },
-  { id: '4', name: 'Vikram Singh', subtitle: 'ME \'12 • Engineering Lead at Tesla', initials: 'VS', color: '#0E7490' },
-  { id: '5', name: 'Neha Gupta', subtitle: 'CSE \'21 • SDE II at Amazon', initials: 'NG', color: '#B45309' },
-  { id: '6', name: 'Arjun Patel', subtitle: 'AI&ML \'19 • Research Scientist at DeepMind', initials: 'AP', color: '#059669' },
-];
+const connectionRequests = [];
 
-const directoryAlumni = [
-  { id: 'da1', name: 'Priya Sharma', branch: 'CSE \'20', title: 'Product Manager at Microsoft', institution: 'RVCE', initials: 'PS', color: '#4F46E5' },
-  { id: 'da2', name: 'Rahul Verma', branch: 'ECE \'19', title: 'Software Engineer at Apple', institution: 'RVCE', initials: 'RV', color: '#1E40AF' },
-  { id: 'da3', name: 'Sneha Patel', branch: 'ISE \'21', title: 'Frontend Engineer at Meta', institution: 'RVITM', initials: 'SP', color: '#7C3AED' },
-  { id: 'da4', name: 'Arjun Reddy', branch: 'ME \'18', title: 'Mechanical Lead at Tesla', institution: 'RVITM', initials: 'AR', color: '#0E7490' },
-  { id: 'da5', name: 'Kavitha Nair', branch: 'EEE \'22', title: 'Systems Lead at Qualcomm', institution: 'RVPU', initials: 'KN', color: '#B45309' },
-  { id: 'da6', name: 'Deepak Kumar', branch: 'CSE \'17', title: 'Data Scientist at Amazon', institution: 'RVPU', initials: 'DK', color: '#059669' },
-  { id: 'da7', name: 'Sarthak Banka', branch: 'CSE \'23', title: 'Fullstack Engineer at Coinbase', institution: 'RVIS', initials: 'SB', color: '#E11D48' },
-  { id: 'da8', name: 'Manjunath N', branch: 'MBA \'15', title: 'Strategy Director at Deloitte', institution: 'RVIS', initials: 'MN', color: '#475569' },
-];
+const directoryAlumni = [];
 
 const DirectoryScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();

@@ -20,43 +20,17 @@ import AdminMetricsScreen from './AdminMetricsScreen';
 // DUMMY DATA FOR THE NEW MODULES
 // ==========================================
 
-const INITIAL_SPAM_REPORTS = [
-  { id: '1', name: 'Nithin Ganimaneni', branch: 'BE, CSE', year: '2022', reason: 'Spamming job referrals with affiliate links', reportedBy: 'Karthik Nagaraju', date: '10/06/2026' },
-  { id: '2', name: 'G.Y Rohith', branch: 'BE, ECE', year: '2016', reason: 'Posting commercial ads in alumni timeline', reportedBy: 'Uday A S', date: '09/06/2026' },
-];
+const INITIAL_SPAM_REPORTS = [];
 
-const INITIAL_ALUMNI_MASTER = [
-  { id: '1', name: 'Karthik Nagaraju', degree: 'M.Tech \'18', title: 'Sr Engineering Technical Leader at Cisco Systems, Ban...', location: 'Bengaluru', course: 'M.Tech', year: '2018', connected: false },
-  { id: '2', name: 'Uday A S', degree: 'BE \'23', title: 'Software Engineer at Cisco', location: 'Bengaluru', course: 'BE', year: '2023', connected: false },
-  { id: '3', name: 'G.Y Rohith', degree: 'BE \'16', title: 'Product Engineer | NPD/NPI Operations at Cisco Syste...', location: 'Bengaluru', course: 'BE', year: '2016', connected: true },
-  { id: '4', name: 'ASHWATH NARAYAN RAO', degree: 'BE/B.Tech \'22', title: 'Software engineer at Cisco, Bangalore', location: 'Bengaluru', course: 'BE', year: '2022', connected: false },
-  { id: '5', name: 'Nithin ganimaneni', degree: 'BE/B.Tech \'22', title: 'Hardware Engineer at Cisco', location: 'Bengaluru', course: 'BE', year: '2022', connected: false },
-];
+const INITIAL_ALUMNI_MASTER = [];
 
-const INITIAL_MEMBERSHIP_REQUESTS = [
-  { id: '1', name: 'Srinivas Murthy', branch: 'BE, Mechanical', year: '2020', email: 'srinivas.m@example.com', proof: 'Degree Certificate ID: 948210' },
-  { id: '2', name: 'Priya Sharma', branch: 'MBA', year: '2021', email: 'priya.sharma@example.com', proof: 'Alumni ID Card No: RV-9481' },
-];
+const INITIAL_MEMBERSHIP_REQUESTS = [];
 
-const INITIAL_PLACEMENTS = [
-  { id: '1', company: 'Cisco Systems', industry: 'Computer Networking', count: 78 },
-  { id: '2', company: 'Accenture', industry: 'Information Technology & Services', count: 62 },
-  { id: '3', company: 'Qualcomm Incorporated', industry: 'Electrical & Electronic Manufacturing', count: 61 },
-  { id: '4', company: 'IBM', industry: 'Information Technology & Services', count: 58 },
-  { id: '5', company: 'Oracle', industry: 'Information Technology & Services', count: 56 },
-  { id: '6', company: 'Cognizant Technology Solutions', industry: 'Information Technology & Services', count: 55 },
-];
+const INITIAL_PLACEMENTS = [];
 
-const INITIAL_MENTOR_APPLICATIONS = [
-  { id: '1', name: 'Ananth R', role: 'Mentor', expertise: 'Machine Learning / MLOps', company: 'Google', status: 'Pending' },
-  { id: '2', name: 'Kavya Hegde', role: 'Mentee', expertise: 'Cloud Architecture & AWS', company: 'Institution Student', status: 'Pending' },
-];
+const INITIAL_MENTOR_APPLICATIONS = [];
 
-const INITIAL_ACTIVITIES = [
-  { id: '1', type: 'Email Interaction', description: 'Welcome email sent to Priya Sharma', category: 'Welcome Mail', date: '11/06/2026' },
-  { id: '2', type: 'Call Interaction', description: 'Followed up with Cisco HR for placements', category: 'Placement Tool', date: '10/06/2026' },
-  { id: '3', type: 'Facebook Interaction', description: 'Shared Silver Jubilee meet invitation post', category: 'Events', date: '08/06/2026' },
-];
+const INITIAL_ACTIVITIES = [];
 
 const panelItems = [
   { id: '1', title: 'Dashboard Overview', icon: 'pie-chart-outline', color: '#EEF2FF', iconColor: '#4F46E5', moduleName: 'dashboard_overview', desc: 'High-level metrics and quick actions' },

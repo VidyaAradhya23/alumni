@@ -27,8 +27,8 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
   const [metrics, setMetrics] = useState({
     totalAlumni: 0,
     pendingApprovals: 0,
-    activeJobs: 24, // Mock
-    upcomingEvents: 5 // Mock
+    activeJobs: 0, // Mock
+    upcomingEvents: 0 // Mock
   });
 
   useEffect(() => {
@@ -55,8 +55,8 @@ export default function AdminMetricsScreen({ navigation, isEmbedded = false }) {
         ...prev,
         totalAlumni: stats.totalAlumni || 0,
         pendingApprovals: stats.pendingUsers || 0,
-        activeJobs: stats.totalPosts || 24, // Assuming jobs are part of posts or keeping it as mock
-        upcomingEvents: stats.totalEvents || 5 // Assuming we have events count
+        activeJobs: stats.totalPosts || 0, // Assuming jobs are part of posts or keeping it as mock
+        upcomingEvents: stats.totalEvents || 0 // Assuming we have events count
       }));
 
     } catch (err) {

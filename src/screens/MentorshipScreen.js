@@ -6,32 +6,7 @@ const MentorshipScreen = () => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
-  const mentors = [
-    {
-      id: 1,
-      name: 'Dr. Ramesh Kumar',
-      expertise: 'Cloud Computing & Architecture',
-      batch: '1998',
-      company: 'AWS',
-      initials: 'RK'
-    },
-    {
-      id: 2,
-      name: 'Sarah Chen',
-      expertise: 'Product Design & UX',
-      batch: '2010',
-      company: 'Airbnb',
-      initials: 'SC'
-    },
-    {
-      id: 3,
-      name: 'Vikram Malhotra',
-      expertise: 'Entrepreneurship & VC',
-      batch: '2005',
-      company: 'Sequoia Capital',
-      initials: 'VM'
-    }
-  ];
+  const mentors = [];
 
     const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };

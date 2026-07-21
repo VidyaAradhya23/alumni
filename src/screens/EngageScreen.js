@@ -106,19 +106,9 @@ const EngageScreen = ({ navigation }) => {
     }
   };
 
-  const suggestions = [
-    { id: '1', name: 'Rohan K.', avatar: 'RK' },
-    { id: '2', name: 'Priya S.', avatar: 'PS' },
-    { id: '3', name: 'Rahul M.', avatar: 'RM' },
-    { id: '4', name: 'Karan G.', avatar: 'KG' },
-  ];
+  const suggestions = [];
 
-  const events = [
-    { id: '1', title: 'Kannada Rajyotsava', date: 'November 1, 2025', location: 'Bengaluru, India', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=300&h=200&q=80' },
-    { id: '2', title: 'Kannada Rajyotsava', date: 'November 1, 2025', location: 'Bengaluru, India', image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=300&h=200&q=80' },
-    { id: '3', title: 'Kannada Rajyotsava', date: 'November 1, 2025', location: 'Bengaluru, India', image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=300&h=200&q=80' },
-    { id: '4', title: 'Kannada Rajyotsava', date: 'November 1, 2025', location: 'Bengaluru, India', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=300&h=200&q=80' },
-  ];
+  const events = [];
 
   const [followedSuggestions, setFollowedSuggestions] = useState({});
 

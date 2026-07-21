@@ -38,7 +38,7 @@ const DirectoryScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
-  const [activeTab, setActiveTab] = useState('directory');
+  const [activeTab, setActiveTab] = useState('request');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(connectionRequests);
 
@@ -442,15 +442,7 @@ const DirectoryScreen = ({ navigation }) => {
 
       {/* ───── Tab Bar ───── */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'directory' && styles.activeTab]}
-          onPress={() => setActiveTab('directory')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, activeTab === 'directory' && styles.activeTabText]}>
-            Directory
-          </Text>
-        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'request' && styles.activeTab]}
           onPress={() => setActiveTab('request')}
@@ -472,9 +464,7 @@ const DirectoryScreen = ({ navigation }) => {
       </View>
 
       {/* ───── Tab Content ───── */}
-      {activeTab === 'directory' ? (
-        isDesktop ? renderWebDirectoryTab() : renderDirectoryTab()
-      ) : activeTab === 'request' ? (
+      {activeTab === 'request' || activeTab === 'directory' ? (
         renderRequestTab()
       ) : (
         renderCommunityTab()

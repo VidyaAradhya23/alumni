@@ -53,8 +53,6 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const renderMessage = ({ item }) => {
-    // If the sender matches the OTHER user's ID, it's from them.
-    // Otherwise (or if it's our optimistic 'me' string), it's from us.
     const isMe = item.sender === 'me' || (item.sender !== chatUser.id && item.sender?._id !== chatUser.id);
     return (
       <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
@@ -78,6 +76,45 @@ const ChatScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={webContainerStyle}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Messages');
+            }
+          }} 
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#002144" />
+        </TouchableOpacity>
+        <View style={styles.headerUserInfo}>
+          <Text style={styles.headerName}>{chatUser.name}</Text>
+          <Text style={styles.headerRole}>{chatUser.role}</Text>
+        </View>
+        <TouchableOpacity style={styles.infoButton}>
+          <Ionicons name="information-circle-outline" size={24} color="#003366" />
+        </TouchableOpacity>
+      </View>
+
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoid} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <FlatList
+          data={messages}
+          keyExtractor={item => item._id || item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.messageList}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Input Area */}
         <View style={styles.inputArea}>
           <TouchableOpacity style={styles.attachBtn}>
             <Ionicons name="add" size={26} color="#64748B" />

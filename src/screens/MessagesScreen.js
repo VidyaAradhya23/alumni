@@ -18,11 +18,13 @@ const MessagesScreen = ({ navigation }) => {
     const fetchSuggestions = async () => {
       try {
         const res = await getSuggestions();
-        if (res && res.data) {
+        if (Array.isArray(res)) {
+          setSuggestionsList(res);
+        } else if (res && res.data) {
           setSuggestionsList(res.data);
         }
       } catch(err) {
-        console.log('Error fetching following:', err);
+        console.log('Error fetching suggestions:', err);
       }
     };
     fetchSuggestions();

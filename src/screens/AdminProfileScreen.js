@@ -35,24 +35,9 @@ const INSTITUTIONS = [
   { id: '26', name: 'RV University, Mysuru Campus', shortName: 'RVU_MYS', location: 'Mysuru, Karnataka', established: 2024, totalAlumni: 0, registeredUsers: 0, admins: 3, status: 'Active', color: '#B45309' },
 ];
 
-const INITIAL_ADMINS = [
-  { id: '1', name: 'Dr. Ramesh Kumar', email: 'admin@rvce.edu', password: 'admin123', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 09:30 AM', passwordChangedAt: '15/06/2026' },
-  { id: '2', name: 'Prof. Anitha Shetty', email: 'anitha.s@rvce.edu', password: 'anitha@2026', institution: 'RVCE', role: 'Admin', status: 'Active', lastLogin: '16/06/2026 02:15 PM', passwordChangedAt: '10/06/2026' },
-  { id: '3', name: 'Suresh Babu', email: 'admin@rvitm.edu.in', password: 'admin456', institution: 'RVITM', role: 'Admin', status: 'Active', lastLogin: '17/06/2026 11:00 AM', passwordChangedAt: '12/06/2026' },
-  { id: '4', name: 'Meera Nair', email: 'admin@rvpu.edu', password: 'admin789', institution: 'RVPU', role: 'Admin', status: 'Active', lastLogin: '14/06/2026 04:45 PM', passwordChangedAt: '01/06/2026' },
-  { id: '5', name: 'Vikram Joshi', email: 'admin@rvis.edu', password: 'admin012', institution: 'RVIS', status: 'Inactive', lastLogin: '10/06/2026 10:00 AM', passwordChangedAt: '05/05/2026' },
-];
+const INITIAL_ADMINS = [];
 
-const INITIAL_PLACEMENTS = [
-  { id: '1', company: 'Cisco Systems', industry: 'Computer Networking', count: 78, institution: 'RVCE' },
-  { id: '2', company: 'Accenture', industry: 'IT Services', count: 62, institution: 'RVCE' },
-  { id: '3', company: 'Qualcomm', industry: 'Semiconductors', count: 61, institution: 'RVCE' },
-  { id: '4', company: 'Infosys', industry: 'IT Services', count: 45, institution: 'RVITM' },
-  { id: '5', company: 'Wipro', industry: 'IT Services', count: 38, institution: 'RVITM' },
-  { id: '6', company: 'TCS', industry: 'IT Services', count: 32, institution: 'RVPU' },
-  { id: '7', company: 'IBM', industry: 'IT Services', count: 28, institution: 'RVCE' },
-  { id: '8', company: 'Amazon', industry: 'E-Commerce/Tech', count: 25, institution: 'RVIS' },
-];
+const INITIAL_PLACEMENTS = [];
 
 const INITIAL_NETWORK_SETTINGS = {
   'RVCE': { institutionName: 'RV College of Engineering', shortTitle: 'RVCE', website: 'https://rvce.edu.in', established: '1963', location: 'Bengaluru, Karnataka', primaryColor: '#003366', secondaryColor: '#00a99c', alumniText: 'Alumni', studentsText: 'Students', facultyText: 'Faculty', batchmatesText: 'Batchmates', manualApproval: true, emailVouching: false, allowUnverified: true, displayJobs: true, displayEvents: true, displayGroups: true, displayMemories: true, displayDonations: false, displayMentorship: true, displayAlumniCard: false, welcomeEmailEnabled: true, whatsappEnabled: false },

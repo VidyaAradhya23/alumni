@@ -17,11 +17,7 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const INITIAL_JOBS = [
-  { id: '1', role: 'Sr Software Engineer', company: 'Paypal', workMode: 'Full-Time', experience: '5+ years', location: 'Bengaluru', views: 124, applied: 38, shared: 14, description: 'We are looking for a Senior Software Engineer with strong background in Node.js and scalable architectures to join our core team.' },
-  { id: '2', role: 'Backend Developer', company: 'Amazon', workMode: 'Remote', experience: '3-5 years', location: 'Remote', views: 89, applied: 22, shared: 8, description: 'Join our AWS team to build highly available backend services.' },
-  { id: '3', role: 'Frontend Engineer', company: 'Google', workMode: 'Hybrid', experience: '2+ years', location: 'Hyderabad', views: 156, applied: 45, shared: 25, description: 'Build beautiful user interfaces with React and Next.js.' },
-];
+const INITIAL_JOBS = [];
 
 const PROFILE_MATCHES = [
   { id: 'm1', title: 'Senior Full Stack Engineer', company: 'Google', location: 'Bengaluru / Hybrid', match: '95% Match' },

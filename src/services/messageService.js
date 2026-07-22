@@ -1,7 +1,7 @@
 import api from './api';
 
-export const sendMessage = async (userId, text) => {
-    const { data } = await api.post(`/messages/${userId}`, { text });
+export const sendMessage = async (userId, text, attachment = null) => {
+    const { data } = await api.post(`/messages/${userId}`, { text, attachment });
     return data;
 };
 

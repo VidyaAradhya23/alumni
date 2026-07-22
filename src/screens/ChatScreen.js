@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Image, Alert, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getConversation, sendMessage as sendApiMessage } from '../services/messageService';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 const ChatScreen = ({ route, navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -17,6 +19,8 @@ const ChatScreen = ({ route, navigation }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [pendingAttachment, setPendingAttachment] = useState(null); // { url, type, name }
+  const [previewImageModal, setPreviewImageModal] = useState(null);
   const flatListRef = useRef(null);
 
   const storageKey = `chat_messages_${chatUser.id || 'default'}`;
@@ -119,15 +123,115 @@ const ChatScreen = ({ route, navigation }) => {
     }
   }, [messages.length]);
 
+  const handlePickImage = async () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setPendingAttachment({
+              url: event.target.result,
+              type: 'image',
+              name: file.name || 'Image'
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+      return;
+    }
+
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const dataUrl = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setPendingAttachment({
+          url: dataUrl,
+          type: 'image',
+          name: asset.fileName || 'Image'
+        });
+      }
+    } catch (err) {
+      console.log('Image picker error:', err);
+    }
+  };
+
+  const handlePickDocument = async () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '*/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const isImg = file.type.startsWith('image/');
+            setPendingAttachment({
+              url: event.target.result,
+              type: isImg ? 'image' : 'document',
+              name: file.name || 'Document'
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+      return;
+    }
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const isImg = asset.mimeType && asset.mimeType.startsWith('image/');
+        setPendingAttachment({
+          url: asset.uri,
+          type: isImg ? 'image' : 'document',
+          name: asset.name || 'Document'
+        });
+      }
+    } catch (err) {
+      console.log('Document picker error:', err);
+    }
+  };
+
   const sendMessage = async () => {
-    if (!inputText.trim() || !chatUser.id) return;
+    if ((!inputText.trim() && !pendingAttachment) || !chatUser.id) return;
     const textToSend = inputText.trim();
+    const attachmentToSend = pendingAttachment;
+
     setInputText('');
+    setPendingAttachment(null);
+    setIsEmojiPickerVisible(false);
     
     // Optimistic UI update
     const optimisticMsg = { 
       _id: Date.now().toString(), 
       text: textToSend, 
+      attachment: attachmentToSend,
       sender: 'me',
       read: false,
       createdAt: new Date().toISOString()
@@ -140,7 +244,7 @@ const ChatScreen = ({ route, navigation }) => {
     });
     
     try {
-      const realMsg = await sendApiMessage(chatUser.id, textToSend);
+      const realMsg = await sendApiMessage(chatUser.id, textToSend, attachmentToSend);
       if (realMsg) {
         setMessages(prev => {
           const updated = prev.map(m => (m._id === optimisticMsg._id || m.id === optimisticMsg._id) ? realMsg : m);
@@ -151,6 +255,61 @@ const ChatScreen = ({ route, navigation }) => {
     } catch(err) {
       console.log('Failed to send msg to server:', err);
     }
+  };
+
+  const renderMessageAttachment = (attachment, isMe) => {
+    if (!attachment || !attachment.url) return null;
+
+    if (attachment.type === 'image') {
+      return (
+        <TouchableOpacity 
+          style={{ marginBottom: 6, borderRadius: 12, overflow: 'hidden' }}
+          activeOpacity={0.9}
+          onPress={() => setPreviewImageModal(attachment.url)}
+        >
+          <Image 
+            source={{ uri: attachment.url }} 
+            style={{ width: 210, height: 160, borderRadius: 12, backgroundColor: '#E2E8F0' }} 
+            resizeMode="cover" 
+          />
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity 
+        style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#F1F5F9', 
+          padding: 10, 
+          borderRadius: 10, 
+          marginBottom: 6,
+          borderWidth: 1,
+          borderColor: isMe ? 'rgba(255,255,255,0.3)' : '#CBD5E1'
+        }}
+        onPress={() => {
+          if (attachment.url.startsWith('http') || attachment.url.startsWith('data:')) {
+            if (Platform.OS === 'web') {
+              window.open(attachment.url, '_blank');
+            } else {
+              Linking.openURL(attachment.url).catch(() => {});
+            }
+          }
+        }}
+      >
+        <Ionicons name="document-text" size={24} color={isMe ? '#FFFFFF' : '#003366'} style={{ marginRight: 8 }} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: isMe ? '#FFFFFF' : '#1E293B' }} numberOfLines={1}>
+            {attachment.name || 'Attachment File'}
+          </Text>
+          <Text style={{ fontSize: 11, color: isMe ? 'rgba(255,255,255,0.8)' : '#64748B' }}>
+            Tap to open
+          </Text>
+        </View>
+        <Ionicons name="download-outline" size={18} color={isMe ? '#FFFFFF' : '#003366'} />
+      </TouchableOpacity>
+    );
   };
 
   const renderMessage = ({ item }) => {
@@ -273,7 +432,10 @@ const ChatScreen = ({ route, navigation }) => {
                 )}
                 <View style={{ maxWidth: '78%' }}>
                   <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
-                    <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
+                    {renderMessageAttachment(item.attachment, isMe)}
+                    {item.text ? (
+                      <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
+                    ) : null}
                     <View style={styles.messageMeta}>
                       <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
                         {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
@@ -315,6 +477,28 @@ const ChatScreen = ({ route, navigation }) => {
           showsVerticalScrollIndicator={false}
         />
 
+        {/* Pending Attachment Preview Bar */}
+        {pendingAttachment && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#DBEAFE' }}>
+            {pendingAttachment.type === 'image' ? (
+              <Image source={{ uri: pendingAttachment.url }} style={{ width: 44, height: 44, borderRadius: 8, marginRight: 10 }} />
+            ) : (
+              <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                <Ionicons name="document-text" size={22} color="#FFFFFF" />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }} numberOfLines={1}>
+                {pendingAttachment.name || 'Attachment attached'}
+              </Text>
+              <Text style={{ fontSize: 11, color: '#64748B' }}>Ready to send</Text>
+            </View>
+            <TouchableOpacity onPress={() => setPendingAttachment(null)} style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={22} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Emoji Quick Picker Row */}
         {isEmojiPickerVisible && (
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', paddingVertical: 8, borderTopWidth: 1, borderColor: '#E2E8F0' }}>
@@ -331,9 +515,18 @@ const ChatScreen = ({ route, navigation }) => {
           <TouchableOpacity style={styles.attachBtn} onPress={() => setIsEmojiPickerVisible(!isEmojiPickerVisible)}>
             <Ionicons name={isEmojiPickerVisible ? "close-circle-outline" : "happy-outline"} size={24} color={isEmojiPickerVisible ? "#3B82F6" : "#64748B"} />
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.attachBtn} onPress={handlePickImage}>
+            <Ionicons name="image-outline" size={22} color="#003366" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.attachBtn} onPress={handlePickDocument}>
+            <Ionicons name="attach-outline" size={24} color="#003366" />
+          </TouchableOpacity>
+
           <TextInput
             style={styles.textInput}
-            placeholder="Type a message..."
+            placeholder="Type a message or attach files..."
             placeholderTextColor="#94A3B8"
             value={inputText}
             onChangeText={setInputText}
@@ -346,13 +539,34 @@ const ChatScreen = ({ route, navigation }) => {
             }}
           />
           <TouchableOpacity 
-            style={[styles.sendBtn, inputText.trim().length > 0 && styles.sendBtnActive]} 
+            style={[styles.sendBtn, (inputText.trim().length > 0 || pendingAttachment) && styles.sendBtnActive]} 
             onPress={sendMessage}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() && !pendingAttachment}
           >
             <Ionicons name="send" size={16} color="#FFFFFF" style={{ marginLeft: 2 }} />
           </TouchableOpacity>
         </View>
+
+        {/* Image Full Preview Modal */}
+        {previewImageModal && (
+          <TouchableOpacity 
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}
+            activeOpacity={1}
+            onPress={() => setPreviewImageModal(null)}
+          >
+            <TouchableOpacity 
+              style={{ position: 'absolute', top: 40, right: 20, zIndex: 1000 }}
+              onPress={() => setPreviewImageModal(null)}
+            >
+              <Ionicons name="close" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Image 
+              source={{ uri: previewImageModal }} 
+              style={{ width: '90%', height: '80%' }} 
+              resizeMode="contain" 
+            />
+          </TouchableOpacity>
+        )}
       </KeyboardAvoidingView>
     </View>
     </SafeAreaView>

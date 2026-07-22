@@ -13,10 +13,15 @@ const messageSchema = new mongoose.Schema({
     },
     text: {
         type: String,
-        required: true
+        default: ''
     },
     encrypted_text: {
         type: String
+    },
+    attachment: {
+        url: { type: String, default: '' },
+        type: { type: String, default: '' }, // 'image', 'document', 'file'
+        name: { type: String, default: '' }
     },
     read: {
         type: Boolean,

@@ -21,20 +21,31 @@ const resolveUserId = async (idParam) => {
 // @route   POST /api/messages/:userId
 exports.sendMessage = async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text, attachment } = req.body;
         const targetId = await resolveUserId(req.params.userId);
         const senderId = req.user._id;
 
-        if (!text) return res.status(400).json({ message: 'Message text is required' });
+        if (!text && (!attachment || !attachment.url)) {
+            return res.status(400).json({ message: 'Message text or attachment is required' });
+        }
         if (!targetId) return res.status(400).json({ message: 'Target user not found' });
 
-        const message = await Message.create({
+        const messageData = {
             sender: senderId,
             receiver: targetId,
-            text: text, // Plaintext stored directly in MongoDB backend
-            encrypted_text: encrypt(text)
-        });
+            text: text || '',
+            encrypted_text: text ? encrypt(text) : ''
+        };
 
+        if (attachment && attachment.url) {
+            messageData.attachment = {
+                url: attachment.url,
+                type: attachment.type || 'file',
+                name: attachment.name || 'Attachment'
+            };
+        }
+
+        const message = await Message.create(messageData);
         const responseMsg = message.toObject();
 
         res.status(201).json(responseMsg);

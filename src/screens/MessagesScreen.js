@@ -18,9 +18,11 @@ const MessagesScreen = ({ navigation }) => {
   const [chatList, setChatList] = useState([]);
   const [suggestionsList, setSuggestionsList] = useState([]);
 
+  // Use useFocusEffect to properly handle focus/blur events for polling
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
+      let interval;
 
       const loadCachedChats = async () => {
         try {
@@ -35,8 +37,6 @@ const MessagesScreen = ({ navigation }) => {
           console.log('Error loading local cached chats:', err);
         }
       };
-
-      loadCachedChats();
 
       const fetchHistory = async () => {
         try {
@@ -54,12 +54,17 @@ const MessagesScreen = ({ navigation }) => {
         }
       };
 
-      fetchHistory();
-      const interval = setInterval(fetchHistory, 4000);
+      // Load cache instantly, then fetch fresh data
+      loadCachedChats().then(() => fetchHistory());
+
+      // Start polling
+      interval = setInterval(fetchHistory, 4000);
 
       return () => {
         isMounted = false;
-        clearInterval(interval);
+        if (interval) {
+          clearInterval(interval);
+        }
       };
     }, [])
   );

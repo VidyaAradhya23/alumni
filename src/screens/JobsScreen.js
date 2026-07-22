@@ -97,11 +97,16 @@ const JobsScreen = ({ navigation, route }) => {
   const deleteJob = (id) => setJobList(prev => prev.filter(j => j.id !== id));
 
   const postJob = () => {
-    if (!fRole.trim() || !fCompany.trim()) { Alert.alert('Required', 'Fill in Role and Company.'); return; }
+    if (!fRole.trim() || !fCompany.trim()) { 
+      if (Platform.OS === 'web') window.alert('Required: Fill in Role and Company.');
+      else Alert.alert('Required', 'Fill in Role and Company.');
+      return; 
+    }
     setJobList([{ id: String(Date.now()), role: fRole, company: fCompany, workMode: fMode, experience: fExp || 'Not specified', location: fLoc || 'Remote', views: 0, applied: 0, shared: 0, description: fDesc || 'No description.' }, ...jobList]);
     setFRole(''); setFCompany(''); setFLoc(''); setFExp(''); setFDesc(''); setFMode('Full-Time');
     setScreen('list');
-    Alert.alert('Success', 'Job posted!');
+    if (Platform.OS === 'web') window.alert('Job posted!');
+    else Alert.alert('Success', 'Job posted!');
   };
 
 

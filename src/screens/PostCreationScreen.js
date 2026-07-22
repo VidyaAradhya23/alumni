@@ -37,7 +37,8 @@ const PostCreationScreen = ({ navigation }) => {
 
   const handlePost = async () => {
     if (!content.trim() && !localImageUri) {
-      Alert.alert('Empty Post', 'Please enter some text or attach an image.');
+      if (Platform.OS === 'web') window.alert('Empty Post: Please enter some text or attach an image.');
+      else Alert.alert('Empty Post', 'Please enter some text or attach an image.');
       return;
     }
 
@@ -56,21 +57,25 @@ const PostCreationScreen = ({ navigation }) => {
       });
 
       setIsUploading(false);
-      Alert.alert(
-        'Success',
-        'Your post has been shared with the community!',
-        [{ text: 'OK', onPress: () => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.navigate('Main');
-          }
-        } }]
-      );
+      if (Platform.OS === 'web') {
+        window.alert('Your post has been shared with the community!');
+        if (navigation.canGoBack()) navigation.goBack();
+        else navigation.navigate('Main');
+      } else {
+        Alert.alert(
+          'Success',
+          'Your post has been shared with the community!',
+          [{ text: 'OK', onPress: () => {
+            if (navigation.canGoBack()) navigation.goBack();
+            else navigation.navigate('Main');
+          }}]
+        );
+      }
     } catch (error) {
       console.error('Error creating post:', error);
       setIsUploading(false);
-      Alert.alert('Error', 'Failed to create post. Please try again later.');
+      if (Platform.OS === 'web') window.alert('Error: Failed to create post. Please try again later.');
+      else Alert.alert('Error', 'Failed to create post. Please try again later.');
     }
   };
 
@@ -80,16 +85,23 @@ const PostCreationScreen = ({ navigation }) => {
   };
 
   const handleToggleAudience = () => {
-    Alert.alert(
-      'Select Audience',
-      'Choose who can see this post',
-      [
-        { text: 'All Alumni', onPress: () => setAudience('All Alumni') },
-        { text: 'My Batch Only', onPress: () => setAudience('Batch of 2023') },
-        { text: 'Department Only', onPress: () => setAudience('CSE Department') },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      const choice = window.prompt('Select Audience:\\n1: All Alumni\\n2: My Batch Only\\n3: Department Only', '1');
+      if (choice === '1') setAudience('All Alumni');
+      else if (choice === '2') setAudience('Batch of 2023');
+      else if (choice === '3') setAudience('CSE Department');
+    } else {
+      Alert.alert(
+        'Select Audience',
+        'Choose who can see this post',
+        [
+          { text: 'All Alumni', onPress: () => setAudience('All Alumni') },
+          { text: 'My Batch Only', onPress: () => setAudience('Batch of 2023') },
+          { text: 'Department Only', onPress: () => setAudience('CSE Department') },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    }
   };
 
   const handleSelectMedia = async () => {
@@ -107,7 +119,8 @@ const PostCreationScreen = ({ navigation }) => {
       }
     } catch (err) {
       console.error('Image picker error:', err);
-      Alert.alert('Error', 'Could not open image picker: ' + err.message);
+      if (Platform.OS === 'web') window.alert('Error: Could not open image picker: ' + err.message);
+      else Alert.alert('Error', 'Could not open image picker: ' + err.message);
     }
   };
 
@@ -126,7 +139,8 @@ const PostCreationScreen = ({ navigation }) => {
       }
     } catch (err) {
       console.error('Document picker error:', err);
-      Alert.alert('Error', 'Could not open document picker: ' + err.message);
+      if (Platform.OS === 'web') window.alert('Error: Could not open document picker: ' + err.message);
+      else Alert.alert('Error', 'Could not open document picker: ' + err.message);
     }
   };
 

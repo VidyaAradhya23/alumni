@@ -6,6 +6,8 @@ import { getSuggestions } from '../services/authService';
 import { getChatHistory } from '../services/messageService';
 import { useFocusEffect } from '@react-navigation/native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const initialChats = [];
 
 const MessagesScreen = ({ navigation }) => {
@@ -19,14 +21,37 @@ const MessagesScreen = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
+
+      const loadCachedChats = async () => {
+        try {
+          const cached = await AsyncStorage.getItem('recent_chats_cache');
+          if (cached && isMounted) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setChatList(parsed);
+            }
+          }
+        } catch (err) {
+          console.log('Error loading local cached chats:', err);
+        }
+      };
+
+      loadCachedChats();
+
       const fetchHistory = async () => {
         try {
           const history = await getChatHistory();
-          if (history && isMounted) setChatList(history);
+          if (history && Array.isArray(history) && isMounted) {
+            if (history.length > 0) {
+              setChatList(history);
+              AsyncStorage.setItem('recent_chats_cache', JSON.stringify(history)).catch(() => {});
+            }
+          }
         } catch(err) {
           console.log('Error fetching chat history:', err);
         }
       };
+
       fetchHistory();
       const interval = setInterval(fetchHistory, 4000);
 

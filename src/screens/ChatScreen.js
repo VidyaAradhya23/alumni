@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getConversation, sendMessage as sendApiMessage } from '../services/messageService';
@@ -17,17 +18,48 @@ const ChatScreen = ({ route, navigation }) => {
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
 
+  const storageKey = `chat_messages_${chatUser.id || 'default'}`;
+
   useEffect(() => {
     let isMounted = true;
+    
+    // Immediately load locally saved messages from AsyncStorage on refresh/mount
+    const loadCachedMessages = async () => {
+      try {
+        const cached = await AsyncStorage.getItem(storageKey);
+        if (cached && isMounted) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        }
+      } catch (err) {
+        console.log('Error loading local cached messages:', err);
+      }
+    };
+
+    loadCachedMessages();
+
+    // Fetch live messages from server & update local storage
     const fetchMsgs = async () => {
       if (!chatUser.id) return;
       try {
         const msgs = await getConversation(chatUser.id);
-        if (msgs && isMounted) {
-          setMessages(msgs);
+        if (msgs && Array.isArray(msgs) && isMounted) {
+          if (msgs.length > 0) {
+            setMessages(prev => {
+              // Merge live server msgs with local optimistic msgs to ensure nothing is lost
+              const map = new Map();
+              prev.forEach(m => map.set(m._id || m.id, m));
+              msgs.forEach(m => map.set(m._id || m.id, m));
+              const merged = Array.from(map.values()).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+              AsyncStorage.setItem(storageKey, JSON.stringify(merged)).catch(() => {});
+              return merged;
+            });
+          }
         }
       } catch(err) {
-        console.log('Failed to load chat:', err);
+        console.log('Failed to load live chat:', err);
       }
     };
 
@@ -61,13 +93,24 @@ const ChatScreen = ({ route, navigation }) => {
       read: false,
       createdAt: new Date().toISOString()
     };
-    setMessages(prev => [...prev, optimisticMsg]);
+    
+    setMessages(prev => {
+      const updated = [...prev, optimisticMsg];
+      AsyncStorage.setItem(storageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
     
     try {
       const realMsg = await sendApiMessage(chatUser.id, textToSend);
-      setMessages(prev => prev.map(m => m._id === optimisticMsg._id ? realMsg : m));
+      if (realMsg) {
+        setMessages(prev => {
+          const updated = prev.map(m => m._id === optimisticMsg._id ? realMsg : m);
+          AsyncStorage.setItem(storageKey, JSON.stringify(updated)).catch(() => {});
+          return updated;
+        });
+      }
     } catch(err) {
-      console.log('Failed to send msg:', err);
+      console.log('Failed to send msg to server:', err);
     }
   };
 
@@ -108,7 +151,7 @@ const ChatScreen = ({ route, navigation }) => {
       <View style={webContainerStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
-      {/* Responsive WhatsApp Header */}
+      {/* Responsive Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => {
@@ -259,26 +302,6 @@ const getStyles = (theme) => StyleSheet.create({
   },
   keyboardAvoid: {
     flex: 1,
-  },
-  encryptionNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 16,
-    alignSelf: 'center',
-    maxWidth: '92%',
-  },
-  encryptionNoticeText: {
-    fontSize: 11.5,
-    color: '#92400E',
-    fontWeight: '500',
-    flex: 1,
-    textAlign: 'center',
   },
   messageList: {
     padding: 16,

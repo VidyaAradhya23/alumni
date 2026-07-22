@@ -2,19 +2,34 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const { encrypt, decrypt } = require('../utils/encryption');
 
+const mongoose = require('mongoose');
+
+// Helper to resolve target user ObjectId
+const resolveUserId = async (idParam) => {
+    if (!idParam) return null;
+    if (mongoose.Types.ObjectId.isValid(idParam)) {
+        return idParam;
+    }
+    const foundUser = await User.findOne({ 
+        $or: [{ username: idParam }, { email: idParam }, { name: idParam }] 
+    });
+    return foundUser ? foundUser._id : null;
+};
+
 // @desc    Send a message
 // @route   POST /api/messages/:userId
 exports.sendMessage = async (req, res) => {
     try {
         const { text } = req.body;
-        const receiverId = req.params.userId;
+        const targetId = await resolveUserId(req.params.userId);
         const senderId = req.user._id;
 
         if (!text) return res.status(400).json({ message: 'Message text is required' });
+        if (!targetId) return res.status(400).json({ message: 'Target user not found' });
 
         const message = await Message.create({
             sender: senderId,
-            receiver: receiverId,
+            receiver: targetId,
             text: encrypt(text)
         });
 
@@ -23,6 +38,7 @@ exports.sendMessage = async (req, res) => {
 
         res.status(201).json(responseMsg);
     } catch (error) {
+        console.error('sendMessage error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -31,19 +47,23 @@ exports.sendMessage = async (req, res) => {
 // @route   GET /api/messages/:userId
 exports.getConversation = async (req, res) => {
     try {
-        const otherUserId = req.params.userId;
+        const targetId = await resolveUserId(req.params.userId);
         const currentUserId = req.user._id;
+
+        if (!targetId) {
+            return res.json([]);
+        }
 
         const messages = await Message.find({
             $or: [
-                { sender: currentUserId, receiver: otherUserId },
-                { sender: otherUserId, receiver: currentUserId }
+                { sender: currentUserId, receiver: targetId },
+                { sender: targetId, receiver: currentUserId }
             ]
         }).sort('createdAt'); // oldest to newest for chat UI
 
         // Mark received messages as read
         await Message.updateMany(
-            { sender: otherUserId, receiver: currentUserId, read: false },
+            { sender: targetId, receiver: currentUserId, read: false },
             { $set: { read: true } }
         );
         
@@ -56,6 +76,7 @@ exports.getConversation = async (req, res) => {
 
         res.json(decryptedMessages);
     } catch (error) {
+        console.error('getConversation error:', error);
         res.status(500).json({ message: error.message });
     }
 };

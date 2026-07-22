@@ -154,6 +154,19 @@ const ChatScreen = ({ route, navigation }) => {
     );
   };
 
+  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
+  const [selectedReaction, setSelectedReaction] = useState({});
+  const [isTyping, setIsTyping] = useState(false);
+
+  const addEmoji = (emoji) => {
+    setInputText(prev => prev + emoji);
+    setIsEmojiPickerVisible(false);
+  };
+
+  const handleReaction = (msgId, emoji) => {
+    setSelectedReaction(prev => ({ ...prev, [msgId]: emoji }));
+  };
+
   const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
@@ -192,7 +205,9 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
           <View style={styles.headerUserInfo}>
             <Text style={styles.headerName} numberOfLines={1}>{chatUser.name}</Text>
-            {!!chatUser.role && <Text style={styles.headerRole} numberOfLines={1}>{chatUser.role}</Text>}
+            <Text style={[styles.headerRole, { color: '#10B981', fontWeight: '600' }]} numberOfLines={1}>
+              {inputText.trim().length > 0 ? 'typing...' : 'Online'}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -213,15 +228,80 @@ const ChatScreen = ({ route, navigation }) => {
           ref={flatListRef}
           data={messages}
           keyExtractor={item => item._id || item.id}
-          renderItem={renderMessage}
+          renderItem={({ item }) => {
+            const senderIdStr = typeof item.sender === 'object' ? (item.sender._id || item.sender.id) : item.sender;
+            const chatUserIdStr = (chatUser.id || chatUser._id || '').toString();
+
+            const isMe = item.sender === 'me' || (senderIdStr && senderIdStr.toString() !== chatUserIdStr);
+            const msgId = item._id || item.id;
+            const reaction = selectedReaction[msgId];
+
+            return (
+              <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
+                {!isMe && (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{chatUser.initials}</Text>
+                  </View>
+                )}
+                <View style={{ maxWidth: '78%' }}>
+                  <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
+                    <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
+                    <View style={styles.messageMeta}>
+                      <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
+                        {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                      </Text>
+                      {isMe && (
+                        <Ionicons 
+                          name={item.read ? "checkmark-done" : "checkmark-done-outline"} 
+                          size={14} 
+                          color={item.read ? "#60A5FA" : "rgba(255,255,255,0.7)"} 
+                          style={{ marginLeft: 4 }} 
+                        />
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Reaction badge */}
+                  {reaction ? (
+                    <View style={[{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: -8, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 }]}>
+                      <Text style={{ fontSize: 12 }}>{reaction}</Text>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: 2, gap: 8 }}>
+                      <TouchableOpacity onPress={() => handleReaction(msgId, '❤️')} activeOpacity={0.6}>
+                        <Text style={{ fontSize: 10, opacity: 0.5 }}>❤️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction(msgId, '👍')} activeOpacity={0.6}>
+                        <Text style={{ fontSize: 10, opacity: 0.5 }}>👍</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction(msgId, '🔥')} activeOpacity={0.6}>
+                        <Text style={{ fontSize: 10, opacity: 0.5 }}>🔥</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+            );
+          }}
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
         />
 
+        {/* Emoji Quick Picker Row */}
+        {isEmojiPickerVisible && (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', paddingVertical: 8, borderTopWidth: 1, borderColor: '#E2E8F0' }}>
+            {['😊', '❤️', '👍', '🔥', '🎉', '😂', '👏', '🙏'].map((emoji) => (
+              <TouchableOpacity key={emoji} onPress={() => addEmoji(emoji)} style={{ padding: 6 }}>
+                <Text style={{ fontSize: 22 }}>{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Responsive Input Area */}
         <View style={styles.inputArea}>
-          <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="happy-outline" size={24} color="#64748B" />
+          <TouchableOpacity style={styles.attachBtn} onPress={() => setIsEmojiPickerVisible(!isEmojiPickerVisible)}>
+            <Ionicons name={isEmojiPickerVisible ? "close-circle-outline" : "happy-outline"} size={24} color={isEmojiPickerVisible ? "#3B82F6" : "#64748B"} />
           </TouchableOpacity>
           <TextInput
             style={styles.textInput}

@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     passwordResetExpires: { type: Date }
 }, { timestamps: true });
 
+// Database search indexes for fast lookup and user filtering
+userSchema.index({ is_approved: 1, name: 1 });
+userSchema.index({ role: 1 });
+
 // Hash password before saving
 userSchema.pre('save', async function() {
     if (!this.isModified('password')) return;

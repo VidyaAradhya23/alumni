@@ -49,9 +49,15 @@ const ChatScreen = ({ route, navigation }) => {
           if (msgs.length > 0) {
             setMessages(prev => {
               const map = new Map();
-              prev.forEach(m => map.set(m._id || m.id, m));
-              msgs.forEach(m => map.set(m._id || m.id, m));
-              const merged = Array.from(map.values()).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+              prev.forEach(m => {
+                const k = (m._id || m.id || '').toString();
+                if (k) map.set(k, m);
+              });
+              msgs.forEach(m => {
+                const k = (m._id || m.id || '').toString();
+                if (k) map.set(k, m);
+              });
+              const merged = Array.from(map.values()).sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
               AsyncStorage.setItem(storageKey, JSON.stringify(merged)).catch(() => {});
               return merged;
             });
@@ -106,7 +112,7 @@ const ChatScreen = ({ route, navigation }) => {
       const realMsg = await sendApiMessage(chatUser.id, textToSend);
       if (realMsg) {
         setMessages(prev => {
-          const updated = prev.map(m => m._id === optimisticMsg._id ? realMsg : m);
+          const updated = prev.map(m => (m._id === optimisticMsg._id || m.id === optimisticMsg._id) ? realMsg : m);
           AsyncStorage.setItem(storageKey, JSON.stringify(updated)).catch(() => {});
           return updated;
         });
@@ -117,7 +123,10 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender === 'me' || (item.sender !== chatUser.id && item.sender?._id !== chatUser.id);
+    const senderIdStr = typeof item.sender === 'object' ? (item.sender._id || item.sender.id) : item.sender;
+    const chatUserIdStr = (chatUser.id || chatUser._id || '').toString();
+
+    const isMe = item.sender === 'me' || (senderIdStr && senderIdStr.toString() !== chatUserIdStr);
     return (
       <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
         {!isMe && (

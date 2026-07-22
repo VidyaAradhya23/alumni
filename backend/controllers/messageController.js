@@ -85,38 +85,57 @@ exports.getConversation = async (req, res) => {
 // @route   GET /api/messages/history/recent
 exports.getChatHistory = async (req, res) => {
     try {
-        const currentUserId = req.user._id;
+        const currentUserId = req.user._id.toString();
 
         // Find all messages involving the current user
         const messages = await Message.find({
-            $or: [{ sender: currentUserId }, { receiver: currentUserId }]
+            $or: [{ sender: req.user._id }, { receiver: req.user._id }]
         })
         .sort('-createdAt')
         .populate('sender receiver', 'name email avatar_url role degree institution department');
 
-        // Group by user
         const chatsMap = new Map();
 
-        messages.forEach(msg => {
-            if (!msg || !msg.sender || !msg.receiver) return;
+        for (const msg of messages) {
+            if (!msg) continue;
 
-            const senderIdStr = msg.sender._id ? msg.sender._id.toString() : msg.sender.toString();
-            const currentUserIdStr = currentUserId.toString();
+            const senderObj = msg.sender;
+            const receiverObj = msg.receiver;
 
-            const isSender = senderIdStr === currentUserIdStr;
-            const otherUser = isSender ? msg.receiver : msg.sender;
+            const senderIdStr = senderObj ? (senderObj._id ? senderObj._id.toString() : senderObj.toString()) : '';
+            const receiverIdStr = receiverObj ? (receiverObj._id ? receiverObj._id.toString() : receiverObj.toString()) : '';
 
-            if (!otherUser || typeof otherUser !== 'object') return;
+            if (!senderIdStr || !receiverIdStr) continue;
 
-            const otherUserIdStr = otherUser._id ? otherUser._id.toString() : otherUser.toString();
+            const isSender = senderIdStr === currentUserId;
+            const otherUserRaw = isSender ? receiverObj : senderObj;
+            const otherUserIdStr = isSender ? receiverIdStr : senderIdStr;
+
+            let otherUserObj = null;
+
+            if (otherUserRaw && typeof otherUserRaw === 'object' && otherUserRaw.name) {
+                otherUserObj = otherUserRaw;
+            } else {
+                // If not populated or raw ID, look up user from DB
+                const dbUser = await User.findById(otherUserIdStr).select('name email avatar_url role degree institution department');
+                if (dbUser) {
+                    otherUserObj = dbUser;
+                } else {
+                    otherUserObj = {
+                        _id: otherUserIdStr,
+                        name: 'Alumni Member',
+                        institution: 'Alumni Network',
+                        role: 'Alumni'
+                    };
+                }
+            }
 
             if (!chatsMap.has(otherUserIdStr)) {
-                // Decrypt the last message preview
                 const msgObj = msg.toObject ? msg.toObject() : { ...msg };
                 msgObj.text = decrypt(msgObj.text);
 
                 chatsMap.set(otherUserIdStr, {
-                    user: otherUser,
+                    user: otherUserObj,
                     lastMessage: msgObj,
                     unreadCount: (!isSender && !msg.read) ? 1 : 0
                 });
@@ -125,9 +144,8 @@ exports.getChatHistory = async (req, res) => {
                     chatsMap.get(otherUserIdStr).unreadCount += 1;
                 }
             }
-        });
+        }
 
-        // Convert map to array
         const chatHistory = Array.from(chatsMap.values());
         res.json(chatHistory);
     } catch (error) {

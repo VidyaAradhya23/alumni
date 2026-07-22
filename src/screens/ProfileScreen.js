@@ -5,6 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser } from '../services/authService';
+import { getChatHistory } from '../services/messageService';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -32,12 +33,13 @@ const ProfileScreen = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState('menu'); // 'menu' | 'profile_edit' | 'profile_settings' | 'security'
-  const [activeTab, setActiveTab] = useState('post'); // 'post' | 'reshare' | 'saved' | 'tags'
+  const [activeTab, setActiveTab] = useState('post'); // 'post' | 'messages' | 'reshare' | 'saved' | 'tags'
   const [listModalType, setListModalType] = useState(null); // 'connections' | 'following'
   
-  // Real data states for connections and following
+  // Real data states for connections, following, and messages
   const [connections, setConnections] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [profileChats, setProfileChats] = useState([]);
 
   const [profileData, setProfileData] = useState({
     username: 'loading',
@@ -54,6 +56,18 @@ const ProfileScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
+    const fetchRecentChats = async () => {
+      try {
+        const history = await getChatHistory();
+        if (history && Array.isArray(history)) {
+          setProfileChats(history);
+        }
+      } catch (err) {
+        console.log('Error loading profile chats:', err);
+      }
+    };
+    fetchRecentChats();
+
     const fetchProfile = async () => {
       try {
         const data = await getProfile();
@@ -289,8 +303,9 @@ const ProfileScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.actionButton} onPress={handleOpenEdit} activeOpacity={0.7}>
               <Text style={styles.actionButtonText}>Edit Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
-              <Text style={styles.actionButtonText}>Share Profile</Text>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]} onPress={() => setActiveTab('messages')} activeOpacity={0.7}>
+              <Ionicons name="chatbubbles-outline" size={14} color="#003366" style={{ marginRight: 4 }} />
+              <Text style={[styles.actionButtonText, { color: '#003366' }]}>Messages</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallIconBtn} onPress={handleLogout} activeOpacity={0.7}>
               <Ionicons name="log-out-outline" size={18} color="#FF3B30" />
@@ -307,6 +322,14 @@ const ProfileScreen = ({ navigation }) => {
           >
             <Ionicons name={activeTab === 'post' ? 'grid' : 'grid-outline'} size={20} color={activeTab === 'post' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'post' && styles.activeTabLabel]}>Posts</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tabButton, activeTab === 'messages' && styles.activeTabButton]} 
+            onPress={() => setActiveTab('messages')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name={activeTab === 'messages' ? 'chatbubbles' : 'chatbubbles-outline'} size={20} color={activeTab === 'messages' ? theme.primary : theme.textMuted} />
+            <Text style={[styles.tabLabel, activeTab === 'messages' && styles.activeTabLabel]}>Messages</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tabButton, activeTab === 'reshare' && styles.activeTabButton]} 
@@ -342,6 +365,61 @@ const ProfileScreen = ({ navigation }) => {
                 <Image source={{ uri: post.uri }} style={styles.gridImage} />
               </TouchableOpacity>
             ))}
+          </View>
+        )}
+
+        {activeTab === 'messages' && (
+          <View style={styles.tabContentList}>
+            {profileChats.length === 0 ? (
+              <View style={{ padding: 30, alignItems: 'center' }}>
+                <Ionicons name="chatbubbles-outline" size={48} color="#CBD5E1" />
+                <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No message communications yet</Text>
+              </View>
+            ) : (
+              profileChats.map((item, index) => {
+                const u = item.user || {};
+                const userName = u.name || item.name || 'Alumni Member';
+                const userInst = u.institution || u.department || u.degree || item.role || '';
+                const userId = u._id || u.id || item.id || index.toString();
+                const initials = userName.charAt(0).toUpperCase();
+                const lastText = typeof item.lastMessage === 'string' ? item.lastMessage : (item.lastMessage?.text || '');
+                const timeText = item.lastMessage?.createdAt 
+                  ? new Date(item.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                  : (item.time || '');
+
+                return (
+                  <TouchableOpacity 
+                    key={userId} 
+                    style={styles.listCard}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      navigation.navigate('Chat', { 
+                        user: { 
+                          id: userId, 
+                          name: userName, 
+                          role: userInst, 
+                          initials: initials 
+                        } 
+                      });
+                    }}
+                  >
+                    <View style={styles.cardHeader}>
+                      <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>{initials}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.cardTitle}>{userName}</Text>
+                        {!!userInst && <Text style={{ fontSize: 11, color: '#64748B' }}>{userInst}</Text>}
+                      </View>
+                      <Text style={styles.cardFooterText}>{timeText}</Text>
+                    </View>
+                    <Text style={[styles.cardBodyText, { marginTop: 6, color: '#334155' }]} numberOfLines={2}>
+                      &quot;{lastText}&quot;
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
         )}
 

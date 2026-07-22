@@ -47,10 +47,14 @@ const MessagesScreen = ({ navigation }) => {
   }, []);
 
   const filteredChats = chatList.filter(chat => {
-    const nameMatch = chat.user?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const roleMatch = chat.user?.degree?.toLowerCase().includes(searchQuery.toLowerCase());
-    const msgMatch = chat.lastMessage?.text?.toLowerCase().includes(searchQuery.toLowerCase());
-    return nameMatch || roleMatch || msgMatch;
+    if (!searchQuery || !searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    const nameMatch = chat.user?.name ? chat.user.name.toLowerCase().includes(q) : false;
+    const roleMatch = (chat.user?.institution || chat.user?.degree || chat.user?.department) 
+      ? (chat.user.institution || chat.user.degree || chat.user.department).toLowerCase().includes(q) 
+      : false;
+    const msgMatch = chat.lastMessage?.text ? chat.lastMessage.text.toLowerCase().includes(q) : false;
+    return Boolean(nameMatch || roleMatch || msgMatch);
   });
 
   const [composeModalVisible, setComposeModalVisible] = useState(false);

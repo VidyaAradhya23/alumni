@@ -18,7 +18,10 @@ exports.sendMessage = async (req, res) => {
             text: encrypt(text)
         });
 
-        res.status(201).json(message);
+        const responseMsg = message.toObject();
+        responseMsg.text = text;
+
+        res.status(201).json(responseMsg);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -66,22 +69,29 @@ exports.getChatHistory = async (req, res) => {
         // Find all messages involving the current user
         const messages = await Message.find({
             $or: [{ sender: currentUserId }, { receiver: currentUserId }]
-        }).sort('-createdAt').populate('sender receiver', 'name email avatar_url role degree institution department');
+        })
+        .sort('-createdAt')
+        .populate('sender receiver', 'name email avatar_url role degree institution department');
 
         // Group by user
         const chatsMap = new Map();
 
         messages.forEach(msg => {
-            const isSender = msg.sender._id.toString() === currentUserId.toString();
+            if (!msg || !msg.sender || !msg.receiver) return;
+
+            const senderIdStr = msg.sender._id ? msg.sender._id.toString() : msg.sender.toString();
+            const currentUserIdStr = currentUserId.toString();
+
+            const isSender = senderIdStr === currentUserIdStr;
             const otherUser = isSender ? msg.receiver : msg.sender;
 
-            if (!otherUser) return; // defensive
+            if (!otherUser || typeof otherUser !== 'object') return;
 
-            const otherUserIdStr = otherUser._id.toString();
+            const otherUserIdStr = otherUser._id ? otherUser._id.toString() : otherUser.toString();
 
             if (!chatsMap.has(otherUserIdStr)) {
                 // Decrypt the last message preview
-                const msgObj = msg.toObject();
+                const msgObj = msg.toObject ? msg.toObject() : { ...msg };
                 msgObj.text = decrypt(msgObj.text);
 
                 chatsMap.set(otherUserIdStr, {
@@ -100,6 +110,7 @@ exports.getChatHistory = async (req, res) => {
         const chatHistory = Array.from(chatsMap.values());
         res.json(chatHistory);
     } catch (error) {
+        console.error('getChatHistory error:', error);
         res.status(500).json({ message: error.message });
     }
 };

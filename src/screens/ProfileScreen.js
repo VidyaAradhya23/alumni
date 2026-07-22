@@ -783,27 +783,46 @@ const ProfileScreen = ({ navigation }) => {
                     <Text style={styles.connectionName}>{user.name}</Text>
                     <Text style={styles.connectionUsername}>{user.title}</Text>
                   </View>
-                  <TouchableOpacity 
-                    style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}
-                    onPress={async () => {
-                      try {
-                        await toggleFollowUser(user.id);
-                        if (listModalType === 'following') {
-                          setFollowing(prev => prev.filter(u => u.id !== user.id));
-                          setProfileData(prev => ({...prev, following: (parseInt(prev.following) - 1).toString()}));
-                        } else {
-                          setConnections(prev => prev.filter(u => u.id !== user.id));
-                          setProfileData(prev => ({...prev, followers: (parseInt(prev.followers) - 1).toString()}));
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity 
+                      style={[styles.connectionBtn, { backgroundColor: '#EFF6FF', marginRight: 8, paddingHorizontal: 10 }]}
+                      onPress={() => {
+                        setListModalType(null);
+                        navigation.navigate('Chat', { 
+                          user: { 
+                            id: user.id, 
+                            name: user.name, 
+                            role: user.title || '', 
+                            initials: user.avatar 
+                          } 
+                        });
+                      }}
+                    >
+                      <Ionicons name="chatbubble-ellipses-outline" size={16} color="#003366" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.connectionBtn, listModalType === 'following' && styles.followingBtn]}
+                      onPress={async () => {
+                        try {
+                          await toggleFollowUser(user.id);
+                          if (listModalType === 'following') {
+                            setFollowing(prev => prev.filter(u => u.id !== user.id));
+                            setProfileData(prev => ({...prev, following: (parseInt(prev.following) - 1).toString()}));
+                          } else {
+                            setConnections(prev => prev.filter(u => u.id !== user.id));
+                            setProfileData(prev => ({...prev, followers: (parseInt(prev.followers) - 1).toString()}));
+                          }
+                        } catch (err) {
+                          console.error('Error toggling follow', err);
                         }
-                      } catch (err) {
-                        console.error('Error toggling follow', err);
-                      }
-                    }}
-                  >
-                    <Text style={[styles.connectionBtnText, listModalType === 'following' && styles.followingBtnText]}>
-                      {listModalType === 'connections' ? 'Remove' : 'Following'}
-                    </Text>
-                  </TouchableOpacity>
+                      }}
+                    >
+                      <Text style={[styles.connectionBtnText, listModalType === 'following' && styles.followingBtnText]}>
+                        {listModalType === 'connections' ? 'Remove' : 'Following'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
               <View style={{height: 40}} />

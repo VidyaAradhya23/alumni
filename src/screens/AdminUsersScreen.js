@@ -487,11 +487,10 @@ const AdminUsersScreen = ({ navigation, route }) => {
         activeOpacity={0.7}
         onPress={() => navigation && navigation.navigate('Chat', { 
           user: { 
+            id: item._id || item.id,
             name: item.name, 
-            role: `${item.branch} • Batch ${item.batch}`, 
-            initials: item.avatar,
-            lastMessage: 'Hi! Let\'s connect.',
-            time: 'Just now'
+            role: item.institution || `${item.branch} • Batch ${item.batch}` || '', 
+            initials: item.avatar || (item.name || '?').charAt(0).toUpperCase()
           } 
         })}
       >

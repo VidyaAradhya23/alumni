@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Image, Alert, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Image, Alert, Linking, Modal, Dimensions, useWindowDimensions, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,10 @@ import * as DocumentPicker from 'expo-document-picker';
 
 const ChatScreen = ({ route, navigation }) => {
   const { theme, isDarkMode } = useTheme();
-  const styles = getStyles(theme);
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = windowWidth >= 768;
+  const isLargeDesktop = windowWidth >= 1200;
+  const styles = getStyles(theme, isDesktop, isLargeDesktop, isDarkMode);
 
   const { user } = route?.params || {};
   
@@ -455,14 +458,30 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
+  const webContainerStyle = isWeb 
+    ? { 
+        alignSelf: 'center', 
+        width: '100%', 
+        maxWidth: isLargeDesktop ? 900 : isDesktop ? 780 : '100%', 
+        flex: 1,
+        ...(isDesktop ? {
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+          shadowColor: '#000',
+          shadowOpacity: 0.08,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 0 },
+        } : {})
+      } 
+    : { flex: 1 };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={webContainerStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
-      {/* Responsive Header */}
+      {/* Responsive Header — Premium Design */}
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => {
@@ -473,13 +492,14 @@ const ChatScreen = ({ route, navigation }) => {
             }
           }} 
           style={styles.backButton}
+          activeOpacity={0.6}
         >
-          <Ionicons name="arrow-back" size={24} color="#002144" />
+          <Ionicons name="arrow-back" size={22} color={isDarkMode ? '#E2E8F0' : '#1E293B'} />
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-          activeOpacity={0.8}
+          style={styles.headerProfileRow}
+          activeOpacity={0.7}
           onPress={() => {
             if (chatUser.id) {
               navigation.navigate('Profile', { userId: chatUser.id });
@@ -492,19 +512,35 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
           <View style={styles.headerUserInfo}>
             <Text style={styles.headerName} numberOfLines={1}>{chatUser.name}</Text>
-            <Text style={[styles.headerRole, { color: '#10B981', fontWeight: '600' }]} numberOfLines={1}>
-              {inputText.trim().length > 0 ? 'typing...' : 'Online'}
+            <Text style={styles.headerStatus} numberOfLines={1}>
+              {inputText.trim().length > 0 ? '✏️ typing...' : '● Online'}
             </Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.infoButton} onPress={() => {
-          if (chatUser.id) {
-            navigation.navigate('Profile', { userId: chatUser.id });
-          }
-        }}>
-          <Ionicons name="information-circle-outline" size={24} color="#003366" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => {
+            if (chatUser.id) {
+              navigation.navigate('Profile', { userId: chatUser.id });
+            }
+          }}>
+            <Ionicons name="videocam-outline" size={22} color={isDarkMode ? '#94A3B8' : '#475569'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => {
+            if (chatUser.id) {
+              navigation.navigate('Profile', { userId: chatUser.id });
+            }
+          }}>
+            <Ionicons name="call-outline" size={20} color={isDarkMode ? '#94A3B8' : '#475569'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => {
+            if (chatUser.id) {
+              navigation.navigate('Profile', { userId: chatUser.id });
+            }
+          }}>
+            <Ionicons name="ellipsis-vertical" size={20} color={isDarkMode ? '#94A3B8' : '#475569'} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <KeyboardAvoidingView 
@@ -529,7 +565,7 @@ const ChatScreen = ({ route, navigation }) => {
                     <Text style={styles.avatarText}>{chatUser.initials}</Text>
                   </View>
                 )}
-                <View style={{ maxWidth: '82%' }}>
+                <View style={{ maxWidth: isDesktop ? '65%' : '82%' }}>
                   <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
                     
                     {/* Forwarded Tag */}
@@ -589,29 +625,29 @@ const ChatScreen = ({ route, navigation }) => {
                   )}
 
                   {/* Action row (Reactions, Reply, Forward) */}
-                  <View style={{ flexDirection: 'row', alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: 3, alignItems: 'center', gap: 10 }}>
-                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '❤️')} activeOpacity={0.6}>
-                      <Text style={{ fontSize: 11, opacity: 0.6 }}>❤️</Text>
+                  <View style={styles.actionRow(isMe)}>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleToggleReaction(msgId, '❤️')} activeOpacity={0.6}>
+                      <Text style={styles.actionEmoji}>❤️</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '👍')} activeOpacity={0.6}>
-                      <Text style={{ fontSize: 11, opacity: 0.6 }}>👍</Text>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleToggleReaction(msgId, '👍')} activeOpacity={0.6}>
+                      <Text style={styles.actionEmoji}>👍</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '🔥')} activeOpacity={0.6}>
-                      <Text style={{ fontSize: 11, opacity: 0.6 }}>🔥</Text>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleToggleReaction(msgId, '🔥')} activeOpacity={0.6}>
+                      <Text style={styles.actionEmoji}>🔥</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={{ flexDirection: 'row', alignItems: 'center' }} 
+                      style={styles.actionBtn} 
                       onPress={() => setReplyToMsg({ _id: msgId, text: item.text || item.attachment?.name || 'Attachment', senderName: senderDisplayName })}
                     >
-                      <Ionicons name="arrow-undo-outline" size={13} color="#64748B" />
+                      <Ionicons name="arrow-undo-outline" size={isDesktop ? 15 : 13} color="#64748B" />
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                      style={styles.actionBtn}
                       onPress={() => setForwardModalMsg(item)}
                     >
-                      <Ionicons name="arrow-redo-outline" size={13} color="#64748B" />
+                      <Ionicons name="arrow-redo-outline" size={isDesktop ? 15 : 13} color="#64748B" />
                     </TouchableOpacity>
                   </View>
 
@@ -664,55 +700,50 @@ const ChatScreen = ({ route, navigation }) => {
 
         {/* WhatsApp-Style Attachment Popup Menu — Monochrome Icons */}
         {showAttachMenu && (
-          <View style={{ backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderTopWidth: 1, borderTopColor: isDarkMode ? '#334155' : '#E5E7EB', paddingVertical: 4 }}>
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
-              onPress={() => { setShowAttachMenu(false); handlePickDocument(); }}
-            >
-              <Ionicons name="document-text-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
-              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Send a document</Text>
+          <View style={styles.attachMenuContainer}>
+            <TouchableOpacity style={styles.attachMenuItem} onPress={() => { setShowAttachMenu(false); handlePickDocument(); }}>
+              <View style={styles.attachMenuIcon}>
+                <Ionicons name="document-text-outline" size={isDesktop ? 24 : 26} color={isDarkMode ? '#94A3B8' : '#6B7280'} />
+              </View>
+              <Text style={styles.attachMenuText}>Send a document</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
-              onPress={() => { handleTakePhoto(); }}
-            >
-              <Ionicons name="camera-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
-              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Take a photo or video</Text>
+            <TouchableOpacity style={styles.attachMenuItem} onPress={() => { handleTakePhoto(); }}>
+              <View style={styles.attachMenuIcon}>
+                <Ionicons name="camera-outline" size={isDesktop ? 24 : 26} color={isDarkMode ? '#94A3B8' : '#6B7280'} />
+              </View>
+              <Text style={styles.attachMenuText}>Take a photo or video</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
-              onPress={() => { setShowAttachMenu(false); handlePickImage(); }}
-            >
-              <Ionicons name="images-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
-              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Select media from library</Text>
+            <TouchableOpacity style={styles.attachMenuItem} onPress={() => { setShowAttachMenu(false); handlePickImage(); }}>
+              <View style={styles.attachMenuIcon}>
+                <Ionicons name="images-outline" size={isDesktop ? 24 : 26} color={isDarkMode ? '#94A3B8' : '#6B7280'} />
+              </View>
+              <Text style={styles.attachMenuText}>Select media from library</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
-              onPress={() => { setShowAttachMenu(false); }}
-            >
-              <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? '#94A3B8' : '#6B7280', marginRight: 20, width: 26, textAlign: 'center' }}>GIF</Text>
-              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Send a GIF</Text>
+            <TouchableOpacity style={styles.attachMenuItem} onPress={() => { setShowAttachMenu(false); }}>
+              <View style={styles.attachMenuIcon}>
+                <Text style={styles.attachMenuGifLabel}>GIF</Text>
+              </View>
+              <Text style={styles.attachMenuText}>Send a GIF</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
-              onPress={() => { setShowAttachMenu(false); }}
-            >
-              <Ionicons name="at-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
-              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Mention a person</Text>
+            <TouchableOpacity style={styles.attachMenuItem} onPress={() => { setShowAttachMenu(false); }}>
+              <View style={styles.attachMenuIcon}>
+                <Ionicons name="at-outline" size={isDesktop ? 24 : 26} color={isDarkMode ? '#94A3B8' : '#6B7280'} />
+              </View>
+              <Text style={styles.attachMenuText}>Mention a person</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Emoji Quick Picker Row */}
         {isEmojiPickerVisible && (
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', paddingVertical: 8, borderTopWidth: 1, borderColor: '#E2E8F0' }}>
-            {['😊', '❤️', '👍', '🔥', '🎉', '😂', '👏', '🙏'].map((emoji) => (
-              <TouchableOpacity key={emoji} onPress={() => addEmoji(emoji)} style={{ padding: 6 }}>
-                <Text style={{ fontSize: 22 }}>{emoji}</Text>
+          <View style={styles.emojiRow}>
+            {['😊', '❤️', '👍', '🔥', '🎉', '😂', '👏', '🙏', '😍', '🤔'].map((emoji) => (
+              <TouchableOpacity key={emoji} onPress={() => addEmoji(emoji)} style={styles.emojiBtn}>
+                <Text style={styles.emojiText}>{emoji}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -720,14 +751,14 @@ const ChatScreen = ({ route, navigation }) => {
 
         {/* Responsive Input Area — WhatsApp Style: 📎 | "Write a message..." | 🎤 */}
         <View style={styles.inputArea}>
-          <TouchableOpacity style={styles.attachBtn} onPress={() => { setShowAttachMenu(!showAttachMenu); setIsEmojiPickerVisible(false); }}>
-            <Ionicons name={showAttachMenu ? 'close' : 'attach-outline'} size={24} color={showAttachMenu ? '#3B82F6' : '#64748B'} style={showAttachMenu ? {} : { transform: [{ rotate: '-45deg' }] }} />
+          <TouchableOpacity style={styles.attachBtn} onPress={() => { setShowAttachMenu(!showAttachMenu); setIsEmojiPickerVisible(false); }} activeOpacity={0.6}>
+            <Ionicons name={showAttachMenu ? 'close' : 'attach-outline'} size={isDesktop ? 22 : 24} color={showAttachMenu ? '#3B82F6' : '#64748B'} style={showAttachMenu ? {} : { transform: [{ rotate: '-45deg' }] }} />
           </TouchableOpacity>
 
           <TextInput
             style={styles.textInput}
             placeholder="Write a message..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={isDarkMode ? '#64748B' : '#94A3B8'}
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -744,12 +775,13 @@ const ChatScreen = ({ route, navigation }) => {
             <TouchableOpacity 
               style={[styles.sendBtn, styles.sendBtnActive]} 
               onPress={sendMessage}
+              activeOpacity={0.7}
             >
-              <Ionicons name="send" size={16} color="#FFFFFF" style={{ marginLeft: 2 }} />
+              <Ionicons name="send" size={isDesktop ? 18 : 16} color="#FFFFFF" style={{ marginLeft: 2 }} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.attachBtn}>
-              <Ionicons name="mic-outline" size={24} color="#64748B" />
+            <TouchableOpacity style={styles.micBtn} activeOpacity={0.6}>
+              <Ionicons name="mic-outline" size={isDesktop ? 22 : 24} color="#64748B" />
             </TouchableOpacity>
           )}
         </View>
@@ -828,176 +860,336 @@ const ChatScreen = ({ route, navigation }) => {
   );
 };
 
-const getStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: theme.card,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-  },
-  backButton: {
-    padding: 4,
-    marginRight: 6,
-  },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#003366',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    position: 'relative',
-  },
-  onlineStatusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#10B981',
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  headerAvatarText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  headerUserInfo: {
-    flex: 1,
-  },
-  headerName: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: theme.text,
-  },
-  headerRole: {
-    fontSize: 11,
-    color: '#059669',
-    fontWeight: '600',
-  },
-  infoButton: {
-    padding: 4,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  messageList: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  messageWrapper: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    alignItems: 'flex-end',
-  },
-  messageWrapperMe: {
-    justifyContent: 'flex-end',
-  },
-  messageWrapperThem: {
-    justifyContent: 'flex-start',
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: theme.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  avatarText: {
-    color: theme.card,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  messageBubble: {
-    maxWidth: '78%',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  messageBubbleMe: {
-    backgroundColor: '#003366',
-    borderBottomRightRadius: 4,
-  },
-  messageBubbleThem: {
-    backgroundColor: theme.card,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderBottomLeftRadius: 4,
-  },
-  messageText: {
-    fontSize: 14.5,
-    lineHeight: 20,
-  },
-  messageTextMe: {
-    color: '#FFFFFF',
-  },
-  messageTextThem: {
-    color: theme.text,
-  },
-  messageMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 4,
-  },
-  messageTime: {
-    fontSize: 10,
-  },
-  messageTimeMe: {
-    color: 'rgba(255,255,255,0.7)',
-  },
-  messageTimeThem: {
-    color: theme.textMuted,
-  },
-  inputArea: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: theme.card,
-    borderTopWidth: 1,
-    borderTopColor: theme.border,
-  },
-  attachBtn: {
-    padding: 6,
-    marginRight: 2,
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 8,
-    maxHeight: 100,
-    fontSize: 14.5,
-    color: theme.text,
-  },
-  sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.textMuted,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 6,
-    marginBottom: 1,
-  },
-  sendBtnActive: {
-    backgroundColor: '#003366',
-  }
-});
+const getStyles = (theme, isDesktop = false, isLargeDesktop = false, isDarkMode = false) => {
+  const headerHeight = isDesktop ? 64 : 56;
+  const bubbleRadius = isDesktop ? 18 : 16;
+  const inputPadH = isDesktop ? 16 : 10;
+  const msgFontSize = isDesktop ? 15 : 14.5;
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#0F172A' : '#F0F2F5',
+    },
+
+    /* ── Header ── */
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: headerHeight,
+      paddingHorizontal: isDesktop ? 20 : 12,
+      backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+      borderBottomWidth: 1,
+      borderBottomColor: isDarkMode ? '#334155' : '#E2E8F0',
+      ...(isDesktop ? {
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+      } : {}),
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 4,
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    },
+    headerProfileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      paddingVertical: 4,
+    },
+    headerAvatar: {
+      width: isDesktop ? 42 : 38,
+      height: isDesktop ? 42 : 38,
+      borderRadius: isDesktop ? 21 : 19,
+      backgroundColor: '#003366',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+      position: 'relative',
+    },
+    onlineStatusDot: {
+      width: 11,
+      height: 11,
+      borderRadius: 6,
+      backgroundColor: '#10B981',
+      position: 'absolute',
+      bottom: -1,
+      right: -1,
+      borderWidth: 2.5,
+      borderColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+    },
+    headerAvatarText: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      fontSize: isDesktop ? 15 : 14,
+    },
+    headerUserInfo: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    headerName: {
+      fontSize: isDesktop ? 16 : 15,
+      fontWeight: '700',
+      color: theme.text,
+      letterSpacing: 0.1,
+    },
+    headerStatus: {
+      fontSize: isDesktop ? 12 : 11,
+      color: '#10B981',
+      fontWeight: '500',
+      marginTop: 1,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: isDesktop ? 6 : 2,
+    },
+    headerActionBtn: {
+      width: isDesktop ? 38 : 34,
+      height: isDesktop ? 38 : 34,
+      borderRadius: isDesktop ? 19 : 17,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,51,102,0.05)',
+    },
+
+    /* ── Keyboard & Message List ── */
+    keyboardAvoid: {
+      flex: 1,
+    },
+    messageList: {
+      padding: isDesktop ? 24 : 16,
+      paddingBottom: isDesktop ? 32 : 24,
+    },
+
+    /* ── Message Wrappers ── */
+    messageWrapper: {
+      flexDirection: 'row',
+      marginBottom: isDesktop ? 14 : 12,
+      alignItems: 'flex-end',
+      paddingHorizontal: isDesktop ? 8 : 0,
+    },
+    messageWrapperMe: {
+      justifyContent: 'flex-end',
+    },
+    messageWrapperThem: {
+      justifyContent: 'flex-start',
+    },
+    avatar: {
+      width: isDesktop ? 32 : 28,
+      height: isDesktop ? 32 : 28,
+      borderRadius: isDesktop ? 16 : 14,
+      backgroundColor: theme.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: isDesktop ? 10 : 8,
+    },
+    avatarText: {
+      color: theme.card,
+      fontSize: isDesktop ? 11 : 10,
+      fontWeight: '700',
+    },
+
+    /* ── Message Bubbles ── */
+    messageBubble: {
+      maxWidth: '100%',
+      paddingHorizontal: isDesktop ? 16 : 14,
+      paddingVertical: isDesktop ? 10 : 8,
+      borderRadius: bubbleRadius,
+    },
+    messageBubbleMe: {
+      backgroundColor: '#003366',
+      borderBottomRightRadius: 4,
+      ...(isDesktop ? {
+        shadowColor: '#003366',
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+      } : {}),
+    },
+    messageBubbleThem: {
+      backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+      borderWidth: isDarkMode ? 0 : 1,
+      borderColor: isDarkMode ? 'transparent' : '#E2E8F0',
+      borderBottomLeftRadius: 4,
+      ...(isDesktop ? {
+        shadowColor: '#000',
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+      } : {}),
+    },
+    messageText: {
+      fontSize: msgFontSize,
+      lineHeight: isDesktop ? 22 : 20,
+      letterSpacing: 0.1,
+    },
+    messageTextMe: {
+      color: '#FFFFFF',
+    },
+    messageTextThem: {
+      color: theme.text,
+    },
+    messageMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginTop: 4,
+    },
+    messageTime: {
+      fontSize: isDesktop ? 11 : 10,
+    },
+    messageTimeMe: {
+      color: 'rgba(255,255,255,0.65)',
+    },
+    messageTimeThem: {
+      color: theme.textMuted,
+    },
+
+    /* ── Action Row (Reactions, Reply, Forward) ── */
+    actionRow: (isMe) => ({
+      flexDirection: 'row',
+      alignSelf: isMe ? 'flex-end' : 'flex-start',
+      marginTop: 4,
+      alignItems: 'center',
+      gap: isDesktop ? 12 : 10,
+    }),
+    actionBtn: {
+      padding: isDesktop ? 4 : 2,
+      minWidth: isDesktop ? 28 : 22,
+      alignItems: 'center',
+    },
+    actionEmoji: {
+      fontSize: isDesktop ? 13 : 11,
+      opacity: 0.55,
+    },
+
+    /* ── Attachment Menu ── */
+    attachMenuContainer: {
+      backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+      borderTopWidth: 1,
+      borderTopColor: isDarkMode ? '#334155' : '#E5E7EB',
+      paddingVertical: isDesktop ? 6 : 4,
+      ...(isDesktop ? {
+        paddingHorizontal: 8,
+      } : {}),
+    },
+    attachMenuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: isDesktop ? 14 : 16,
+      paddingHorizontal: isDesktop ? 20 : 24,
+      borderRadius: isDesktop ? 10 : 0,
+      ...(isDesktop ? {
+        marginHorizontal: 4,
+      } : {}),
+    },
+    attachMenuIcon: {
+      width: isDesktop ? 28 : 26,
+      marginRight: isDesktop ? 18 : 20,
+      alignItems: 'center',
+    },
+    attachMenuText: {
+      fontSize: isDesktop ? 15 : 17,
+      fontWeight: '400',
+      color: isDarkMode ? '#E2E8F0' : '#1F2937',
+      letterSpacing: 0.1,
+    },
+    attachMenuGifLabel: {
+      fontSize: isDesktop ? 16 : 18,
+      fontWeight: '800',
+      color: isDarkMode ? '#94A3B8' : '#6B7280',
+    },
+
+    /* ── Emoji Row ── */
+    emojiRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC',
+      paddingVertical: isDesktop ? 10 : 8,
+      borderTopWidth: 1,
+      borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+    },
+    emojiBtn: {
+      padding: isDesktop ? 8 : 6,
+      borderRadius: 8,
+    },
+    emojiText: {
+      fontSize: isDesktop ? 24 : 22,
+    },
+
+    /* ── Input Area ── */
+    inputArea: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      paddingHorizontal: inputPadH,
+      paddingVertical: isDesktop ? 10 : 8,
+      backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+      borderTopWidth: 1,
+      borderTopColor: isDarkMode ? '#334155' : '#E2E8F0',
+      ...(isDesktop ? {
+        paddingBottom: 12,
+      } : {}),
+    },
+    attachBtn: {
+      width: isDesktop ? 40 : 36,
+      height: isDesktop ? 40 : 36,
+      borderRadius: isDesktop ? 20 : 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 2,
+    },
+    micBtn: {
+      width: isDesktop ? 40 : 36,
+      height: isDesktop ? 40 : 36,
+      borderRadius: isDesktop ? 20 : 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 4,
+    },
+    textInput: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#0F172A' : '#F1F5F9',
+      borderRadius: 24,
+      paddingHorizontal: isDesktop ? 18 : 14,
+      paddingTop: isDesktop ? 10 : 8,
+      paddingBottom: isDesktop ? 10 : 8,
+      maxHeight: isDesktop ? 150 : 100,
+      fontSize: isDesktop ? 15 : 14.5,
+      color: theme.text,
+      borderWidth: isDarkMode ? 1 : 0,
+      borderColor: isDarkMode ? '#334155' : 'transparent',
+      ...(isDesktop ? {
+        outlineStyle: 'none',
+      } : {}),
+    },
+    sendBtn: {
+      width: isDesktop ? 40 : 36,
+      height: isDesktop ? 40 : 36,
+      borderRadius: isDesktop ? 20 : 18,
+      backgroundColor: theme.textMuted,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 8,
+      marginBottom: 1,
+    },
+    sendBtnActive: {
+      backgroundColor: '#003366',
+      ...(isDesktop ? {
+        shadowColor: '#003366',
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+      } : {}),
+    },
+  });
+};
 
 export default ChatScreen;

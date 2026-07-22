@@ -77,7 +77,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
         ...formData,
         otp: otpString
       });
-      alert('Account verified and created successfully!');
+      alert('Registration complete & email verified! Your account has been submitted and is currently pending Admin approval.');
       navigation.navigate('Login');
     } catch (error) {
       console.error('OTP verification error:', error);

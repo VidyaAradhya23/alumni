@@ -81,7 +81,7 @@ const SuperAdminDrawer = createDrawerNavigator();
 
 // ===== ALUMNI TABS/DRAWER =====
 function MainTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -163,7 +163,7 @@ function MainTabs() {
 
 // ===== ADMIN TABS/DRAWER =====
 function AdminTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -248,7 +248,7 @@ function AdminTabs() {
 
 // ===== SUPER ADMIN TABS/DRAWER =====
 function SuperAdminTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -388,7 +388,7 @@ const linking = {
 };
 
 function RootNavigator() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator 

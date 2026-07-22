@@ -144,7 +144,7 @@ const PostCreationScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (Platform.OS === 'web') {
       const handleGlobalDragOver = (e) => {
         e.preventDefault();

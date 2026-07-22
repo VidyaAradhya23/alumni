@@ -349,7 +349,7 @@ exports.getSuggestions = async (req, res) => {
             query.institution = currentUser.institution;
         }
         const suggestions = await User.find(query)
-            .select('name email institution department batchYear company designation avatar_url')
+            .select('name email institution department degree batchYear company designation avatar_url role')
             .limit(10);
         res.json(suggestions);
     } catch (error) {

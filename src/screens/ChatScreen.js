@@ -11,7 +11,7 @@ const ChatScreen = ({ route, navigation }) => {
   const { user } = route?.params || {};
   
   // Default fallback if someone opens this without a user
-  const chatUser = user || { name: 'Unknown User', role: 'Alumni', initials: '?' };
+  const chatUser = user || { name: 'Unknown User', role: '', initials: '?' };
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');

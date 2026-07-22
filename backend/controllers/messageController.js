@@ -66,7 +66,7 @@ exports.getChatHistory = async (req, res) => {
         // Find all messages involving the current user
         const messages = await Message.find({
             $or: [{ sender: currentUserId }, { receiver: currentUserId }]
-        }).sort('-createdAt').populate('sender receiver', 'name email avatar_url role degree');
+        }).sort('-createdAt').populate('sender receiver', 'name email avatar_url role degree institution department');
 
         // Group by user
         const chatsMap = new Map();

@@ -63,7 +63,7 @@ const MessagesScreen = ({ navigation }) => {
     const newUser = { 
       id: Date.now().toString(), 
       name: composeSearch.trim(), 
-      role: 'Alumni', 
+      role: '', 
       lastMessage: '', 
       time: 'Now', 
       unread: 0, 
@@ -147,7 +147,7 @@ const MessagesScreen = ({ navigation }) => {
                   user: {
                     id: item.user._id,
                     name: item.user.name,
-                    role: item.user.degree || 'Alumni',
+                    role: item.user.institution || item.user.department || item.user.degree || '',
                     initials: (item.user.name || '?').charAt(0).toUpperCase()
                   }
                 });
@@ -168,7 +168,7 @@ const MessagesScreen = ({ navigation }) => {
                     {item.lastMessage?.createdAt ? new Date(item.lastMessage.createdAt).toLocaleDateString() : ''}
                   </Text>
                 </View>
-                <Text style={styles.role}>{item.user?.degree || 'Alumni'}</Text>
+                <Text style={styles.role}>{item.user?.institution || item.user?.department || item.user?.degree || ''}</Text>
                 <View style={styles.messageRow}>
                   <Text 
                     style={[
@@ -221,7 +221,7 @@ const MessagesScreen = ({ navigation }) => {
                       const newUser = { 
                         id: item._id, 
                         name: item.name, 
-                        role: item.degree || 'Alumni', 
+                        role: item.institution || item.department || item.degree || '', 
                         lastMessage: '', 
                         time: 'Now', 
                         unread: 0, 
@@ -239,7 +239,7 @@ const MessagesScreen = ({ navigation }) => {
                     </View>
                     <View>
                       <Text style={{ fontSize: 16, color: '#1E293B', fontWeight: '600' }}>{item.name}</Text>
-                      <Text style={{ fontSize: 13, color: '#64748B' }}>{item.degree || 'Alumni'}</Text>
+                      <Text style={{ fontSize: 13, color: '#64748B' }}>{item.institution || item.department || item.degree || ''}</Text>
                     </View>
                   </TouchableOpacity>
                 )}

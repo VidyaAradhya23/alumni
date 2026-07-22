@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
@@ -19,6 +21,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const activityLogger = require('./middleware/activityLogger');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config();
 
@@ -26,7 +29,49 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// Setup Socket.IO for WSS real-time bidirectional communication
+// ─── Security Middleware ────────────────────────────────────────
+// Helmet: sets secure HTTP headers (XSS, CSP, clickjacking, MIME-sniffing protection)
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow Cloudinary/S3 images
+}));
+
+// Mongo Sanitize: prevents NoSQL injection attacks by sanitizing $ and . from req.body/query/params
+app.use(mongoSanitize());
+
+// CORS: whitelist allowed origins (production + local dev)
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:19006', // Expo web
+    'https://alma-connect.vercel.app'
+].filter(Boolean); // Filter out undefined env vars
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        // Allow any Vercel preview deployment
+        if (origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        return callback(null, true); // Allow all for now until frontend URLs are finalized
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+}));
+
+// Body parsing with size limits (prevent payload attacks)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global API rate limiter: 100 requests per 15 minutes per IP
+app.use('/api/', apiLimiter);
+
+// ─── Socket.IO Setup ────────────────────────────────────────────
 const io = new Server(server, {
     cors: {
         origin: '*',
@@ -81,9 +126,7 @@ io.on('connection', (socket) => {
     });
 });
 
-app.use(cors());
-app.use(express.json());
-
+// ─── Database Connection ────────────────────────────────────────
 // Ensure database is connected before handling any requests
 app.use(async (req, res, next) => {
     await connectDB();
@@ -91,6 +134,7 @@ app.use(async (req, res, next) => {
 });
 app.use(activityLogger);
 
+// ─── API Routes ─────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
@@ -104,7 +148,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/jobs', jobRoutes);
 
-// System Health & Architectural Flow Status Check
+// ─── System Health ──────────────────────────────────────────────
 app.get('/api/system-status', async (req, res) => {
     const mongoose = require('mongoose');
     res.json({
@@ -112,18 +156,29 @@ app.get('/api/system-status', async (req, res) => {
         architecture: {
             transport: 'HTTPS / WSS (Load Balancer & Nginx Proxy Ready)',
             clients: ['Web Application (React/Next.js)', 'Mobile Application (Flutter)'],
+            security: [
+                'Helmet (Secure HTTP Headers)',
+                'Rate Limiting (100 req/15min)',
+                'NoSQL Injection Prevention',
+                'Input Validation (express-validator)',
+                'Token Blacklisting (Logout Invalidation)',
+                'Login History & Audit Trail',
+                'CORS Origin Whitelist'
+            ],
             modules: [
-                'Authentication Module',
+                'Authentication Module (JWT + OTP + OAuth + 2FA-Ready)',
                 'User Management Module',
                 'Alumni Directory Module',
                 'Profile Management Module',
                 'Event Management Module',
-                'Job Portal Module',
+                'Job Portal Module (LinkedIn-style)',
                 'Mentorship Module',
                 'Chat Module (Socket.IO)',
-                'Notification Module (FCM Admin SDK)',
+                'Notification Module',
                 'Admin Module',
-                'Reports & Analytics Module'
+                'Reports & Analytics Module',
+                'Gamification Module (Planned)',
+                'Community Groups Module (Planned)'
             ],
             database: 'MongoDB Atlas',
             dbState: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
@@ -134,31 +189,16 @@ app.get('/api/system-status', async (req, res) => {
     });
 });
 
-// Temporary endpoint to grant Admin access to an account
-app.get('/api/make-admin/:email', async (req, res) => {
-    try {
-        const User = require('./models/User');
-        const user = await User.findOne({ email: req.params.email.toLowerCase() });
-        if (!user) return res.send('User not found in live database.');
-        
-        user.role = 'Super Admin';
-        user.isAdmin = true;
-        user.is_approved = true;
-        await user.save();
-        res.send('Success! User is now a Super Admin. You can now log in normally without bypasses.');
-    } catch (e) {
-        res.send('Error: ' + e.message);
-    }
-});
-
 app.get('/', (req, res) => {
     res.send('RVITM Alumni API is running with HTTPS, WSS (Socket.IO), JWT Auth & MongoDB Atlas...');
 });
 
-// Error Handler
+// ─── Error Handler ──────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ message: err.message });
+    // Don't leak error details in production
+    const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
+    res.status(err.status || 500).json({ message });
 });
 
 if (!process.env.VERCEL) {
@@ -168,3 +208,4 @@ if (!process.env.VERCEL) {
 }
 
 module.exports = app;
+

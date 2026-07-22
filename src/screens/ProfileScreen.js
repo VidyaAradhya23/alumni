@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser } from '../services/authService';
+import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory } from '../services/authService';
 import { getChatHistory } from '../services/messageService';
 
 const validatePasswordStrength = (password) => {
@@ -58,6 +58,13 @@ const ProfileScreen = ({ navigation }) => {
   });
 
   const [userPosts, setUserPosts] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [highlights, setHighlights] = useState([
+    { id: '1', title: 'Campus', icon: 'school-outline' },
+    { id: '2', title: 'Work', icon: 'briefcase-outline' },
+    { id: '3', title: 'Events', icon: 'calendar-outline' },
+    { id: '4', title: 'Projects', icon: 'code-slash-outline' },
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -201,6 +208,7 @@ const ProfileScreen = ({ navigation }) => {
     const performLogout = async () => {
       setSettingsVisible(false);
       try {
+        await logout().catch(err => console.log('Logout API call error:', err));
         await AsyncStorage.clear();
       } catch (error) {
         console.error('Failed to clear user session', error);
@@ -300,12 +308,80 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
             <Text style={styles.occupationText}>{profileData.branch} Class of {profileData.batch}</Text>
             <Text style={styles.bioText}>{profileData.bio}</Text>
+            {profileData.linkedin ? (
+              <TouchableOpacity onPress={() => Platform.OS === 'web' && window.open(profileData.linkedin, '_blank')}>
+                <Text style={{ color: '#0A66C2', fontWeight: '600', fontSize: 13, marginTop: 4 }}>
+                  🔗 {profileData.linkedin}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
+
+          {/* Instagram Story Highlights */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 14, paddingLeft: 4 }}>
+            {highlights.map(h => (
+              <View key={h.id} style={{ alignItems: 'center', marginRight: 18 }}>
+                <View style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  padding: 2.5,
+                  borderWidth: 2,
+                  borderColor: theme.primary,
+                  backgroundColor: theme.card,
+                  justify: 'center',
+                  alignItems: 'center'
+                }}>
+                  <View style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: 30,
+                    backgroundColor: theme.background,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    <Ionicons name={h.icon} size={24} color={theme.primary} />
+                  </View>
+                </View>
+                <Text style={{ fontSize: 11, color: theme.text, marginTop: 4, fontWeight: '500' }}>{h.title}</Text>
+              </View>
+            ))}
+            <TouchableOpacity style={{ alignItems: 'center', marginRight: 18 }} onPress={handleOpenEdit}>
+              <View style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                borderWidth: 1.5,
+                borderColor: '#CBD5E1',
+                borderStyle: 'dashed',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: theme.card
+              }}>
+                <Ionicons name="add" size={26} color="#64748B" />
+              </View>
+              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>New</Text>
+            </TouchableOpacity>
+          </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={[styles.actionButton, { flex: 1, marginRight: 12 }]} onPress={handleOpenEdit} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.actionButton, { flex: 1, marginRight: 8 }]} onPress={handleOpenEdit} activeOpacity={0.7}>
               <Text style={styles.actionButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.actionButton, { flex: 1, marginRight: 8, backgroundColor: 'rgba(0, 33, 68, 0.08)' }]} 
+              onPress={() => {
+                if (Platform.OS === 'web' && navigator.clipboard) {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Profile link copied to clipboard!');
+                } else {
+                  alert(`Profile link: https://alma-connect.vercel.app/profile/${profileData.username}`);
+                }
+              }} 
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.actionButtonText, { color: theme.primary }]}>Share Profile</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallIconBtn} onPress={handleLogout} activeOpacity={0.7}>
               <Ionicons name="log-out-outline" size={18} color="#FF3B30" />
@@ -357,15 +433,24 @@ const ProfileScreen = ({ navigation }) => {
               <View style={{ padding: 40, alignItems: 'center', width: '100%' }}>
                 <Ionicons name="grid-outline" size={48} color="#CBD5E1" />
                 <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No posts yet</Text>
+                <TouchableOpacity style={{ marginTop: 16, backgroundColor: theme.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20 }} onPress={() => navigation.navigate('PostCreation')}>
+                  <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Share your first post</Text>
+                </TouchableOpacity>
               </View>
             ) : (
               userPosts.map((post) => (
-                <TouchableOpacity key={post._id || post.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
+                <TouchableOpacity 
+                  key={post._id || post.id} 
+                  style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} 
+                  activeOpacity={0.85}
+                  onPress={() => setSelectedPost(post)}
+                >
                   {post.image_url ? (
                     <Image source={{ uri: post.image_url }} style={styles.gridImage} />
                   ) : (
-                    <View style={[styles.gridImage, { backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', padding: 8 }]}>
-                      <Text style={{fontSize: 10, color: '#475569'}} numberOfLines={4}>{post.content}</Text>
+                    <View style={[styles.gridImage, { backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', padding: 10, borderWidth: 0.5, borderColor: '#E2E8F0' }]}>
+                      <Ionicons name="document-text-outline" size={24} color={theme.primary} style={{ marginBottom: 6 }} />
+                      <Text style={{fontSize: 11, color: '#334155', fontWeight: '500', textAlign: 'center'}} numberOfLines={3}>{post.content}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -856,6 +941,74 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
               ))}
               <View style={{height: 40}} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Instagram Post Detail Lightbox Modal */}
+      <Modal visible={!!selectedPost} transparent animationType="fade" onRequestClose={() => setSelectedPost(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: Platform.OS === 'web' ? 20 : 10 }}>
+          <View style={{ backgroundColor: theme.card, width: '100%', maxWidth: 520, borderRadius: 16, overflow: 'hidden', maxHeight: '90%' }}>
+            {/* Post Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderBottomWidth: 0.5, borderColor: theme.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                  <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{profileData.avatar}</Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>{profileData.name}</Text>
+                  <Text style={{ fontSize: 11, color: theme.textMuted }}>{selectedPost?.createdAt ? new Date(selectedPost.createdAt).toLocaleDateString() : 'Just now'}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
+                <Ionicons name="close-circle" size={26} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Post Image or Styled Card */}
+              {selectedPost?.image_url ? (
+                <Image source={{ uri: selectedPost.image_url }} style={{ width: '100%', height: 320, resizeMode: 'cover' }} />
+              ) : null}
+
+              {/* Post Body & Content */}
+              <View style={{ padding: 16 }}>
+                <Text style={{ fontSize: 15, color: theme.text, lineHeight: 22 }}>{selectedPost?.content}</Text>
+              </View>
+
+              {/* Engagement Bar */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 0.5, borderColor: theme.border }}>
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}
+                  onPress={async () => {
+                    if (selectedPost) {
+                      try {
+                        await toggleLikePost(selectedPost._id || selectedPost.id);
+                        const isLiked = selectedPost.likes?.includes(profileData.name);
+                        const updatedLikes = isLiked 
+                          ? (selectedPost.likes || []).filter(l => l !== profileData.name)
+                          : [...(selectedPost.likes || []), profileData.name];
+                        setSelectedPost({ ...selectedPost, likes: updatedLikes });
+                      } catch (e) {
+                        console.error('Like toggle error', e);
+                      }
+                    }
+                  }}
+                >
+                  <Ionicons name={selectedPost?.likes?.length > 0 ? "heart" : "heart-outline"} size={24} color={selectedPost?.likes?.length > 0 ? "#EF4444" : theme.text} />
+                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
+                    {selectedPost?.likes?.length || 0} {selectedPost?.likes?.length === 1 ? 'like' : 'likes'}
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
+                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
+                    {selectedPost?.comments?.length || 0} comments
+                  </Text>
+                </View>
+              </View>
             </ScrollView>
           </View>
         </View>

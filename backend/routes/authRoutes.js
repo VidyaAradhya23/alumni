@@ -2,6 +2,7 @@ const express = require('express');
 const { 
     registerUser, 
     loginUser, 
+    logoutUser,
     updateUserProfile, 
     getUsers, 
     getSuggestions,
@@ -18,26 +19,50 @@ const {
     getFollowers,
     getFollowing,
     getNotifications,
-    markNotificationsRead
+    markNotificationsRead,
+    getLoginHistory,
+    googleAuth,
+    refreshAccessToken,
+    setup2FA,
+    verify2FA,
+    loginVerify2FA,
+    disable2FA,
+    getActiveSessions,
+    revokeSession
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const { authLimiter, otpLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
+const { loginValidation, registerValidation, otpValidation, forgotPasswordValidation, profileUpdateValidation, changePasswordValidation } = require('../middleware/requestValidator');
 const router = express.Router();
 
 router.post('/check-email', checkEmailExists);
-router.post('/send-otp', sendOtp);
-router.post('/register', registerUser);
-router.post('/login', loginUser);
+router.post('/send-otp', otpLimiter, otpValidation, sendOtp);
+router.post('/register', registerValidation, registerUser);
+router.post('/login', authLimiter, loginValidation, loginUser);
+router.post('/logout', protect, logoutUser);
+router.post('/google', googleAuth);
+router.post('/refresh-token', refreshAccessToken);
 router.post('/oauth', oauthLogin);
 router.get('/linkedin/callback', linkedinAuthCallback);
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, forgotPassword);
 router.post('/reset-password', resetPassword);
 
+// 2FA Endpoints
+router.post('/2fa/setup', protect, setup2FA);
+router.post('/2fa/verify', protect, verify2FA);
+router.post('/2fa/login-verify', loginVerify2FA);
+router.post('/2fa/disable', protect, disable2FA);
+
+// Profile & Sessions
 router.get('/profile', protect, getProfile);
-router.put('/profile', protect, updateUserProfile);
-router.put('/change-password', protect, changePassword);
+router.put('/profile', protect, profileUpdateValidation, updateUserProfile);
+router.put('/change-password', protect, changePasswordValidation, changePassword);
 router.delete('/account', protect, deleteAccount);
 router.get('/users', protect, getUsers);
 router.get('/suggestions', protect, getSuggestions);
+router.get('/login-history', protect, getLoginHistory);
+router.get('/sessions', protect, getActiveSessions);
+router.delete('/sessions/:sessionId', protect, revokeSession);
 
 router.post('/follow/:id', protect, toggleFollow);
 router.get('/followers', protect, getFollowers);

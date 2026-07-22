@@ -105,3 +105,56 @@ export const getEvents = async () => {
     const { data } = await api.get('/events');
     return data;
 };
+
+export const logout = async () => {
+    const { data } = await api.post('/auth/logout');
+    return data;
+};
+
+export const getLoginHistory = async () => {
+    const { data } = await api.get('/auth/login-history');
+    return data;
+};
+
+// ─── Phase 2: Enhanced Auth Services ──────────────────────────────
+
+export const googleAuth = async ({ idToken, accessToken }) => {
+    const { data } = await api.post('/auth/google', { idToken, accessToken });
+    return data;
+};
+
+export const refreshToken = async (refreshTokenValue) => {
+    const { data } = await api.post('/auth/refresh-token', { refreshToken: refreshTokenValue });
+    return data;
+};
+
+export const setup2FA = async () => {
+    const { data } = await api.post('/auth/2fa/setup');
+    return data;
+};
+
+export const verify2FA = async (code) => {
+    const { data } = await api.post('/auth/2fa/verify', { code });
+    return data;
+};
+
+export const loginVerify2FA = async (twoFactorToken, code) => {
+    const { data } = await api.post('/auth/2fa/login-verify', { twoFactorToken, code });
+    return data;
+};
+
+export const disable2FA = async ({ password, code }) => {
+    const { data } = await api.post('/auth/2fa/disable', { password, code });
+    return data;
+};
+
+export const getActiveSessions = async () => {
+    const { data } = await api.get('/auth/sessions');
+    return data;
+};
+
+export const revokeSession = async (sessionId) => {
+    const { data } = await api.delete(`/auth/sessions/${sessionId}`);
+    return data;
+};
+

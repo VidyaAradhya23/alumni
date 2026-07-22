@@ -34,12 +34,31 @@ const userSchema = new mongoose.Schema({
     authProvider: { type: String, default: 'local' },
     providerId: { type: String },
     passwordResetToken: { type: String },
-    passwordResetExpires: { type: Date }
+    passwordResetExpires: { type: Date },
+
+    // Security & Session Management
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, select: false },
+    twoFactorTempSecret: { type: String, select: false },
+    twoFactorBackupCodes: [{ type: String, select: false }],
+    loginHistory: [{
+        ip: String,
+        userAgent: String,
+        timestamp: { type: Date, default: Date.now },
+        success: { type: Boolean, default: true }
+    }],
+
+    // Profile Enhancement
+    skills: [{ type: String }],
+    headline: { type: String }
 }, { timestamps: true });
 
 // Database search indexes for fast lookup and user filtering
 userSchema.index({ is_approved: 1, name: 1 });
 userSchema.index({ role: 1 });
+userSchema.index({ institution: 1, department: 1, batchYear: 1 });
+// Text search index for unified search
+userSchema.index({ name: 'text', company: 'text', designation: 'text', department: 'text', institution: 'text', bio: 'text' });
 
 // Hash password before saving
 userSchema.pre('save', async function() {

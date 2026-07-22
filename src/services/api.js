@@ -27,11 +27,59 @@ api.interceptors.request.use(
     const userInfo = await AsyncStorage.getItem('userInfo');
     if (userInfo) {
       const { token } = JSON.parse(userInfo);
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+// Automatic Refresh Token Interceptor
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If 401 error, not already retrying, and not login/auth attempt
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !originalRequest.url?.includes('/auth/refresh-token')
+    ) {
+      originalRequest._retry = true;
+      try {
+        const userInfoRaw = await AsyncStorage.getItem('userInfo');
+        if (userInfoRaw) {
+          const userInfo = JSON.parse(userInfoRaw);
+          if (userInfo.refreshToken) {
+            // Call refresh-token endpoint directly with plain axios
+            const res = await axios.post(`${BASE_URL}/auth/refresh-token`, {
+              refreshToken: userInfo.refreshToken
+            });
+
+            if (res.data?.token) {
+              userInfo.token = res.data.token;
+              if (res.data.refreshToken) {
+                userInfo.refreshToken = res.data.refreshToken;
+              }
+              await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+              originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
+              return axios(originalRequest);
+            }
+          }
+        }
+      } catch (refreshErr) {
+        // Refresh failed — clear stored user session so app redirects to login cleanly
+        await AsyncStorage.removeItem('userInfo');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
+

@@ -6,9 +6,32 @@ const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
 const crypto = require('crypto');
 const OTP = require('../models/OTP');
 const Notification = require('../models/Notification');
+const TokenBlacklist = require('../models/TokenBlacklist');
+const RefreshToken = require('../models/RefreshToken');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+};
+
+// Generate Refresh Token & save to DB
+const createRefreshToken = async (userId, req) => {
+    const token = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    await RefreshToken.create({
+        user: userId,
+        token,
+        deviceInfo: {
+            ip: req.ip || req.connection?.remoteAddress || 'unknown',
+            userAgent: req.get('user-agent') || 'unknown'
+        },
+        expiresAt
+    });
+    return token;
 };
 
 // @desc    Check if email exists
@@ -132,10 +155,40 @@ exports.loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ email: email.trim().toLowerCase() });
 
+        // Track login attempt in history
+        const loginEntry = {
+            ip: req.ip || req.connection?.remoteAddress || 'unknown',
+            userAgent: req.get('user-agent') || 'unknown',
+            timestamp: new Date(),
+            success: false
+        };
+
         if (user && user.password && (await user.comparePassword(password))) {
             if (!user.is_approved) {
                 return res.status(403).json({ message: 'Your account is pending admin approval. You cannot log in yet.' });
             }
+
+            // Check if user has 2FA enabled
+            if (user.twoFactorEnabled) {
+                // Issue a short-lived temporary 2FA token (valid for 5 minutes)
+                const twoFactorToken = jwt.sign(
+                    { id: user._id, is2FATemp: true },
+                    process.env.JWT_SECRET || 'secret',
+                    { expiresIn: '5m' }
+                );
+                return res.json({
+                    requires2FA: true,
+                    twoFactorToken,
+                    message: 'Please enter your 6-digit 2FA authentication code'
+                });
+            }
+
+            // Record successful login
+            loginEntry.success = true;
+            user.loginHistory = [...(user.loginHistory || []).slice(-19), loginEntry]; // Keep last 20
+            await user.save({ validateBeforeSave: false });
+
+            const refreshToken = await createRefreshToken(user._id, req);
 
             res.json({
                 _id: user._id,
@@ -153,9 +206,16 @@ exports.loginUser = async (req, res) => {
                 role: user.role,
                 avatar_url: user.avatar_url,
                 linkedin: user.linkedin,
-                token: generateToken(user._id)
+                twoFactorEnabled: user.twoFactorEnabled || false,
+                token: generateToken(user._id),
+                refreshToken
             });
         } else {
+            // Record failed login attempt
+            if (user) {
+                user.loginHistory = [...(user.loginHistory || []).slice(-19), loginEntry];
+                await user.save({ validateBeforeSave: false });
+            }
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
@@ -529,3 +589,438 @@ exports.markNotificationsRead = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Logout user (blacklist current token)
+// @route   POST /api/auth/logout
+exports.logoutUser = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        // Decode to get expiration time for TTL auto-cleanup
+        const decoded = jwt.decode(token);
+        const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await TokenBlacklist.create({
+            token,
+            user: req.user._id,
+            reason: 'logout',
+            expiresAt
+        });
+
+        res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get login history for current user
+// @route   GET /api/auth/login-history
+exports.getLoginHistory = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('loginHistory');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        // Return most recent first
+        const history = (user.loginHistory || []).reverse();
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ─── Phase 2: Google OAuth, Refresh Tokens & 2FA ─────────────────
+
+// @desc    Google OAuth Sign-In / Registration
+// @route   POST /api/auth/google
+exports.googleAuth = async (req, res) => {
+    try {
+        const { idToken, accessToken } = req.body;
+        let email, name, picture, sub;
+
+        if (idToken) {
+            // Verify ID Token with Google Client
+            try {
+                const ticket = await googleClient.verifyIdToken({
+                    idToken,
+                    audience: process.env.GOOGLE_CLIENT_ID
+                });
+                const payload = ticket.getPayload();
+                email = payload.email;
+                name = payload.name;
+                picture = payload.picture;
+                sub = payload.sub;
+            } catch (err) {
+                // Fallback to fetch profile via google API if audience mismatch (e.g. mobile client id)
+                const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${idToken}`);
+                email = googleRes.data.email;
+                name = googleRes.data.name;
+                picture = googleRes.data.picture;
+                sub = googleRes.data.sub;
+            }
+        } else if (accessToken) {
+            const googleRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            email = googleRes.data.email;
+            name = googleRes.data.name;
+            picture = googleRes.data.picture;
+            sub = googleRes.data.sub;
+        } else {
+            return res.status(400).json({ message: 'Google ID Token or Access Token is required' });
+        }
+
+        if (!email) {
+            return res.status(400).json({ message: 'Could not retrieve email from Google account' });
+        }
+
+        let user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            // Auto-create user via Google OAuth (defaulting to approved for verified Google domain if configured)
+            user = await User.create({
+                name: name || 'Google User',
+                email: email.toLowerCase(),
+                avatar_url: picture,
+                authProvider: 'google',
+                providerId: sub,
+                is_approved: true, // OAuth signups are pre-verified via Google
+                role: 'Alumni'
+            });
+        } else {
+            if (!user.is_approved) {
+                return res.status(403).json({ message: 'Your account is pending admin approval' });
+            }
+            if (!user.providerId) {
+                user.authProvider = 'google';
+                user.providerId = sub;
+                if (!user.avatar_url && picture) user.avatar_url = picture;
+                await user.save();
+            }
+        }
+
+        // Check if 2FA is required for Google user
+        if (user.twoFactorEnabled) {
+            const twoFactorToken = jwt.sign(
+                { id: user._id, is2FATemp: true },
+                process.env.JWT_SECRET || 'secret',
+                { expiresIn: '5m' }
+            );
+            return res.json({
+                requires2FA: true,
+                twoFactorToken,
+                message: 'Please enter your 6-digit 2FA authentication code'
+            });
+        }
+
+        const refreshToken = await createRefreshToken(user._id, req);
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            institution: user.institution,
+            branch: user.branch,
+            department: user.department,
+            batchYear: user.batchYear,
+            joiningYear: user.joiningYear,
+            bio: user.bio,
+            location: user.location,
+            company: user.company,
+            designation: user.designation,
+            role: user.role,
+            avatar_url: user.avatar_url,
+            linkedin: user.linkedin,
+            twoFactorEnabled: user.twoFactorEnabled || false,
+            token: generateToken(user._id),
+            refreshToken
+        });
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        res.status(500).json({ message: 'Google authentication failed: ' + error.message });
+    }
+};
+
+// @desc    Refresh Access Token using Refresh Token Rotation
+// @route   POST /api/auth/refresh-token
+exports.refreshAccessToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            return res.status(400).json({ message: 'Refresh token is required' });
+        }
+
+        const storedToken = await RefreshToken.findOne({ token: refreshToken });
+        if (!storedToken) {
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
+
+        if (storedToken.isRevoked) {
+            // Revoke all tokens for this user if a revoked token is reused (security compromise detection)
+            await RefreshToken.updateMany({ user: storedToken.user }, { isRevoked: true });
+            return res.status(401).json({ message: 'Revoked refresh token reused. All sessions terminated for security.' });
+        }
+
+        if (storedToken.expiresAt < new Date()) {
+            return res.status(401).json({ message: 'Refresh token has expired. Please log in again.' });
+        }
+
+        // Token Rotation: revoke used refresh token & generate new pair
+        const newRefreshToken = crypto.randomBytes(40).toString('hex');
+        storedToken.isRevoked = true;
+        storedToken.replacedByToken = newRefreshToken;
+        await storedToken.save();
+
+        await RefreshToken.create({
+            user: storedToken.user,
+            token: newRefreshToken,
+            deviceInfo: {
+                ip: req.ip || req.connection?.remoteAddress || 'unknown',
+                userAgent: req.get('user-agent') || 'unknown'
+            },
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        });
+
+        const newAccessToken = generateToken(storedToken.user);
+
+        res.json({
+            token: newAccessToken,
+            refreshToken: newRefreshToken
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Setup 2FA — Generate TOTP Secret & QR Code
+// @route   POST /api/auth/2fa/setup
+exports.setup2FA = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Generate temporary secret
+        const secret = speakeasy.generateSecret({
+            name: `AlmaConnect (${user.email})`,
+            issuer: 'AlmaConnect Network'
+        });
+
+        // Save temporary secret until verified
+        user.twoFactorTempSecret = secret.base32;
+        await user.save();
+
+        // Generate QR code data URL
+        const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+        res.json({
+            qrCodeUrl,
+            manualKey: secret.base32,
+            message: 'Scan the QR code with Google Authenticator or Microsoft Authenticator app'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Verify & Enable 2FA
+// @route   POST /api/auth/2fa/verify
+exports.verify2FA = async (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!code) return res.status(400).json({ message: 'Verification code is required' });
+
+        const user = await User.findById(req.user._id).select('+twoFactorTempSecret');
+        if (!user || !user.twoFactorTempSecret) {
+            return res.status(400).json({ message: '2FA setup was not initiated. Please click setup first.' });
+        }
+
+        const verified = speakeasy.totp.verify({
+            secret: user.twoFactorTempSecret,
+            encoding: 'base32',
+            token: code.trim(),
+            window: 2 // Allow +/- 1 minute drift
+        });
+
+        if (!verified) {
+            return res.status(400).json({ message: 'Invalid 6-digit code. Please check your authenticator app.' });
+        }
+
+        // Generate 8 backup codes
+        const backupCodes = [];
+        for (let i = 0; i < 8; i++) {
+            backupCodes.push(crypto.randomBytes(4).toString('hex').toUpperCase()); // 8-char codes
+        }
+
+        user.twoFactorEnabled = true;
+        user.twoFactorSecret = user.twoFactorTempSecret;
+        user.twoFactorTempSecret = undefined;
+        user.twoFactorBackupCodes = backupCodes.map(c => crypto.createHash('sha256').update(c).digest('hex'));
+        await user.save();
+
+        res.json({
+            message: 'Two-Factor Authentication (2FA) enabled successfully!',
+            backupCodes // Show raw backup codes once to user
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Verify 2FA Token during Login Challenge
+// @route   POST /api/auth/2fa/login-verify
+exports.loginVerify2FA = async (req, res) => {
+    try {
+        const { twoFactorToken, code } = req.body;
+        if (!twoFactorToken || !code) {
+            return res.status(400).json({ message: 'Token and 2FA code are required' });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(twoFactorToken, process.env.JWT_SECRET || 'secret');
+        } catch (e) {
+            return res.status(401).json({ message: '2FA session expired. Please log in again.' });
+        }
+
+        if (!decoded.is2FATemp) {
+            return res.status(400).json({ message: 'Invalid 2FA challenge token' });
+        }
+
+        const user = await User.findById(decoded.id).select('+twoFactorSecret +twoFactorBackupCodes');
+        if (!user || !user.twoFactorEnabled) {
+            return res.status(400).json({ message: '2FA is not enabled for this user' });
+        }
+
+        // Check TOTP code
+        let isValid = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: code.trim(),
+            window: 2
+        });
+
+        // If TOTP failed, check if it's a valid backup code
+        if (!isValid && user.twoFactorBackupCodes && user.twoFactorBackupCodes.length > 0) {
+            const hashedCode = crypto.createHash('sha256').update(code.trim().toUpperCase()).digest('hex');
+            const codeIndex = user.twoFactorBackupCodes.indexOf(hashedCode);
+            if (codeIndex !== -1) {
+                isValid = true;
+                // Consume used backup code
+                user.twoFactorBackupCodes.splice(codeIndex, 1);
+                await user.save();
+            }
+        }
+
+        if (!isValid) {
+            return res.status(400).json({ message: 'Invalid 2FA code or backup code' });
+        }
+
+        const refreshToken = await createRefreshToken(user._id, req);
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            institution: user.institution,
+            branch: user.branch,
+            department: user.department,
+            batchYear: user.batchYear,
+            joiningYear: user.joiningYear,
+            bio: user.bio,
+            location: user.location,
+            company: user.company,
+            designation: user.designation,
+            role: user.role,
+            avatar_url: user.avatar_url,
+            linkedin: user.linkedin,
+            twoFactorEnabled: true,
+            token: generateToken(user._id),
+            refreshToken
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Disable 2FA
+// @route   POST /api/auth/2fa/disable
+exports.disable2FA = async (req, res) => {
+    try {
+        const { password, code } = req.body;
+        const user = await User.findById(req.user._id).select('+password +twoFactorSecret');
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (user.password) {
+            const isMatch = await user.comparePassword(password);
+            if (!isMatch) return res.status(400).json({ message: 'Incorrect password' });
+        } else if (code) {
+            const verified = speakeasy.totp.verify({
+                secret: user.twoFactorSecret,
+                encoding: 'base32',
+                token: code.trim(),
+                window: 2
+            });
+            if (!verified) return res.status(400).json({ message: 'Invalid 2FA code' });
+        } else {
+            return res.status(400).json({ message: 'Password or 2FA code required to disable 2FA' });
+        }
+
+        user.twoFactorEnabled = false;
+        user.twoFactorSecret = undefined;
+        user.twoFactorBackupCodes = undefined;
+        await user.save();
+
+        res.json({ message: 'Two-Factor Authentication disabled successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Active User Sessions
+// @route   GET /api/auth/sessions
+exports.getActiveSessions = async (req, res) => {
+    try {
+        const sessions = await RefreshToken.find({
+            user: req.user._id,
+            isRevoked: false,
+            expiresAt: { $gt: new Date() }
+        }).sort({ createdAt: -1 });
+
+        res.json(sessions.map(s => ({
+            id: s._id,
+            ip: s.deviceInfo?.ip,
+            userAgent: s.deviceInfo?.userAgent,
+            createdAt: s.createdAt,
+            expiresAt: s.expiresAt
+        })));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Revoke Specific Session
+// @route   DELETE /api/auth/sessions/:sessionId
+exports.revokeSession = async (req, res) => {
+    try {
+        const session = await RefreshToken.findOne({
+            _id: req.params.sessionId,
+            user: req.user._id
+        });
+
+        if (!session) {
+            return res.status(404).json({ message: 'Session not found' });
+        }
+
+        session.isRevoked = true;
+        await session.save();
+
+        res.json({ message: 'Session revoked successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

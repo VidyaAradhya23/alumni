@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar, Modal } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { login } from '../services/authService';
+import { login, loginVerify2FA } from '../services/authService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,6 +17,12 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [portal, setPortal] = useState(null);
+
+  // 2FA Challenge States
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [verifying2FA, setVerifying2FA] = useState(false);
 
   useEffect(() => {
     const fetchPortal = async () => {
@@ -78,9 +84,17 @@ const LoginScreen = ({ navigation }) => {
     try {
       const userData = await login({ email: emailClean, password });
 
+      if (userData.requires2FA) {
+        setTwoFactorToken(userData.twoFactorToken);
+        setShow2FAModal(true);
+        setLoading(false);
+        return;
+      }
+
       // Successful login
       await AsyncStorage.setItem('userInfo', JSON.stringify({
         token: userData.token,
+        refreshToken: userData.refreshToken,
         name: userData.name || 'Alumni User', 
         email: userData.email,
         institution: userData.institution || 'Institution',
@@ -98,6 +112,39 @@ const LoginScreen = ({ navigation }) => {
       alert(error.response?.data?.message || error.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handle2FASubmit = async () => {
+    if (!twoFactorCode || twoFactorCode.trim().length < 6) {
+      alert('Please enter your 6-digit code or backup code');
+      return;
+    }
+    setVerifying2FA(true);
+    try {
+      const userData = await loginVerify2FA(twoFactorToken, twoFactorCode.trim());
+      setShow2FAModal(false);
+      
+      await AsyncStorage.setItem('userInfo', JSON.stringify({
+        token: userData.token,
+        refreshToken: userData.refreshToken,
+        name: userData.name || 'Alumni User', 
+        email: userData.email,
+        institution: userData.institution || 'Institution',
+        role: userData.role
+      }));
+
+      if (userData.role === 'Super Admin') {
+        navigation.navigate('SuperAdminMain');
+      } else if (userData.role === 'Admin') {
+        navigation.navigate('AdminMain');
+      } else {
+        navigation.navigate('Main');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || error.message || '2FA verification failed');
+    } finally {
+      setVerifying2FA(false);
     }
   };
 
@@ -193,6 +240,71 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* 2FA Challenge Modal */}
+      <Modal
+        visible={show2FAModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShow2FAModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: theme.card, width: '100%', maxWidth: 420, borderRadius: 16, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0, 33, 68, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <Ionicons name="shield-checkmark" size={32} color={theme.primary} />
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: theme.text, textAlign: 'center' }}>Two-Factor Verification</Text>
+              <Text style={{ fontSize: 13, color: theme.textMuted, textAlign: 'center', marginTop: 6 }}>
+                Enter the 6-digit code from your authenticator app (or a backup code) to continue.
+              </Text>
+            </View>
+
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: theme.border,
+                borderRadius: 10,
+                padding: 14,
+                fontSize: 18,
+                fontWeight: '600',
+                letterSpacing: 4,
+                textAlign: 'center',
+                color: theme.text,
+                backgroundColor: theme.background,
+                marginBottom: 20
+              }}
+              placeholder="000 000"
+              placeholderTextColor="#94A3B8"
+              value={twoFactorCode}
+              onChangeText={setTwoFactorCode}
+              keyboardType="number-pad"
+              maxLength={10}
+              autoCapitalize="characters"
+              autoFocus={true}
+            />
+
+            <TouchableOpacity
+              style={[styles.primaryButton, verifying2FA && styles.disabledButton]}
+              onPress={handle2FASubmit}
+              disabled={verifying2FA}
+            >
+              {verifying2FA ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Verify & Login</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ alignSelf: 'center', marginTop: 14 }}
+              onPress={() => setShow2FAModal(false)}
+            >
+              <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: '600' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       </View>
     </SafeAreaView>
   );

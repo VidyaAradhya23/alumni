@@ -64,20 +64,25 @@ const MessagesScreen = ({ navigation }) => {
 
   const startNewChat = () => {
     if (!composeSearch.trim()) return;
+    const chatUser = {
+      id: Date.now().toString(),
+      name: composeSearch.trim(),
+      role: '',
+      initials: composeSearch.trim().charAt(0).toUpperCase()
+    };
     const newUser = { 
-      id: Date.now().toString(), 
-      name: composeSearch.trim(), 
-      role: '', 
-      lastMessage: '', 
-      time: 'Now', 
-      unread: 0, 
-      initials: composeSearch.trim().charAt(0).toUpperCase(), 
-      online: true 
+      user: {
+        _id: chatUser.id,
+        name: chatUser.name,
+        institution: ''
+      }, 
+      lastMessage: { text: '' }, 
+      unreadCount: 0 
     };
     setChatList([newUser, ...chatList]);
     setComposeModalVisible(false);
     setComposeSearch('');
-    navigation.navigate('Chat', { user: newUser });
+    navigation.navigate('Chat', { user: chatUser });
   };
 
     const isWeb = Platform.OS === 'web';
@@ -138,60 +143,79 @@ const MessagesScreen = ({ navigation }) => {
       ) : (
         <FlatList
           data={filteredChats}
-          keyExtractor={item => item.user?._id || item.user?.id || Math.random().toString()}
+          keyExtractor={(item, index) => (item.user?._id || item.user?.id || item.id || index).toString()}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.chatItem} 
-              activeOpacity={0.7}
-              onPress={() => {
-                const updated = chatList.map(c => c.user._id === item.user._id ? { ...c, unreadCount: 0 } : c);
-                setChatList(updated);
-                navigation.navigate('Chat', { 
-                  user: {
-                    id: item.user._id,
-                    name: item.user.name,
-                    role: item.user.institution || item.user.department || item.user.degree || '',
-                    initials: (item.user.name || '?').charAt(0).toUpperCase()
-                  }
-                });
-              }}
-            >
-              <View style={styles.avatarWrapper}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{(item.user?.name || '?').charAt(0).toUpperCase()}</Text>
+          renderItem={({ item }) => {
+            const u = item.user || {
+              _id: item.id || item._id,
+              name: item.name,
+              institution: item.role || item.institution || item.department || item.degree || ''
+            };
+            const userName = u.name || item.name || 'User';
+            const userInst = u.institution || u.department || u.degree || item.role || '';
+            const userId = u._id || u.id || item.id;
+            const initials = userName.charAt(0).toUpperCase();
+            
+            const lastText = typeof item.lastMessage === 'string' ? item.lastMessage : (item.lastMessage?.text || '');
+            const timeText = item.lastMessage?.createdAt 
+              ? new Date(item.lastMessage.createdAt).toLocaleDateString() 
+              : (item.time || '');
+
+            return (
+              <TouchableOpacity 
+                style={styles.chatItem} 
+                activeOpacity={0.7}
+                onPress={() => {
+                  const updated = chatList.map(c => {
+                    const cId = c.user?._id || c.user?.id || c.id;
+                    return cId === userId ? { ...c, unreadCount: 0 } : c;
+                  });
+                  setChatList(updated);
+                  navigation.navigate('Chat', { 
+                    user: {
+                      id: userId,
+                      name: userName,
+                      role: userInst,
+                      initials: initials
+                    }
+                  });
+                }}
+              >
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials}</Text>
+                  </View>
+                  <View style={styles.onlineDot} />
                 </View>
-                {/* Optional online indicator */}
-                <View style={styles.onlineDot} />
-              </View>
-              
-              <View style={styles.chatInfo}>
-                <View style={styles.chatHeader}>
-                  <Text style={styles.name}>{item.user?.name}</Text>
-                  <Text style={[styles.time, item.unreadCount > 0 && styles.unreadTime]}>
-                    {item.lastMessage?.createdAt ? new Date(item.lastMessage.createdAt).toLocaleDateString() : ''}
-                  </Text>
+                
+                <View style={styles.chatInfo}>
+                  <View style={styles.chatHeader}>
+                    <Text style={styles.name}>{userName}</Text>
+                    <Text style={[styles.time, item.unreadCount > 0 && styles.unreadTime]}>
+                      {timeText}
+                    </Text>
+                  </View>
+                  <Text style={styles.role}>{userInst}</Text>
+                  <View style={styles.messageRow}>
+                    <Text 
+                      style={[
+                        styles.lastMessage, 
+                        item.unreadCount > 0 && styles.unreadLastMessage
+                      ]} 
+                      numberOfLines={1}
+                    >
+                      {lastText}
+                    </Text>
+                    {item.unreadCount > 0 && (
+                      <View style={styles.unreadBadge}>
+                        <Text style={styles.unreadText}>{item.unreadCount}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <Text style={styles.role}>{item.user?.institution || item.user?.department || item.user?.degree || ''}</Text>
-                <View style={styles.messageRow}>
-                  <Text 
-                    style={[
-                      styles.lastMessage, 
-                      item.unreadCount > 0 && styles.unreadLastMessage
-                    ]} 
-                    numberOfLines={1}
-                  >
-                    {item.lastMessage?.text}
-                  </Text>
-                  {item.unreadCount > 0 && (
-                    <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadText}>{item.unreadCount}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
@@ -222,20 +246,25 @@ const MessagesScreen = ({ navigation }) => {
                   <TouchableOpacity 
                     style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', flexDirection: 'row', alignItems: 'center' }}
                     onPress={() => {
-                      const newUser = { 
+                      const chatUser = { 
                         id: item._id, 
                         name: item.name, 
                         role: item.institution || item.department || item.degree || '', 
-                        lastMessage: '', 
-                        time: 'Now', 
-                        unread: 0, 
-                        initials: (item.name || '').charAt(0).toUpperCase(), 
-                        online: true 
+                        initials: (item.name || '').charAt(0).toUpperCase()
+                      };
+                      const newUser = { 
+                        user: {
+                          _id: item._id,
+                          name: item.name,
+                          institution: item.institution || item.department || item.degree || ''
+                        },
+                        lastMessage: { text: '' },
+                        unreadCount: 0
                       };
                       setChatList([newUser, ...chatList]);
                       setComposeModalVisible(false);
                       setComposeSearch('');
-                      navigation.navigate('Chat', { user: newUser });
+                      navigation.navigate('Chat', { user: chatUser });
                     }}
                   >
                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>

@@ -108,7 +108,7 @@ const ChatScreen = ({ route, navigation }) => {
       <View style={webContainerStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
-      {/* WhatsApp Header */}
+      {/* Responsive WhatsApp Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => {
@@ -122,14 +122,31 @@ const ChatScreen = ({ route, navigation }) => {
         >
           <Ionicons name="arrow-back" size={24} color="#002144" />
         </TouchableOpacity>
-        <View style={styles.headerAvatar}>
-          <Text style={styles.headerAvatarText}>{chatUser.initials}</Text>
-        </View>
-        <View style={styles.headerUserInfo}>
-          <Text style={styles.headerName}>{chatUser.name}</Text>
-          {!!chatUser.role && <Text style={styles.headerRole}>{chatUser.role}</Text>}
-        </View>
-        <TouchableOpacity style={styles.infoButton}>
+        
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+          activeOpacity={0.8}
+          onPress={() => {
+            if (chatUser.id) {
+              navigation.navigate('Profile', { userId: chatUser.id });
+            }
+          }}
+        >
+          <View style={styles.headerAvatar}>
+            <Text style={styles.headerAvatarText}>{chatUser.initials}</Text>
+            <View style={styles.onlineStatusDot} />
+          </View>
+          <View style={styles.headerUserInfo}>
+            <Text style={styles.headerName} numberOfLines={1}>{chatUser.name}</Text>
+            {!!chatUser.role && <Text style={styles.headerRole} numberOfLines={1}>{chatUser.role}</Text>}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.infoButton} onPress={() => {
+          if (chatUser.id) {
+            navigation.navigate('Profile', { userId: chatUser.id });
+          }
+        }}>
           <Ionicons name="information-circle-outline" size={24} color="#003366" />
         </TouchableOpacity>
       </View>
@@ -147,10 +164,10 @@ const ChatScreen = ({ route, navigation }) => {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* WhatsApp-style Input Area */}
+        {/* Responsive Input Area */}
         <View style={styles.inputArea}>
           <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="add" size={24} color="#64748B" />
+            <Ionicons name="happy-outline" size={24} color="#64748B" />
           </TouchableOpacity>
           <TextInput
             style={styles.textInput}
@@ -159,6 +176,12 @@ const ChatScreen = ({ route, navigation }) => {
             value={inputText}
             onChangeText={setInputText}
             multiline
+            onKeyPress={(e) => {
+              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
           />
           <TouchableOpacity 
             style={[styles.sendBtn, inputText.trim().length > 0 && styles.sendBtnActive]} 
@@ -197,9 +220,21 @@ const getStyles = (theme) => StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: '#003366',
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+    position: 'relative',
+  },
+  onlineStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10B981',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   headerAvatarText: {
     color: '#FFFFFF',

@@ -145,7 +145,23 @@ const MessagesScreen = ({ navigation }) => {
         <View style={styles.emptyState}>
           <Ionicons name="chatbubbles-outline" size={64} color="#CBD5E1" />
           <Text style={styles.emptyTitle}>No Chats Found</Text>
-          <Text style={styles.emptySubtitle}>Try searching for a different name or message content.</Text>
+          <Text style={styles.emptySubtitle}>Start a conversation with fellow alumni and team members.</Text>
+          <TouchableOpacity 
+            style={{
+              backgroundColor: '#003366',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 20,
+              marginTop: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            activeOpacity={0.8}
+            onPress={() => setComposeModalVisible(true)}
+          >
+            <Ionicons name="create-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 14 }}>Start a New Chat</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList

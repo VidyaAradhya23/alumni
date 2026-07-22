@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory } from '../services/authService';
 import { getChatHistory } from '../services/messageService';
+import { uploadFile } from '../services/uploadService';
+import * as ImagePicker from 'expo-image-picker';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) {
@@ -93,6 +95,7 @@ const ProfileScreen = ({ navigation }) => {
             bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
             linkedin: data.linkedin || '',
             avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU',
+            avatar_url: data.avatar_url || data.profilePicture || ''
           }));
         }
       } catch (e) {
@@ -171,6 +174,47 @@ const ProfileScreen = ({ navigation }) => {
   const [editBatch, setEditBatch] = useState(profileData.batch);
   const [editBio, setEditBio] = useState(profileData.bio);
   const [editLinkedin, setEditLinkedin] = useState(profileData.linkedin);
+  const [editAvatarUrl, setEditAvatarUrl] = useState(profileData.avatar_url || '');
+
+  const handlePickProfilePhoto = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissionResult.granted) {
+          alert('Permission to access photos is required to update profile photo.');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedUri = result.assets[0].uri;
+        const uploadedUrl = await uploadFile(selectedUri, 'image/jpeg', `avatar_${Date.now()}.jpg`);
+        
+        setProfileData(prev => ({
+          ...prev,
+          avatar_url: uploadedUrl
+        }));
+        setEditAvatarUrl(uploadedUrl);
+
+        await updateProfile({ avatar_url: uploadedUrl });
+        if (Platform.OS === 'web') {
+          alert('Profile photo updated successfully!');
+        } else {
+          Alert.alert('Success', 'Profile photo updated successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      alert(error.message || 'Failed to upload profile photo');
+    }
+  };
 
   // Settings States
   const [privateAccount, setPrivateAccount] = useState(true);
@@ -276,13 +320,32 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.profileInfoContainer}>
           <View style={styles.mainInfoRow}>
             {/* Avatar */}
-            <View style={styles.avatarWrapper}>
+            <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickProfilePhoto} activeOpacity={0.8}>
               <View style={styles.storyRing}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{profileData.avatar}</Text>
+                  {profileData.avatar_url ? (
+                    <Image source={{ uri: profileData.avatar_url }} style={{ width: '100%', height: '100%', borderRadius: 45 }} />
+                  ) : (
+                    <Text style={styles.avatarText}>{profileData.avatar}</Text>
+                  )}
+                </View>
+                <View style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  backgroundColor: theme.primary,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: theme.card
+                }}>
+                  <Ionicons name="camera" size={14} color="#FFFFFF" />
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
             
             {/* Stats */}
             <View style={styles.statsContainer}>
@@ -565,6 +628,33 @@ const ProfileScreen = ({ navigation }) => {
               <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380, marginTop: 10 }}>
                 <Text style={styles.settingsSectionTitle}>Profile Information</Text>
                 
+                {/* Photo Upload Option */}
+                <View style={{ alignItems: 'center', marginVertical: 12 }}>
+                  <TouchableOpacity 
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(0, 33, 68, 0.08)',
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 20
+                    }}
+                    onPress={handlePickProfilePhoto}
+                  >
+                    <Ionicons name="camera-outline" size={18} color={theme.primary} style={{ marginRight: 6 }} />
+                    <Text style={{ color: theme.primary, fontWeight: '600', fontSize: 13 }}>Change Profile Photo</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.editLabel}>Profile Picture Image URL</Text>
+                <TextInput 
+                  style={styles.securityInput} 
+                  placeholder="https://example.com/avatar.jpg" 
+                  placeholderTextColor="#94A3B8"
+                  value={editAvatarUrl}
+                  onChangeText={setEditAvatarUrl}
+                />
+
                 <Text style={styles.editLabel}>Full Name</Text>
                 <TextInput 
                   style={styles.securityInput} 
@@ -637,6 +727,7 @@ const ProfileScreen = ({ navigation }) => {
                       batch: editBatch,
                       bio: editBio,
                       linkedin: editLinkedin,
+                      avatar_url: editAvatarUrl,
                       avatar: editName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'AJ'
                     });
 
@@ -647,7 +738,8 @@ const ProfileScreen = ({ navigation }) => {
                           department: editBranch,
                           batch_year: editBatch,
                           bio: editBio,
-                          linkedin: editLinkedin
+                          linkedin: editLinkedin,
+                          avatar_url: editAvatarUrl
                         });
                       } catch (err) {
                         console.error('Error saving profile:', err);

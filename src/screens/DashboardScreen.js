@@ -23,10 +23,12 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
+import useUserRole from '../hooks/useUserRole';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
+  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
 
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
@@ -344,6 +346,25 @@ const DashboardScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Admin Quick Actions Banner */}
+        {isAdminOrSuper && (
+          <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#DBEAFE', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Ionicons name="shield-checkmark" size={18} color="#003366" style={{ marginRight: 10 }} />
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#003366' }}>{userRole} Dashboard</Text>
+                <Text style={{ fontSize: 12, color: '#64748B' }}>Quick actions for administration</Text>
+              </View>
+            </View>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#003366', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
+              onPress={() => navigation.navigate(isSuperAdmin ? 'SuperAdminMain' : 'AdminMain')}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>Admin Panel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {isDesktop ? (
           // WEB GRID DASHBOARD (3-Column Layout)

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import useUserRole from '../hooks/useUserRole';
 
 const INITIAL_JOBS = [];
 
@@ -26,7 +27,7 @@ const RESUME_LIST = [];
 const WORK_MODES = ['Full-Time', 'Part-Time', 'Internship', 'Contract', 'Hybrid', 'Remote'];
 
 // ─── JOB CARD COMPONENT ──────────────────────────────────────────────
-function JobCard({ item, onPress, onDelete, isSmallScreen }) {
+function JobCard({ item, onPress, onDelete, isSmallScreen, canDelete }) {
   return (
     <View style={st.jobCard}>
       <TouchableOpacity style={{ flex: 1, flexDirection: 'row' }} activeOpacity={0.7} onPress={() => onPress(item)}>
@@ -49,9 +50,11 @@ function JobCard({ item, onPress, onDelete, isSmallScreen }) {
           <View style={st.viewMoreBtn}><Text style={st.viewMoreText}>View More</Text><Ionicons name="arrow-forward" size={14} color="#003366" style={{ marginLeft: 4 }} /></View>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity style={{ position: 'absolute', right: 12, top: 24, padding: 4 }} onPress={() => onDelete(item.id)}>
-        <Ionicons name="close" size={18} color="#94A3B8" />
-      </TouchableOpacity>
+      {canDelete && (
+        <TouchableOpacity style={{ position: 'absolute', right: 12, top: 24, padding: 4 }} onPress={() => onDelete(item.id)}>
+          <Ionicons name="close" size={18} color="#94A3B8" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -59,6 +62,7 @@ function JobCard({ item, onPress, onDelete, isSmallScreen }) {
 // ─── MAIN SCREEN ─────────────────────────────────────────────────────
 const JobsScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
+  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
 
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
@@ -66,6 +70,7 @@ const JobsScreen = ({ navigation, route }) => {
   const isWeb = Platform.OS === 'web';
   
   const [screen, setScreen] = useState('list'); // list, detail, editor, resume
+  // Alumni: 'post_job' | 'preferences'; Admin/SuperAdmin: 'post_job' | 'manage' | 'preferences'
   const [activeTab, setActiveTab] = useState('post_job');
   const [searchQ, setSearchQ] = useState('');
   const [detail, setDetail] = useState(null);
@@ -98,6 +103,7 @@ const JobsScreen = ({ navigation, route }) => {
     setScreen('list');
     Alert.alert('Success', 'Job posted!');
   };
+
 
   const openDetail = (job) => { 
     setDetail(job); 
@@ -262,11 +268,27 @@ const JobsScreen = ({ navigation, route }) => {
         </View>
       </View>
 
-      {/* Tabs */}
+      {/* Role Badge */}
+      {isAdminOrSuper && (
+        <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="shield-checkmark" size={16} color="#003366" style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>{userRole} Mode</Text>
+          <Text style={{ fontSize: 12, color: '#64748B', marginLeft: 8 }}>You can manage & post jobs</Text>
+        </View>
+      )}
+
+      {/* Tabs — role-aware */}
       <View style={st.tabBar}>
         <TouchableOpacity style={[st.tab, activeTab === 'post_job' && st.activeTab]} onPress={() => setActiveTab('post_job')}>
-          <Text style={[st.tabText, activeTab === 'post_job' && st.activeTabText]}>Post Job</Text>
+          <Text style={[st.tabText, activeTab === 'post_job' && st.activeTabText]}>
+            {isAlumni ? 'Post Job' : 'All Jobs'}
+          </Text>
         </TouchableOpacity>
+        {isAdminOrSuper && (
+          <TouchableOpacity style={[st.tab, activeTab === 'manage' && st.activeTab]} onPress={() => setActiveTab('manage')}>
+            <Text style={[st.tabText, activeTab === 'manage' && st.activeTabText]}>Manage Jobs</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={[st.tab, activeTab === 'preferences' && st.activeTab]} onPress={() => setActiveTab('preferences')}>
           <Text style={[st.tabText, activeTab === 'preferences' && st.activeTabText]}>Preferences</Text>
         </TouchableOpacity>
@@ -281,7 +303,7 @@ const JobsScreen = ({ navigation, route }) => {
           >
             {filtered.length > 0 ? (
               filtered.map(item => (
-                <JobCard key={item.id} item={item} onPress={openDetail} onDelete={deleteJob} isSmallScreen={isSmallScreen} />
+                <JobCard key={item.id} item={item} onPress={openDetail} onDelete={deleteJob} isSmallScreen={isSmallScreen} canDelete={isAdminOrSuper || isAlumni} />
               ))
             ) : (
               <View style={{ alignItems: 'center', paddingVertical: 80, paddingHorizontal: 40 }}>
@@ -293,15 +315,73 @@ const JobsScreen = ({ navigation, route }) => {
               </View>
             )}
           </ScrollView>
+          {/* FABs — Alumni: Post + Resume; Admin: Post only */}
           <View style={[st.fabContainer, isSmallScreen && { bottom: 16, right: 16 }, { flexDirection: 'column', gap: 12 }]}>
-            <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('resume'); }}>
-              <Ionicons name="document-text" size={isSmallScreen ? 20 : 24} color="#FFFFFF" />
-            </TouchableOpacity>
+            {isAlumni && (
+              <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('resume'); }}>
+                <Ionicons name="document-text" size={isSmallScreen ? 20 : 24} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('editor'); }}>
               <Ionicons name="add" size={isSmallScreen ? 28 : 32} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
+      ) : activeTab === 'manage' && isAdminOrSuper ? (
+        /* ─── ADMIN: MANAGE JOBS TAB ─── */
+        <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 100 }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <Ionicons name="shield-checkmark" size={24} color="#003366" style={{ marginRight: 12 }} />
+              <View>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A' }}>Job Management Console</Text>
+                <Text style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Review, approve, or remove job postings</Text>
+              </View>
+            </View>
+            {/* Stats Row */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1, backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: '#003366' }}>{jobList.length}</Text>
+                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Total Jobs</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#ECFDF5', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: '#059669' }}>{jobList.length}</Text>
+                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Active</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: '#DC2626' }}>0</Text>
+                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Flagged</Text>
+              </View>
+            </View>
+          </View>
+          {/* Job cards with admin controls */}
+          {filtered.length > 0 ? filtered.map(item => (
+            <View key={item.id} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <View style={st.companyLogo}><Ionicons name="business-outline" size={20} color="#003366" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>{item.role}</Text>
+                  <Text style={{ fontSize: 13, color: '#475569' }}>{item.company} • {item.location}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={{ flex: 1, backgroundColor: '#ECFDF5', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                  <Ionicons name="checkmark-circle" size={16} color="#059669" style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669' }}>Approve</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }} onPress={() => deleteJob(item.id)}>
+                  <Ionicons name="trash" size={16} color="#DC2626" style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626' }}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )) : (
+            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+              <Ionicons name="briefcase-outline" size={48} color="#CBD5E1" />
+              <Text style={{ fontSize: 16, color: '#64748B', marginTop: 12 }}>No jobs to manage</Text>
+            </View>
+          )}
+        </ScrollView>
       ) : (
         <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 100 }}>
           <View style={st.prefHeader}>

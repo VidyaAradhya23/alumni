@@ -14,12 +14,14 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions } from '../services/authService';
+import useUserRole from '../hooks/useUserRole';
 
 const connectionRequests = [];
 
 const DirectoryScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
+  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
 
   const [activeTab, setActiveTab] = useState('request');
   const [searchQuery, setSearchQuery] = useState('');
@@ -444,6 +446,15 @@ const DirectoryScreen = ({ navigation }) => {
         </View>
       </View>
 
+      {/* Role Badge for Admin/Super Admin */}
+      {isAdminOrSuper && (
+        <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.border, flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="shield-checkmark" size={16} color="#003366" style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>{userRole} Mode</Text>
+          <Text style={{ fontSize: 12, color: '#64748B', marginLeft: 8 }}>Manage connections & approvals</Text>
+        </View>
+      )}
+
       {/* ───── Tab Bar ───── */}
       <View style={styles.tabBar}>
 
@@ -452,9 +463,16 @@ const DirectoryScreen = ({ navigation }) => {
           onPress={() => setActiveTab('request')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === 'request' && styles.activeTabText]}>
-            Requests
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.tabText, activeTab === 'request' && styles.activeTabText]}>
+              Requests
+            </Text>
+            {isAdminOrSuper && (
+              <View style={{ backgroundColor: '#003366', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 6 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: '#FFFFFF' }}>{filteredRequests.length}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'community' && styles.activeTab]}

@@ -81,7 +81,7 @@ const SuperAdminDrawer = createDrawerNavigator();
 
 // ===== ALUMNI TABS/DRAWER =====
 function MainTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -163,7 +163,7 @@ function MainTabs() {
 
 // ===== ADMIN TABS/DRAWER =====
 function AdminTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -248,7 +248,7 @@ function AdminTabs() {
 
 // ===== SUPER ADMIN TABS/DRAWER =====
 function SuperAdminTabs() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const showDrawer = Platform.OS === 'web' && width >= 768;
 
@@ -263,11 +263,18 @@ function SuperAdminTabs() {
             borderRightWidth: 1,
             borderRightColor: theme.border,
             backgroundColor: theme.card,
+            paddingTop: 20,
+            paddingHorizontal: 12,
           },
-          drawerActiveBackgroundColor: theme.background,
-          drawerActiveTintColor: theme.primary,
-          drawerInactiveTintColor: theme.textMuted,
-          drawerLabelStyle: { fontSize: 15, fontWeight: '600', marginLeft: -12 },
+          drawerItemStyle: {
+            borderRadius: 24,
+            paddingHorizontal: 12,
+            marginVertical: 4,
+          },
+          drawerActiveBackgroundColor: isDarkMode ? '#1E293B' : '#F4F6F9',
+          drawerActiveTintColor: isDarkMode ? '#60A5FA' : '#003366',
+          drawerInactiveTintColor: isDarkMode ? '#94A3B8' : '#8A99AD',
+          drawerLabelStyle: { fontSize: 16, fontWeight: '700', marginLeft: -8 },
           drawerIcon: ({ focused, color, size }) => {
             if (route.name === 'SADashboard') return <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />;
             if (route.name === 'SAUsers') return <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />;

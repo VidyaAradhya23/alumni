@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, ScrollView, TextInput , Platform} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, ScrollView, TextInput, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import useUserRole from '../hooks/useUserRole';
 
 const ContributeScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
+  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
 
-  const [activeTab, setActiveTab] = useState('mentorship'); // 'mentorship' | 'support'
-  const [mentorshipTab, setMentorshipTab] = useState('mentee'); // 'mentee' | 'mentor'
+  // Admin/Super Admin: 'review' | 'support'; Alumni: 'mentorship' | 'support'
+  const [activeTab, setActiveTab] = useState('mentorship');
+  // Alumni defaults to 'mentor' sub-tab
+  const [mentorshipTab, setMentorshipTab] = useState('mentor');
 
   const [showMenteeForm, setShowMenteeForm] = useState(false);
   const [showMentorForm, setShowMentorForm] = useState(false);
@@ -31,6 +35,45 @@ const ContributeScreen = ({ navigation }) => {
   const handleRegisterMentor = () => {
     setShowMentorForm(false);
   };
+
+  // ─── ADMIN: REVIEW APPLICATIONS TAB ─────────────────────────────
+  const renderReviewTab = () => (
+    <View style={styles.mentorshipContainer}>
+      <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, borderWidth: 1, borderColor: theme.border, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <Ionicons name="shield-checkmark" size={24} color="#003366" style={{ marginRight: 12 }} />
+          <View>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Mentorship Applications</Text>
+            <Text style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Review and manage mentorship requests</Text>
+          </View>
+        </View>
+        {/* Stats */}
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1, backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#003366' }}>0</Text>
+            <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Pending</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: '#ECFDF5', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#059669' }}>0</Text>
+            <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Approved</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#DC2626' }}>0</Text>
+            <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Rejected</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Empty state */}
+      <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+        <Ionicons name="document-text-outline" size={56} color="#CBD5E1" />
+        <Text style={{ fontSize: 17, fontWeight: '700', color: '#475569', marginTop: 16 }}>No Pending Applications</Text>
+        <Text style={{ fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center', paddingHorizontal: 40 }}>
+          Mentorship applications from alumni will appear here for review.
+        </Text>
+      </View>
+    </View>
+  );
 
   const renderMenteeView = () => {
     if (showMenteeForm) {
@@ -195,7 +238,7 @@ const ContributeScreen = ({ navigation }) => {
     );
   };
 
-    const isWeb = Platform.OS === 'web';
+  const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
   return (
@@ -232,28 +275,62 @@ const ContributeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Main Tabs */}
+      {/* Role Badge for Admin/Super Admin */}
+      {isAdminOrSuper && (
+        <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="shield-checkmark" size={16} color="#003366" style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>{userRole} Mode</Text>
+          <Text style={{ fontSize: 12, color: '#64748B', marginLeft: 8 }}>Review mentorship applications</Text>
+        </View>
+      )}
+
+      {/* Main Tabs — role-aware */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'mentorship' && styles.activeTab]}
-          onPress={() => setActiveTab('mentorship')}
-        >
-          <Text style={[styles.tabText, activeTab === 'mentorship' && styles.activeTabText]}>
-            Mentorship Application
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'support' && styles.activeTab]}
-          onPress={() => setActiveTab('support')}
-        >
-          <Text style={[styles.tabText, activeTab === 'support' && styles.activeTabText]}>
-            Support Community
-          </Text>
-        </TouchableOpacity>
+        {isAdminOrSuper ? (
+          <>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'review' && styles.activeTab]}
+              onPress={() => setActiveTab('review')}
+            >
+              <Text style={[styles.tabText, activeTab === 'review' && styles.activeTabText]}>
+                Review Applications
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'support' && styles.activeTab]}
+              onPress={() => setActiveTab('support')}
+            >
+              <Text style={[styles.tabText, activeTab === 'support' && styles.activeTabText]}>
+                Support Community
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'mentorship' && styles.activeTab]}
+              onPress={() => setActiveTab('mentorship')}
+            >
+              <Text style={[styles.tabText, activeTab === 'mentorship' && styles.activeTabText]}>
+                Mentorship Application
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'support' && styles.activeTab]}
+              onPress={() => setActiveTab('support')}
+            >
+              <Text style={[styles.tabText, activeTab === 'support' && styles.activeTabText]}>
+                Support Community
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {activeTab === 'mentorship' ? (
+        {activeTab === 'review' && isAdminOrSuper ? (
+          renderReviewTab()
+        ) : activeTab === 'mentorship' ? (
           <View style={styles.mentorshipContainer}>
             {/* Sub Tabs */}
             {(!showMenteeForm && !showMentorForm) && (

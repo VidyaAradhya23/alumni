@@ -1,83 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, TextInput, StatusBar, Alert, Modal , Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getSuggestions } from '../services/authService';
+import { getChatHistory } from '../services/messageService';
+import { useFocusEffect } from '@react-navigation/native';
 
-const initialChats = [
-  {
-    id: '1',
-    name: 'Rahul Murthy',
-    role: 'SDE-3 @ Google',
-    lastMessage: "Sure, let's connect this weekend for the referral discussion.",
-    time: '10:30 AM',
-    unread: 2,
-    initials: 'RM',
-    online: true,
-  },
-  {
-    id: '2',
-    name: 'Sneha Kapur',
-    role: 'Product Manager @ MSFT',
-    lastMessage: 'The alumni event was amazing! See you next time.',
-    time: 'Yesterday',
-    unread: 0,
-    initials: 'SK',
-    online: true,
-  },
-  {
-    id: '3',
-    name: 'Placement Cell',
-    role: 'Official Coordinator',
-    lastMessage: 'Please update your professional details for the yearly audit.',
-    time: 'Wed',
-    unread: 0,
-    initials: 'PC',
-    online: false,
-  },
-  {
-    id: '4',
-    name: 'Amit Shah',
-    role: 'Entrepreneur (Batch 2008)',
-    lastMessage: 'Can you mentor some of our junior students in Cloud Architecture?',
-    time: 'Mon',
-    unread: 1,
-    initials: 'AS',
-    online: false,
-  }
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const initialChats = [];
 
 const MessagesScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [chatList, setChatList] = useState(initialChats);
+  const [chatList, setChatList] = useState([]);
+  const [suggestionsList, setSuggestionsList] = useState([]);
 
-  const filteredChats = chatList.filter(chat => 
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
+
+      const loadCachedChats = async () => {
+        try {
+          const cached = await AsyncStorage.getItem('recent_chats_cache');
+          if (cached && isMounted) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setChatList(parsed);
+            }
+          }
+        } catch (err) {
+          console.log('Error loading local cached chats:', err);
+        }
+      };
+
+      loadCachedChats();
+
+      const fetchHistory = async () => {
+        try {
+          const history = await getChatHistory();
+          if (history && Array.isArray(history) && isMounted) {
+            if (history.length > 0) {
+              setChatList(history);
+              AsyncStorage.setItem('recent_chats_cache', JSON.stringify(history)).catch(() => {});
+            }
+          }
+        } catch(err) {
+          console.log('Error fetching chat history:', err);
+        }
+      };
+
+      fetchHistory();
+      const interval = setInterval(fetchHistory, 4000);
+
+      return () => {
+        isMounted = false;
+        clearInterval(interval);
+      };
+    }, [])
   );
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const res = await getSuggestions();
+        if (Array.isArray(res)) {
+          setSuggestionsList(res);
+        } else if (res && res.data) {
+          setSuggestionsList(res.data);
+        }
+      } catch(err) {
+        console.log('Error fetching suggestions:', err);
+      }
+    };
+    fetchSuggestions();
+  }, []);
+
+  const filteredChats = chatList.filter(chat => {
+    if (!searchQuery || !searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    const nameMatch = chat.user?.name ? chat.user.name.toLowerCase().includes(q) : false;
+    const roleMatch = (chat.user?.institution || chat.user?.degree || chat.user?.department) 
+      ? (chat.user.institution || chat.user.degree || chat.user.department).toLowerCase().includes(q) 
+      : false;
+    const msgMatch = chat.lastMessage?.text ? chat.lastMessage.text.toLowerCase().includes(q) : false;
+    return Boolean(nameMatch || roleMatch || msgMatch);
+  });
 
   const [composeModalVisible, setComposeModalVisible] = useState(false);
   const [composeSearch, setComposeSearch] = useState('');
 
+  const filteredSuggestions = suggestionsList.filter(f => f.name && f.name.toLowerCase().includes(composeSearch.toLowerCase()));
+
   const startNewChat = () => {
     if (!composeSearch.trim()) return;
+    const chatUser = {
+      id: Date.now().toString(),
+      name: composeSearch.trim(),
+      role: '',
+      initials: composeSearch.trim().charAt(0).toUpperCase()
+    };
     const newUser = { 
-      id: Date.now().toString(), 
-      name: composeSearch.trim(), 
-      role: 'Alumni', 
-      lastMessage: '', 
-      time: 'Now', 
-      unread: 0, 
-      initials: composeSearch.trim().charAt(0).toUpperCase(), 
-      online: true 
+      user: {
+        _id: chatUser.id,
+        name: chatUser.name,
+        institution: ''
+      }, 
+      lastMessage: { text: '' }, 
+      unreadCount: 0 
     };
     setChatList([newUser, ...chatList]);
     setComposeModalVisible(false);
     setComposeSearch('');
-    navigation.navigate('Chat', { user: newUser });
+    navigation.navigate('Chat', { user: chatUser });
   };
 
     const isWeb = Platform.OS === 'web';
@@ -133,55 +170,100 @@ const MessagesScreen = ({ navigation }) => {
         <View style={styles.emptyState}>
           <Ionicons name="chatbubbles-outline" size={64} color="#CBD5E1" />
           <Text style={styles.emptyTitle}>No Chats Found</Text>
-          <Text style={styles.emptySubtitle}>Try searching for a different name or message content.</Text>
+          <Text style={styles.emptySubtitle}>Start a conversation with fellow alumni and team members.</Text>
+          <TouchableOpacity 
+            style={{
+              backgroundColor: '#003366',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 20,
+              marginTop: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            activeOpacity={0.8}
+            onPress={() => setComposeModalVisible(true)}
+          >
+            <Ionicons name="create-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 14 }}>Start a New Chat</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
           data={filteredChats}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, index) => (item.user?._id || item.user?.id || item.id || index).toString()}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.chatItem} 
-              activeOpacity={0.7}
-              onPress={() => {
-                const updated = chatList.map(c => c.id === item.id ? { ...c, unread: 0 } : c);
-                setChatList(updated);
-                navigation.navigate('Chat', { user: item });
-              }}
-            >
-              <View style={styles.avatarWrapper}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.initials}</Text>
+          renderItem={({ item }) => {
+            const u = item.user || {
+              _id: item.id || item._id,
+              name: item.name,
+              institution: item.role || item.institution || item.department || item.degree || ''
+            };
+            const userName = u.name || item.name || 'User';
+            const userInst = u.institution || u.department || u.degree || item.role || '';
+            const userId = u._id || u.id || item.id;
+            const initials = userName.charAt(0).toUpperCase();
+            
+            const lastText = typeof item.lastMessage === 'string' ? item.lastMessage : (item.lastMessage?.text || '');
+            const timeText = item.lastMessage?.createdAt 
+              ? new Date(item.lastMessage.createdAt).toLocaleDateString() 
+              : (item.time || '');
+
+            return (
+              <TouchableOpacity 
+                style={styles.chatItem} 
+                activeOpacity={0.7}
+                onPress={() => {
+                  const updated = chatList.map(c => {
+                    const cId = c.user?._id || c.user?.id || c.id;
+                    return cId === userId ? { ...c, unreadCount: 0 } : c;
+                  });
+                  setChatList(updated);
+                  navigation.navigate('Chat', { 
+                    user: {
+                      id: userId,
+                      name: userName,
+                      role: userInst,
+                      initials: initials
+                    }
+                  });
+                }}
+              >
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials}</Text>
+                  </View>
+                  <View style={styles.onlineDot} />
                 </View>
-                {item.online && <View style={styles.onlineDot} />}
-              </View>
-              
-              <View style={styles.chatInfo}>
-                <View style={styles.chatHeader}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={[styles.time, item.unread > 0 && styles.unreadTime]}>{item.time}</Text>
+                
+                <View style={styles.chatInfo}>
+                  <View style={styles.chatHeader}>
+                    <Text style={styles.name}>{userName}</Text>
+                    <Text style={[styles.time, item.unreadCount > 0 && styles.unreadTime]}>
+                      {timeText}
+                    </Text>
+                  </View>
+                  <Text style={styles.role}>{userInst}</Text>
+                  <View style={styles.messageRow}>
+                    <Text 
+                      style={[
+                        styles.lastMessage, 
+                        item.unreadCount > 0 && styles.unreadLastMessage
+                      ]} 
+                      numberOfLines={1}
+                    >
+                      {lastText}
+                    </Text>
+                    {item.unreadCount > 0 && (
+                      <View style={styles.unreadBadge}>
+                        <Text style={styles.unreadText}>{item.unreadCount}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <Text style={styles.role}>{item.role}</Text>
-                <View style={styles.messageRow}>
-                  <Text 
-                    style={[
-                      styles.lastMessage, 
-                      item.unread > 0 && styles.unreadLastMessage
-                    ]} 
-                    numberOfLines={1}
-                  >
-                    {item.lastMessage}
-                  </Text>
-                  {item.unread > 0 && (
-                    <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadText}>{item.unread}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
@@ -205,13 +287,46 @@ const MessagesScreen = ({ navigation }) => {
                 onChangeText={setComposeSearch}
                 autoFocus
               />
-              <TouchableOpacity 
-                style={[styles.modalStartBtn, !composeSearch.trim() && { opacity: 0.5 }]} 
-                onPress={startNewChat}
-                disabled={!composeSearch.trim()}
-              >
-                <Text style={styles.modalStartBtnText}>Start Chat</Text>
-              </TouchableOpacity>
+              <FlatList
+                data={filteredSuggestions}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => {
+                      const chatUser = { 
+                        id: item._id, 
+                        name: item.name, 
+                        role: item.institution || item.department || item.degree || '', 
+                        initials: (item.name || '').charAt(0).toUpperCase()
+                      };
+                      const newUser = { 
+                        user: {
+                          _id: item._id,
+                          name: item.name,
+                          institution: item.institution || item.department || item.degree || ''
+                        },
+                        lastMessage: { text: '' },
+                        unreadCount: 0
+                      };
+                      setChatList([newUser, ...chatList]);
+                      setComposeModalVisible(false);
+                      setComposeSearch('');
+                      navigation.navigate('Chat', { user: chatUser });
+                    }}
+                  >
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                      <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>{(item.name || '').charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 16, color: '#1E293B', fontWeight: '600' }}>{item.name}</Text>
+                      <Text style={{ fontSize: 13, color: '#64748B' }}>{item.institution || item.department || item.degree || ''}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={<Text style={{ padding: 12, color: '#94A3B8', textAlign: 'center' }}>No users found.</Text>}
+                style={{ maxHeight: 250, marginTop: 12 }}
+              />
             </View>
           </View>
         </View>

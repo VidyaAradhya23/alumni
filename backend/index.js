@@ -11,6 +11,7 @@ const blockRoutes = require('./routes/blockRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const activityRoutes = require('./routes/activityRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const activityLogger = require('./middleware/activityLogger');
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/blocks', blockRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Temporary endpoint to grant Admin access to an account
 app.get('/api/make-admin/:email', async (req, res) => {

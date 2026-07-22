@@ -257,7 +257,6 @@ const JobsScreen = ({ navigation, route }) => {
           <TextInput style={{ flex: 1, fontSize: isSmallScreen ? 13 : 14, color: '#0F172A', paddingVertical: 0 }} placeholder="Search" placeholderTextColor="#94A3B8" value={searchQ} onChangeText={setSearchQ} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity style={[st.iconBtn, isSmallScreen && { width: 30, height: 30, marginLeft: 2 }]} onPress={() => { setDetail(null); setScreen('editor'); }}><Ionicons name="add-circle-outline" size={isSmallScreen ? 20 : 22} color="#003366" /></TouchableOpacity>
           <TouchableOpacity style={[st.iconBtn, isSmallScreen && { width: 30, height: 30, marginLeft: 2 }]} onPress={() => navigation && navigation.navigate('Messages')}><Ionicons name="chatbubble-ellipses-outline" size={isSmallScreen ? 20 : 22} color="#003366" /><View style={st.dot} /></TouchableOpacity>
           <TouchableOpacity style={[st.iconBtn, isSmallScreen && { width: 30, height: 30, marginLeft: 2 }]} onPress={() => navigation && navigation.navigate('Notifications')}><Ionicons name="notifications-outline" size={isSmallScreen ? 20 : 22} color="#003366" /><View style={st.dot} /></TouchableOpacity>
         </View>
@@ -288,13 +287,18 @@ const JobsScreen = ({ navigation, route }) => {
               <View style={{ alignItems: 'center', paddingVertical: 80, paddingHorizontal: 40 }}>
                 <Ionicons name="briefcase-outline" size={48} color="#CBD5E1" />
                 <Text style={{ fontSize: 17, fontWeight: '700', color: '#475569', marginTop: 12 }}>No Jobs Posted Yet</Text>
-                <Text style={{ fontSize: 13.5, color: '#94A3B8', textAlign: 'center', marginTop: 6 }}>Tap the + button to post a new job.</Text>
+                <TouchableOpacity style={{ backgroundColor: '#003366', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, marginTop: 16 }} onPress={() => { setDetail(null); setScreen('editor'); }}>
+                   <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>+ Post a Job</Text>
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
-          <View style={[st.fabContainer, isSmallScreen && { bottom: 16, right: 16 }]}>
-            <TouchableOpacity style={[st.fab, isSmallScreen && { width: 50, height: 50, borderRadius: 25 }]} onPress={() => { setDetail(null); setScreen('resume'); }}>
+          <View style={[st.fabContainer, isSmallScreen && { bottom: 16, right: 16 }, { flexDirection: 'column', gap: 12 }]}>
+            <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('resume'); }}>
               <Ionicons name="document-text" size={isSmallScreen ? 20 : 24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('editor'); }}>
+              <Ionicons name="add" size={isSmallScreen ? 28 : 32} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
@@ -437,7 +441,8 @@ const st = StyleSheet.create({
   modalItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
 
   // FABs
-  fabContainer: { position: 'absolute', bottom: Platform.OS === 'ios' ? 34 : 24, right: 24, alignItems: 'flex-end', zIndex: 10 },
+  fabContainer: { position: 'absolute', bottom: Platform.OS === 'ios' ? 34 : 24, right: 24, alignItems: 'center', zIndex: 10 },
+  blueFab: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   fabSmall: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   extendedFab: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#003366', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 24, elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   webChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0' },

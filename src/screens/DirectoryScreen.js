@@ -294,7 +294,7 @@ const DirectoryScreen = ({ navigation }) => {
                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                   <TouchableOpacity
                     style={{ padding: 6, backgroundColor: '#EFF6FF', borderRadius: 6 }}
-                    onPress={() => navigation.navigate('Chat', { user: { name: item.name, role: item.branch + ' • ' + item.title, initials: item.initials, lastMessage: 'Let\'s connect and catch up!', time: 'Now' } })}
+                    onPress={() => navigation.navigate('Chat', { user: { id: item._id || item.id, name: item.name, role: item.institution || (item.branch ? `${item.branch} • ${item.title}` : item.title) || '', initials: item.initials } })}
                   >
                     <Ionicons name="chatbubble-ellipses-outline" size={16} color="#003366" />
                   </TouchableOpacity>
@@ -345,7 +345,7 @@ const DirectoryScreen = ({ navigation }) => {
                 </View>
                 <TouchableOpacity
                   style={styles.messageIconBtn}
-                  onPress={() => navigation.navigate('Chat', { user: { name: item.name, role: `${item.branch} • ${item.title}`, initials: item.initials, lastMessage: 'Let\'s connect and catch up!', time: 'Now' } })}
+                  onPress={() => navigation.navigate('Chat', { user: { id: item._id || item.id, name: item.name, role: item.institution || (item.branch ? `${item.branch} • ${item.title}` : item.title) || '', initials: item.initials } })}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={16} color="#003366" />

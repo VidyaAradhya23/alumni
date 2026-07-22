@@ -17,6 +17,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const jobRoutes = require('./routes/jobRoutes');
 const activityLogger = require('./middleware/activityLogger');
 
 dotenv.config();
@@ -101,6 +102,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // System Health & Architectural Flow Status Check
 app.get('/api/system-status', async (req, res) => {

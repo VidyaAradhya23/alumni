@@ -1,0 +1,214 @@
+const Job = require('../models/Job');
+const JobPreference = require('../models/JobPreference');
+
+// @desc    Get all jobs with filters & search
+// @route   GET /api/jobs
+exports.getJobs = async (req, res) => {
+    try {
+        const { search, workplaceType, jobType, location } = req.query;
+        let query = { isActive: true };
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { company: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (workplaceType) query.workplaceType = workplaceType;
+        if (jobType) query.jobType = jobType;
+        if (location) query.location = { $regex: location, $options: 'i' };
+
+        const jobs = await Job.find(query)
+            .populate('postedBy', 'name profilePicture role company designation')
+            .sort({ createdAt: -1 });
+
+        res.json(jobs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Create a new job posting
+// @route   POST /api/jobs
+exports.createJob = async (req, res) => {
+    try {
+        const { title, company, location, workplaceType, jobType, experienceLevel, salaryRange, description, requirements } = req.body;
+
+        const job = await Job.create({
+            title,
+            company,
+            location,
+            workplaceType: workplaceType || 'On-site',
+            jobType: jobType || 'Full-time',
+            experienceLevel: experienceLevel || 'Mid-Senior',
+            salaryRange: salaryRange || '',
+            description,
+            requirements: Array.isArray(requirements) ? requirements : (requirements ? [requirements] : []),
+            postedBy: req.user._id
+        });
+
+        res.status(201).json(job);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle Save / Bookmark Job (LinkedIn Saved Jobs)
+// @route   POST /api/jobs/:id/save
+exports.toggleSaveJob = async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+
+        const userId = req.user._id;
+        const index = job.savedBy.indexOf(userId);
+
+        if (index > -1) {
+            job.savedBy.splice(index, 1);
+        } else {
+            job.savedBy.push(userId);
+        }
+
+        await job.save();
+        res.json({ message: 'Save status updated', isSaved: index === -1, savedCount: job.savedBy.length });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Easy Apply to a Job
+// @route   POST /api/jobs/:id/apply
+exports.applyToJob = async (req, res) => {
+    try {
+        const { resumeUrl, coverNote } = req.body;
+        const job = await Job.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+
+        const alreadyApplied = job.applicants.some(app => app.user.toString() === req.user._id.toString());
+        if (alreadyApplied) {
+            return res.status(400).json({ message: 'You have already applied to this position' });
+        }
+
+        job.applicants.push({
+            user: req.user._id,
+            resumeUrl: resumeUrl || '',
+            coverNote: coverNote || 'Interested in this opportunity.',
+            status: 'Applied',
+            appliedAt: new Date()
+        });
+
+        await job.save();
+        res.json({ message: 'Application submitted successfully', job });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get LinkedIn Job Tracker (Saved & Applied Jobs)
+// @route   GET /api/jobs/tracker
+exports.getJobTracker = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const savedJobs = await Job.find({ savedBy: userId })
+            .populate('postedBy', 'name company profilePicture')
+            .sort({ createdAt: -1 });
+
+        const appliedJobsList = await Job.find({ 'applicants.user': userId })
+            .populate('postedBy', 'name company profilePicture');
+
+        const appliedJobsFormatted = appliedJobsList.map(job => {
+            const applicantObj = job.applicants.find(app => app.user.toString() === userId.toString());
+            return {
+                _id: job._id,
+                title: job.title,
+                company: job.company,
+                location: job.location,
+                workplaceType: job.workplaceType,
+                jobType: job.jobType,
+                status: applicantObj ? applicantObj.status : 'Applied',
+                appliedAt: applicantObj ? applicantObj.appliedAt : job.createdAt,
+            };
+        });
+
+        res.json({
+            savedJobs,
+            appliedJobs: appliedJobsFormatted
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get LinkedIn Job Preferences & Open to Work
+// @route   GET /api/jobs/preferences
+exports.getPreferences = async (req, res) => {
+    try {
+        let prefs = await JobPreference.findOne({ user: req.user._id });
+        if (!prefs) {
+            prefs = await JobPreference.create({
+                user: req.user._id,
+                openToWork: true,
+                targetTitles: ['Software Engineer', 'Full Stack Developer', 'Data Engineer'],
+                targetLocations: ['Bangalore', 'Remote', 'Hybrid'],
+                jobTypes: ['Full-time', 'Contract']
+            });
+        }
+        res.json(prefs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update LinkedIn Job Preferences & Open to Work
+// @route   PUT /api/jobs/preferences
+exports.updatePreferences = async (req, res) => {
+    try {
+        const { openToWork, targetTitles, targetLocations, jobTypes, preferredIndustry, minSalary } = req.body;
+
+        let prefs = await JobPreference.findOne({ user: req.user._id });
+        if (!prefs) {
+            prefs = new JobPreference({ user: req.user._id });
+        }
+
+        if (typeof openToWork === 'boolean') prefs.openToWork = openToWork;
+        if (targetTitles) prefs.targetTitles = targetTitles;
+        if (targetLocations) prefs.targetLocations = targetLocations;
+        if (jobTypes) prefs.jobTypes = jobTypes;
+        if (preferredIndustry) prefs.preferredIndustry = preferredIndustry;
+        if (minSalary) prefs.minSalary = minSalary;
+
+        await prefs.save();
+        res.json(prefs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Recommended Jobs (LinkedIn Algorithm)
+// @route   GET /api/jobs/recommended
+exports.getRecommendedJobs = async (req, res) => {
+    try {
+        const prefs = await JobPreference.findOne({ user: req.user._id });
+        let titleRegex = prefs && prefs.targetTitles.length > 0
+            ? new RegExp(prefs.targetTitles.join('|'), 'i')
+            : /Engineer|Developer|Manager|Analyst/i;
+
+        const recommended = await Job.find({
+            isActive: true,
+            $or: [
+                { title: titleRegex },
+                { description: titleRegex }
+            ]
+        })
+        .populate('postedBy', 'name company profilePicture')
+        .limit(15)
+        .sort({ createdAt: -1 });
+
+        res.json(recommended);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

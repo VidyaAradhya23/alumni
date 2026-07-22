@@ -13,452 +13,533 @@ import {
   Modal,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
+  Switch
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import useUserRole from '../hooks/useUserRole';
+import {
+  fetchJobs,
+  createJobPosting,
+  toggleSaveJob,
+  applyToJob,
+  fetchJobTracker,
+  fetchJobPreferences,
+  updateJobPreferences,
+  fetchRecommendedJobs
+} from '../services/jobService';
 
-const INITIAL_JOBS = [];
+const WORKPLACE_TYPES = ['All', 'On-site', 'Hybrid', 'Remote'];
+const JOB_TYPES = ['All', 'Full-time', 'Part-time', 'Contract', 'Internship'];
 
-const PROFILE_MATCHES = [];
-
-const RESUME_LIST = [];
-
-const WORK_MODES = ['Full-Time', 'Part-Time', 'Internship', 'Contract', 'Hybrid', 'Remote'];
-
-// ─── JOB CARD COMPONENT ──────────────────────────────────────────────
-function JobCard({ item, onPress, onDelete, isSmallScreen, canDelete }) {
-  return (
-    <View style={st.jobCard}>
-      <TouchableOpacity style={{ flex: 1, flexDirection: 'row' }} activeOpacity={0.7} onPress={() => onPress(item)}>
-        <View style={st.companyLogo}>
-          <Ionicons name="business-outline" size={isSmallScreen ? 18 : 22} color="#003366" />
-        </View>
-        <View style={{ flex: 1, marginRight: 24 }}>
-          <Text style={[st.jobTitle, isSmallScreen && { fontSize: 14 }]}>{item.role}</Text>
-          <Text style={[st.jobCompany, isSmallScreen && { fontSize: 12 }]}>{item.company}</Text>
-          <View style={st.badgeRow}>
-            <View style={st.badge}><Ionicons name="briefcase-outline" size={11} color="#64748B" style={{ marginRight: 3 }} /><Text style={st.badgeText}>{item.workMode}</Text></View>
-            <View style={st.badge}><Ionicons name="time-outline" size={11} color="#64748B" style={{ marginRight: 3 }} /><Text style={st.badgeText}>{item.experience}</Text></View>
-            <View style={st.badge}><Ionicons name="location-outline" size={11} color="#64748B" style={{ marginRight: 3 }} /><Text style={st.badgeText}>{item.location}</Text></View>
-          </View>
-          <View style={st.statsRow}>
-            <View style={st.statItem}><Ionicons name="eye-outline" size={13} color="#64748B" /><Text style={st.statText}>{item.views || 0} Views</Text></View>
-            <View style={st.statItem}><Ionicons name="document-text-outline" size={13} color="#64748B" /><Text style={st.statText}>{item.applied || 0} Applied</Text></View>
-            <View style={st.statItem}><Ionicons name="share-social-outline" size={13} color="#64748B" /><Text style={st.statText}>{item.shared || 0} Shared</Text></View>
-          </View>
-          <View style={st.viewMoreBtn}><Text style={st.viewMoreText}>View More</Text><Ionicons name="arrow-forward" size={14} color="#003366" style={{ marginLeft: 4 }} /></View>
-        </View>
-      </TouchableOpacity>
-      {canDelete && (
-        <TouchableOpacity style={{ position: 'absolute', right: 12, top: 24, padding: 4 }} onPress={() => onDelete(item.id)}>
-          <Ionicons name="close" size={18} color="#94A3B8" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}
-
-// ─── MAIN SCREEN ─────────────────────────────────────────────────────
 const JobsScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
-  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
+  const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper } = useUserRole();
 
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
   const isDesktop = screenWidth >= 1024;
-  const isWeb = Platform.OS === 'web';
-  
-  const [screen, setScreen] = useState('list'); // list, detail, editor, resume
-  // Alumni: 'post_job' | 'preferences'; Admin/SuperAdmin: 'post_job' | 'manage' | 'preferences'
-  const [activeTab, setActiveTab] = useState('post_job');
-  const [searchQ, setSearchQ] = useState('');
-  const [detail, setDetail] = useState(null);
-  const [jobList, setJobList] = useState(INITIAL_JOBS);
 
-  // Form
-  const [fRole, setFRole] = useState('');
-  const [fCompany, setFCompany] = useState('');
-  const [fLoc, setFLoc] = useState('');
-  const [fExp, setFExp] = useState('');
-  const [fDesc, setFDesc] = useState('');
-  const [fMode, setFMode] = useState('Full-Time');
-  const [modalVis, setModalVis] = useState(false);
+  // LinkedIn Navigation Tabs
+  const [activeTab, setActiveTab] = useState('search'); // 'search' | 'tracker' | 'preferences' | 'recommended' | 'post'
+  const [trackerSubTab, setTrackerSubTab] = useState('saved'); // 'saved' | 'applied'
+
+  // Data States
+  const [jobs, setJobs] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedWorkplace, setSelectedWorkplace] = useState('All');
+  const [selectedJobType, setSelectedJobType] = useState('All');
+
+  // Selected Job for Detail / Easy Apply Modal
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applyModalVisible, setApplyModalVisible] = useState(false);
+  const [coverNote, setCoverNote] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
+
+  // Job Preferences State
+  const [openToWork, setOpenToWork] = useState(true);
+  const [targetTitles, setTargetTitles] = useState('Software Engineer, Full Stack Developer');
+  const [targetLocations, setTargetLocations] = useState('Bangalore, Remote, Hybrid');
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // Job Posting Form State
+  const [pTitle, setPTitle] = useState('');
+  const [pCompany, setPCompany] = useState('');
+  const [pLocation, setPLocation] = useState('');
+  const [pWorkplace, setPWorkplace] = useState('On-site');
+  const [pJobType, setPJobType] = useState('Full-time');
+  const [pSalary, setPSalary] = useState('');
+  const [pDesc, setPDesc] = useState('');
+  const [postingJob, setPostingJob] = useState(false);
 
   useEffect(() => {
-    if (route && route.params && route.params.openEditor) {
-      setScreen('editor');
-      if (navigation && navigation.setParams) {
-        navigation.setParams({ openEditor: undefined });
+    loadAllData();
+  }, [activeTab, selectedWorkplace, selectedJobType]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'search') {
+        const filters = {};
+        if (searchQuery) filters.search = searchQuery;
+        if (selectedWorkplace !== 'All') filters.workplaceType = selectedWorkplace;
+        if (selectedJobType !== 'All') filters.jobType = selectedJobType;
+        const res = await fetchJobs(filters);
+        setJobs(res);
+      } else if (activeTab === 'tracker') {
+        const trackerData = await fetchJobTracker();
+        setSavedJobs(trackerData.savedJobs || []);
+        setAppliedJobs(trackerData.appliedJobs || []);
+      } else if (activeTab === 'recommended') {
+        const recs = await fetchRecommendedJobs();
+        setRecommendedJobs(recs);
+      } else if (activeTab === 'preferences') {
+        const prefs = await fetchJobPreferences();
+        if (prefs) {
+          setOpenToWork(prefs.openToWork ?? true);
+          setTargetTitles((prefs.targetTitles || []).join(', '));
+          setTargetLocations((prefs.targetLocations || []).join(', '));
+        }
       }
+    } catch (e) {
+      console.log('Error loading jobs data:', e);
+    } finally {
+      setLoading(false);
     }
-  }, [route, navigation]);
-
-  const deleteJob = (id) => setJobList(prev => prev.filter(j => j.id !== id));
-
-  const postJob = () => {
-    if (!fRole.trim() || !fCompany.trim()) { 
-      if (Platform.OS === 'web') window.alert('Required: Fill in Role and Company.');
-      else Alert.alert('Required', 'Fill in Role and Company.');
-      return; 
-    }
-    setJobList([{ id: String(Date.now()), role: fRole, company: fCompany, workMode: fMode, experience: fExp || 'Not specified', location: fLoc || 'Remote', views: 0, applied: 0, shared: 0, description: fDesc || 'No description.' }, ...jobList]);
-    setFRole(''); setFCompany(''); setFLoc(''); setFExp(''); setFDesc(''); setFMode('Full-Time');
-    setScreen('list');
-    if (Platform.OS === 'web') window.alert('Job posted!');
-    else Alert.alert('Success', 'Job posted!');
   };
 
-
-  const openDetail = (job) => { 
-    setDetail(job); 
-    if (!isDesktop) setScreen('detail'); 
+  const handleToggleSave = async (jobId) => {
+    try {
+      await toggleSaveJob(jobId);
+      loadAllData();
+    } catch (e) {
+      Alert.alert('Error', 'Could not update save status');
+    }
   };
 
-  const filtered = jobList.filter(j => 
-    (j.role || '').toLowerCase().includes((searchQ || '').toLowerCase()) || 
-    (j.company || '').toLowerCase().includes((searchQ || '').toLowerCase()) || 
-    (j.location || '').toLowerCase().includes((searchQ || '').toLowerCase())
-  );
-
-  // ─── RENDER DETAIL ──────────────────────────────────────────────
-  const renderDetail = () => {
-    if (!detail) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' }}>
-          <Ionicons name="document-text-outline" size={48} color="#CBD5E1" />
-          <Text style={{ fontSize: 16, color: '#94A3B8', marginTop: 12 }}>Select a job to view details</Text>
-        </View>
-      );
+  const handleEasyApplySubmit = async () => {
+    if (!selectedJob) return;
+    setIsApplying(true);
+    try {
+      await applyToJob(selectedJob._id || selectedJob.id, { coverNote });
+      Alert.alert('Application Submitted! 🎉', `Your application for ${selectedJob.title} at ${selectedJob.company} has been sent!`);
+      setApplyModalVisible(false);
+      setCoverNote('');
+      loadAllData();
+    } catch (e) {
+      Alert.alert('Already Applied', e.response?.data?.message || 'You have already applied to this position.');
+    } finally {
+      setIsApplying(false);
     }
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
+    try {
+      const titlesArray = targetTitles.split(',').map(s => s.trim()).filter(Boolean);
+      const locsArray = targetLocations.split(',').map(s => s.trim()).filter(Boolean);
+      await updateJobPreferences({
+        openToWork,
+        targetTitles: titlesArray,
+        targetLocations: locsArray
+      });
+      Alert.alert('Preferences Saved ⚙️', 'Your LinkedIn job preferences have been updated!');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to save preferences.');
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
+
+  const handleCreateJob = async () => {
+    if (!pTitle.trim() || !pCompany.trim() || !pLocation.trim() || !pDesc.trim()) {
+      Alert.alert('Required Fields', 'Please fill in Title, Company, Location, and Description.');
+      return;
+    }
+    setPostingJob(true);
+    try {
+      await createJobPosting({
+        title: pTitle,
+        company: pCompany,
+        location: pLocation,
+        workplaceType: pWorkplace,
+        jobType: pJobType,
+        salaryRange: pSalary,
+        description: pDesc
+      });
+      Alert.alert('Job Posted! 🚀', 'Your job vacancy is now live on the Alumni portal.');
+      setPTitle(''); setPCompany(''); setPLocation(''); setPSalary(''); setPDesc('');
+      setActiveTab('search');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to post job opportunity.');
+    } finally {
+      setPostingJob(false);
+    }
+  };
+
+  const renderJobCard = (job, isAppliedTab = false) => {
+    const isSaved = (job.savedBy || []).includes('current_user') || savedJobs.some(s => s._id === job._id);
+
     return (
-      <View style={{ flex: 1 }}>
-        <View style={[st.editorHeader, isDesktop && { borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }]}>
-          {!isDesktop && <TouchableOpacity onPress={() => { setDetail(null); setScreen('list'); }}><Ionicons name="arrow-back" size={24} color="#0F172A" /></TouchableOpacity>}
-          <Text style={st.editorTitle}>Job Details</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <ScrollView contentContainerStyle={{ padding: isSmallScreen ? 12 : 20, paddingBottom: 40, backgroundColor: '#F8FAFC' }} showsVerticalScrollIndicator={false}>
-          <View style={st.detailCard}>
-            <View style={st.detailLogo}><Ionicons name="business-outline" size={28} color="#003366" /></View>
-            <Text style={[st.detailRole, isSmallScreen && { fontSize: 17 }]}>{detail.role}</Text>
-            <Text style={st.detailCompany}>{detail.company}</Text>
-            <View style={[st.badgeRow, { justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }]}>
-              <View style={st.badge}><Text style={st.badgeText}>{detail.workMode}</Text></View>
-              <View style={st.badge}><Text style={st.badgeText}>{detail.experience}</Text></View>
-              <View style={st.badge}><Text style={st.badgeText}>{detail.location}</Text></View>
+      <View key={job._id || job.id} style={st.card}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <View style={st.logoBox}>
+            <Ionicons name="business-outline" size={24} color="#003366" />
+          </View>
+
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={st.titleText}>{job.title}</Text>
+            <Text style={st.companyText}>{job.company} • <Text style={{ color: '#64748B' }}>{job.location}</Text></Text>
+
+            <View style={st.tagRow}>
+              <View style={st.tagPill}>
+                <Text style={st.tagText}>{job.workplaceType || 'On-site'}</Text>
+              </View>
+              <View style={[st.tagPill, { backgroundColor: '#F1F5F9' }]}>
+                <Text style={[st.tagText, { color: '#475569' }]}>{job.jobType || 'Full-time'}</Text>
+              </View>
+              {job.salaryRange ? (
+                <View style={[st.tagPill, { backgroundColor: '#ECFDF5' }]}>
+                  <Text style={[st.tagText, { color: '#059669' }]}>{job.salaryRange}</Text>
+                </View>
+              ) : null}
             </View>
+
+            {isAppliedTab ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669' }}>
+                  Status: {job.status || 'Applied'}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <View style={[st.detailStatsRow, isSmallScreen && { flexDirection: 'column', gap: 8 }]}>
-            <View style={[st.detailStatCard, isSmallScreen && { marginHorizontal: 0 }]}><Text style={{ fontSize: 16, marginRight: 6 }}>👁</Text><Text style={st.detailStatText}>{detail.views || 0} Views</Text></View>
-            <View style={[st.detailStatCard, isSmallScreen && { marginHorizontal: 0 }]}><Text style={{ fontSize: 16, marginRight: 6 }}>📄</Text><Text style={st.detailStatText}>{detail.applied || 0} Applied</Text></View>
-            <View style={[st.detailStatCard, isSmallScreen && { marginHorizontal: 0 }]}><Text style={{ fontSize: 16, marginRight: 6 }}>🔗</Text><Text style={st.detailStatText}>{detail.shared || 0} Shared</Text></View>
-          </View>
-          <View style={st.descSection}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 }}>Job Description</Text>
-            <Text style={{ fontSize: 14.5, color: '#475569', lineHeight: 24 }}>{detail.description}</Text>
-          </View>
-        </ScrollView>
-        <View style={st.bottomBar}>
-          <TouchableOpacity style={st.applyBtn} onPress={() => Alert.alert('Applied', 'You have applied for this role.')}>
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Apply Now</Text>
+
+          <TouchableOpacity onPress={() => handleToggleSave(job._id || job.id)} style={{ padding: 6 }}>
+            <Ionicons name={isSaved ? "bookmark" : "bookmark-outline"} size={22} color={isSaved ? "#003366" : "#94A3B8"} />
           </TouchableOpacity>
         </View>
+
+        {/* Action Row */}
+        {!isAppliedTab && (
+          <View style={st.cardActionRow}>
+            <TouchableOpacity 
+              style={st.easyApplyBtn}
+              onPress={() => { setSelectedJob(job); setApplyModalVisible(true); }}
+            >
+              <Ionicons name="flash" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={st.easyApplyText}>Easy Apply</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={st.detailsBtn}
+              onPress={() => { setSelectedJob(job); setApplyModalVisible(true); }}
+            >
+              <Text style={st.detailsText}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
 
-  // ─── RENDER RESUME ──────────────────────────────────────────────
-  const renderResume = () => (
-    <View style={{ flex: 1 }}>
-      <View style={[st.editorHeader, isDesktop && { borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }]}>
-        {!isDesktop && <TouchableOpacity onPress={() => setScreen('list')}><Ionicons name="arrow-back" size={24} color="#0F172A" /></TouchableOpacity>}
-        <Text style={st.editorTitle}>Resume Book</Text>
-        <View style={{ width: 24 }} />
-      </View>
-      <ScrollView contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 40, backgroundColor: '#F8FAFC' }} showsVerticalScrollIndicator={false}>
-        <View style={st.seekerBanner}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 }}>Are you a job seeker?</Text>
-          <View style={{ flexDirection: 'row', width: '100%' }}>
-            <TouchableOpacity style={st.getListedBtn}><Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Get Listed</Text></TouchableOpacity>
-            <TouchableOpacity style={st.learnMoreBtn}><Text style={{ color: '#003366', fontWeight: '700', fontSize: 14 }}>Learn More</Text></TouchableOpacity>
-          </View>
-        </View>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 16 }}>Resume book of your network</Text>
-        {RESUME_LIST.map(item => (
-          <View key={item.id} style={st.resumeCard}>
-            <View style={{ padding: isSmallScreen ? 12 : 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                <View style={[st.resumeAvatar, isSmallScreen && { width: 48, height: 48, borderRadius: 24 }]}><Text style={{ fontSize: isSmallScreen ? 18 : 22, fontWeight: '700', color: '#64748B' }}>{item.name.charAt(0)}</Text></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: isSmallScreen ? 15 : 18, fontWeight: '700', color: '#0F172A', marginBottom: 4 }}>{item.name}</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>More Info</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
-                {item.skills.map((sk, i) => (<View key={i} style={st.skillPill}><Text style={{ fontSize: 11, color: '#475569', fontWeight: '600' }}>{sk}</Text></View>))}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="briefcase-outline" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A', flex: 1 }}>{item.company} - <Text style={{ fontWeight: '400', color: '#64748B' }}>{item.role}</Text></Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="build-outline" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#0F172A', flex: 1 }}>{item.domain} <Text style={{ fontWeight: '400', color: '#64748B' }}>{item.experience}</Text></Text>
-              </View>
-              {item.desc ? <Text style={{ fontSize: 13, color: '#64748B', lineHeight: 20, marginTop: 8, fontStyle: 'italic' }}>{item.desc}</Text> : null}
-            </View>
-            <View style={{ flexDirection: isSmallScreen ? 'column' : 'row', justifyContent: 'space-between', paddingHorizontal: isSmallScreen ? 12 : 16, paddingVertical: 12, backgroundColor: '#FAFAFA', gap: isSmallScreen ? 8 : 0 }}>
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ fontSize: 14, fontWeight: '700', color: '#003366' }}>Show Resume</Text><Ionicons name="open-outline" size={16} color="#003366" style={{ marginLeft: 4 }} /></TouchableOpacity>
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ fontSize: 14, fontWeight: '700', color: '#003366' }}>Forward Resume</Text><Ionicons name="arrow-forward" size={16} color="#003366" style={{ marginLeft: 4 }} /></TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  // ─── RENDER EDITOR ──────────────────────────────────────────────
-  const renderEditor = () => (
-    <View style={{ flex: 1 }}>
-      <View style={[st.editorHeader, isDesktop && { borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }]}>
-        {!isDesktop && <TouchableOpacity onPress={() => setScreen('list')}><Ionicons name="close" size={24} color="#0F172A" /></TouchableOpacity>}
-        <Text style={st.editorTitle}>Create Job Post</Text>
-        <TouchableOpacity style={st.postHeaderBtn} onPress={postJob}><Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Post Job</Text></TouchableOpacity>
-      </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: isSmallScreen ? 14 : 20, backgroundColor: '#FFFFFF' }} showsVerticalScrollIndicator={false}>
-        <View style={{ marginBottom: 20 }}><Text style={st.inputLabel}>Role / Job Title *</Text><TextInput style={st.textInput} placeholder="e.g. Senior Software Engineer" placeholderTextColor="#94A3B8" value={fRole} onChangeText={setFRole} /></View>
-        <View style={{ marginBottom: 20 }}><Text style={st.inputLabel}>Company *</Text><TextInput style={st.textInput} placeholder="e.g. Google, Amazon" placeholderTextColor="#94A3B8" value={fCompany} onChangeText={setFCompany} /></View>
-        
-        <View style={{ marginBottom: 20 }}>
-          <Text style={st.inputLabel}>Work Mode</Text>
-          {isWeb ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {WORK_MODES.map(mode => (
-                <TouchableOpacity 
-                  key={mode} 
-                  style={[st.webChip, fMode === mode && st.webChipActive]} 
-                  onPress={() => setFMode(mode)}
-                >
-                  <Text style={[st.webChipText, fMode === mode && st.webChipTextActive]}>{mode}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <TouchableOpacity style={st.selectorInput} onPress={() => setModalVis(true)}>
-              <Text style={{ fontSize: 14.5, color: '#0F172A' }}>{fMode}</Text>
-              <Ionicons name="chevron-down" size={20} color="#64748B" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={{ marginBottom: 20 }}><Text style={st.inputLabel}>Experience Required</Text><TextInput style={st.textInput} placeholder="e.g. 3-5 years" placeholderTextColor="#94A3B8" value={fExp} onChangeText={setFExp} /></View>
-        <View style={{ marginBottom: 20 }}><Text style={st.inputLabel}>Location</Text><TextInput style={st.textInput} placeholder="e.g. Bengaluru, Remote" placeholderTextColor="#94A3B8" value={fLoc} onChangeText={setFLoc} /></View>
-        <View style={{ marginBottom: 20 }}><Text style={st.inputLabel}>Job Description</Text><TextInput style={[st.textInput, { height: 120, textAlignVertical: 'top' }]} placeholder="Description..." placeholderTextColor="#94A3B8" value={fDesc} onChangeText={setFDesc} multiline /></View>
-      </ScrollView>
-    </View>
-  );
-
-  // ─── RENDER MAIN LIST ──────────────────────────────────────────────
-  const renderMainList = () => (
-    <View style={{ flex: 1 }}>
-      {/* Header */}
-      <View style={[st.header, isSmallScreen && { paddingHorizontal: 10, paddingVertical: 8 }]}>
-        <TouchableOpacity style={[st.headerAvatar, isSmallScreen && { width: 32, height: 32, borderRadius: 16, marginRight: 8 }]} activeOpacity={0.8} onPress={() => navigation && navigation.navigate('Profile')}>
-          <Text style={{ color: '#FFFFFF', fontSize: isSmallScreen ? 11 : 13, fontWeight: '700' }}>AJ</Text>
-        </TouchableOpacity>
-        <View style={[st.searchBar, isSmallScreen && { height: 34, marginRight: 8 }]}>
-          <Ionicons name="search-outline" size={16} color="#94A3B8" style={{ marginRight: 6 }} />
-          <TextInput style={{ flex: 1, fontSize: isSmallScreen ? 13 : 14, color: '#0F172A', paddingVertical: 0 }} placeholder="Search" placeholderTextColor="#94A3B8" value={searchQ} onChangeText={setSearchQ} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity style={[st.iconBtn, isSmallScreen && { width: 30, height: 30, marginLeft: 2 }]} onPress={() => navigation && navigation.navigate('Messages')}><Ionicons name="chatbubble-ellipses-outline" size={isSmallScreen ? 20 : 22} color="#003366" /><View style={st.dot} /></TouchableOpacity>
-          <TouchableOpacity style={[st.iconBtn, isSmallScreen && { width: 30, height: 30, marginLeft: 2 }]} onPress={() => navigation && navigation.navigate('Notifications')}><Ionicons name="notifications-outline" size={isSmallScreen ? 20 : 22} color="#003366" /><View style={st.dot} /></TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Role Badge */}
-      {isAdminOrSuper && (
-        <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="shield-checkmark" size={16} color="#003366" style={{ marginRight: 8 }} />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>{userRole} Mode</Text>
-          <Text style={{ fontSize: 12, color: '#64748B', marginLeft: 8 }}>You can manage & post jobs</Text>
-        </View>
-      )}
-
-      {/* Tabs — role-aware */}
-      <View style={st.tabBar}>
-        <TouchableOpacity style={[st.tab, activeTab === 'post_job' && st.activeTab]} onPress={() => setActiveTab('post_job')}>
-          <Text style={[st.tabText, activeTab === 'post_job' && st.activeTabText]}>
-            {isAlumni ? 'Post Job' : 'All Jobs'}
-          </Text>
-        </TouchableOpacity>
-        {isAdminOrSuper && (
-          <TouchableOpacity style={[st.tab, activeTab === 'manage' && st.activeTab]} onPress={() => setActiveTab('manage')}>
-            <Text style={[st.tabText, activeTab === 'manage' && st.activeTabText]}>Manage Jobs</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={[st.tab, activeTab === 'preferences' && st.activeTab]} onPress={() => setActiveTab('preferences')}>
-          <Text style={[st.tabText, activeTab === 'preferences' && st.activeTabText]}>Preferences</Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'post_job' ? (
-        <View style={{ flex: 1, minHeight: 0 }}>
-          <ScrollView
-            contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 100 }}
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-          >
-            {filtered.length > 0 ? (
-              filtered.map(item => (
-                <JobCard key={item.id} item={item} onPress={openDetail} onDelete={deleteJob} isSmallScreen={isSmallScreen} canDelete={isAdminOrSuper || isAlumni} />
-              ))
-            ) : (
-              <View style={{ alignItems: 'center', paddingVertical: 80, paddingHorizontal: 40 }}>
-                <Ionicons name="briefcase-outline" size={48} color="#CBD5E1" />
-                <Text style={{ fontSize: 17, fontWeight: '700', color: '#475569', marginTop: 12 }}>No Jobs Posted Yet</Text>
-                <TouchableOpacity style={{ backgroundColor: '#003366', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, marginTop: 16 }} onPress={() => { setDetail(null); setScreen('editor'); }}>
-                   <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>+ Post a Job</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </ScrollView>
-          {/* FABs — Alumni: Post + Resume; Admin: Post only */}
-          <View style={[st.fabContainer, isSmallScreen && { bottom: 16, right: 16 }, { flexDirection: 'column', gap: 12 }]}>
-            {isAlumni && (
-              <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('resume'); }}>
-                <Ionicons name="document-text" size={isSmallScreen ? 20 : 24} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={st.blueFab} onPress={() => { setDetail(null); setScreen('editor'); }}>
-              <Ionicons name="add" size={isSmallScreen ? 28 : 32} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : activeTab === 'manage' && isAdminOrSuper ? (
-        /* ─── ADMIN: MANAGE JOBS TAB ─── */
-        <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 100 }}>
-          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-              <Ionicons name="shield-checkmark" size={24} color="#003366" style={{ marginRight: 12 }} />
-              <View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A' }}>Job Management Console</Text>
-                <Text style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Review, approve, or remove job postings</Text>
-              </View>
-            </View>
-            {/* Stats Row */}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1, backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: '#003366' }}>{jobList.length}</Text>
-                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Total Jobs</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: '#ECFDF5', borderRadius: 8, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: '#059669' }}>{jobList.length}</Text>
-                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Active</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: '#DC2626' }}>0</Text>
-                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600', marginTop: 2 }}>Flagged</Text>
-              </View>
-            </View>
-          </View>
-          {/* Job cards with admin controls */}
-          {filtered.length > 0 ? filtered.map(item => (
-            <View key={item.id} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <View style={st.companyLogo}><Ionicons name="business-outline" size={20} color="#003366" /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>{item.role}</Text>
-                  <Text style={{ fontSize: 13, color: '#475569' }}>{item.company} • {item.location}</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={{ flex: 1, backgroundColor: '#ECFDF5', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
-                  <Ionicons name="checkmark-circle" size={16} color="#059669" style={{ marginRight: 6 }} />
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669' }}>Approve</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }} onPress={() => deleteJob(item.id)}>
-                  <Ionicons name="trash" size={16} color="#DC2626" style={{ marginRight: 6 }} />
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626' }}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )) : (
-            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-              <Ionicons name="briefcase-outline" size={48} color="#CBD5E1" />
-              <Text style={{ fontSize: 16, color: '#64748B', marginTop: 12 }}>No jobs to manage</Text>
-            </View>
-          )}
-        </ScrollView>
-      ) : (
-        <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: isSmallScreen ? 12 : 16, paddingBottom: 100 }}>
-          <View style={st.prefHeader}>
-            <View>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>Job Match Alerts</Text>
-              <Text style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Get notified about roles fitting your profile.</Text>
-            </View>
-            <View style={[st.toggleTrack, { backgroundColor: '#10B981' }]}><View style={[st.toggleThumb, { transform: [{ translateX: 22 }] }]} /></View>
-          </View>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 12, marginTop: 8 }}>Matches Based on Your Profile</Text>
-          {PROFILE_MATCHES.map(item => (
-            <View key={item.id} style={st.matchCard}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <View style={{ flex: 1, marginRight: 12 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>{item.title}</Text>
-                  <Text style={{ fontSize: 14, color: '#475569', marginTop: 2 }}>{item.company} • {item.location}</Text>
-                </View>
-                <View style={st.matchBadge}><Text style={st.matchBadgeText}>{item.match}</Text></View>
-              </View>
-              <TouchableOpacity style={st.viewMatchBtn}><Text style={{ fontSize: 13, fontWeight: '700', color: '#003366' }}>View Role</Text></TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={st.updateProfileBtn}><Text style={{ fontSize: 14, fontWeight: '700', color: '#FFFFFF' }}>Update Profile Preferences</Text></TouchableOpacity>
-        </ScrollView>
-      )}
-    </View>
-  );
-
-  // ─── FINAL RETURN COMPOSED FOR DESKTOP / MOBILE ──────────────────────
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 1200, flex: 1 } : { flex: 1 };
-
   return (
-    <SafeAreaView style={st.container}>
+    <SafeAreaView style={[st.container, { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <View style={webContainerStyle}>
-        {isDesktop ? (
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            <View style={{ width: 400, borderRightWidth: 1, borderRightColor: '#E2E8F0', backgroundColor: '#FFFFFF' }}>
-              {renderMainList()}
-            </View>
-            <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-              {screen === 'editor' ? renderEditor() : screen === 'resume' ? renderResume() : renderDetail()}
-            </View>
-          </View>
-        ) : (
-          <View style={{ flex: 1 }}>
-            {screen === 'editor' ? renderEditor() : screen === 'resume' ? renderResume() : screen === 'detail' ? renderDetail() : renderMainList()}
-          </View>
-        )}
+
+      {/* LinkedIn Jobs Navigation Header */}
+      <View style={[st.headerContainer, { backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF' }]}>
+        <Text style={[st.headerTitle, { color: isDarkMode ? '#F8FAFC' : '#0F172A' }]}>LinkedIn Jobs</Text>
+        
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tabBar}>
+          <TouchableOpacity 
+            style={[st.tabItem, activeTab === 'search' && st.tabItemActive]}
+            onPress={() => setActiveTab('search')}
+          >
+            <Ionicons name="search" size={16} color={activeTab === 'search' ? '#003366' : '#64748B'} />
+            <Text style={[st.tabText, activeTab === 'search' && st.tabTextActive]}>Search Jobs</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[st.tabItem, activeTab === 'tracker' && st.tabItemActive]}
+            onPress={() => setActiveTab('tracker')}
+          >
+            <Ionicons name="bookmark" size={16} color={activeTab === 'tracker' ? '#003366' : '#64748B'} />
+            <Text style={[st.tabText, activeTab === 'tracker' && st.tabTextActive]}>Job Tracker</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[st.tabItem, activeTab === 'preferences' && st.tabItemActive]}
+            onPress={() => setActiveTab('preferences')}
+          >
+            <Ionicons name="options" size={16} color={activeTab === 'preferences' ? '#003366' : '#64748B'} />
+            <Text style={[st.tabText, activeTab === 'preferences' && st.tabTextActive]}>Preferences</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[st.tabItem, activeTab === 'recommended' && st.tabItemActive]}
+            onPress={() => setActiveTab('recommended')}
+          >
+            <Ionicons name="sparkles" size={16} color={activeTab === 'recommended' ? '#003366' : '#64748B'} />
+            <Text style={[st.tabText, activeTab === 'recommended' && st.tabTextActive]}>Recommended</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[st.tabItem, activeTab === 'post' && st.tabItemActive]}
+            onPress={() => setActiveTab('post')}
+          >
+            <Ionicons name="add-circle" size={16} color={activeTab === 'post' ? '#003366' : '#64748B'} />
+            <Text style={[st.tabText, activeTab === 'post' && st.tabTextActive]}>Post a Job</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
-      {!isWeb && (
-        <Modal visible={modalVis} transparent animationType="fade">
-        <View style={st.modalOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setModalVis(false)} />
-          <View style={st.modalContent}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A' }}>Select Work Mode</Text>
-              <TouchableOpacity onPress={() => setModalVis(false)}><Ionicons name="close" size={24} color="#0F172A" /></TouchableOpacity>
+      {/* Main Content Area */}
+      <View style={{ flex: 1, maxWidth: isDesktop ? 900 : '100%', width: '100%', alignSelf: 'center' }}>
+
+        {/* TAB 1: SEARCH JOBS */}
+        {activeTab === 'search' && (
+          <View style={{ flex: 1 }}>
+            {/* Filter Bar */}
+            <View style={st.filterSection}>
+              <View style={st.searchBox}>
+                <Ionicons name="search" size={18} color="#64748B" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={st.searchInput}
+                  placeholder="Search title, company, or skills..."
+                  placeholderTextColor="#94A3B8"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  onSubmitEditing={loadAllData}
+                />
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                {WORKPLACE_TYPES.map(type => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[st.chip, selectedWorkplace === type && st.chipActive]}
+                    onPress={() => setSelectedWorkplace(type)}
+                  >
+                    <Text style={[st.chipText, selectedWorkplace === type && st.chipTextActive]}>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-            {WORK_MODES.map(mode => (
-              <TouchableOpacity key={mode} style={[st.modalItem, fMode === mode && { backgroundColor: '#F8FAFC' }]} onPress={() => { setFMode(mode); setModalVis(false); }}>
-                <Text style={{ fontSize: 16, color: fMode === mode ? '#003366' : '#475569', fontWeight: fMode === mode ? '600' : '400' }}>{mode}</Text>
-                {fMode === mode && <Ionicons name="checkmark" size={20} color="#003366" />}
-              </TouchableOpacity>
-            ))}
+
+            {loading ? (
+              <ActivityIndicator size="large" color="#003366" style={{ marginTop: 40 }} />
+            ) : (
+              <FlatList
+                data={jobs}
+                keyExtractor={item => item._id || item.id}
+                renderItem={({ item }) => renderJobCard(item)}
+                contentContainerStyle={{ padding: 16 }}
+                ListEmptyComponent={() => (
+                  <View style={st.emptyBox}>
+                    <Ionicons name="briefcase-outline" size={48} color="#CBD5E1" />
+                    <Text style={st.emptyText}>No jobs found matching your filter criteria.</Text>
+                  </View>
+                )}
+              />
+            )}
           </View>
-        </View>
+        )}
+
+        {/* TAB 2: JOB TRACKER (SAVED & APPLIED) */}
+        {activeTab === 'tracker' && (
+          <View style={{ flex: 1, padding: 16 }}>
+            <View style={st.subTabBar}>
+              <TouchableOpacity 
+                style={[st.subTab, trackerSubTab === 'saved' && st.subTabActive]}
+                onPress={() => setTrackerSubTab('saved')}
+              >
+                <Text style={[st.subTabText, trackerSubTab === 'saved' && st.subTabTextActive]}>
+                  Saved Jobs ({savedJobs.length})
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[st.subTab, trackerSubTab === 'applied' && st.subTabActive]}
+                onPress={() => setTrackerSubTab('applied')}
+              >
+                <Text style={[st.subTabText, trackerSubTab === 'applied' && st.subTabTextActive]}>
+                  Applied Jobs ({appliedJobs.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {trackerSubTab === 'saved' ? (
+              <FlatList
+                data={savedJobs}
+                keyExtractor={item => item._id || item.id}
+                renderItem={({ item }) => renderJobCard(item)}
+                ListEmptyComponent={() => (
+                  <Text style={st.emptyText}>You haven't saved any jobs yet.</Text>
+                )}
+              />
+            ) : (
+              <FlatList
+                data={appliedJobs}
+                keyExtractor={item => item._id || item.id}
+                renderItem={({ item }) => renderJobCard(item, true)}
+                ListEmptyComponent={() => (
+                  <Text style={st.emptyText}>You haven't applied to any jobs yet.</Text>
+                )}
+              />
+            )}
+          </View>
+        )}
+
+        {/* TAB 3: JOB PREFERENCES & OPEN TO WORK */}
+        {activeTab === 'preferences' && (
+          <ScrollView contentContainerStyle={{ padding: 20 }}>
+            {/* Open to Work Banner */}
+            <View style={st.openToWorkCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={{ fontSize: 17, fontWeight: '700', color: '#0F172A' }}>#OpenToWork</Text>
+                  <Text style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>
+                    Show recruiters & alumni that you are actively seeking job opportunities.
+                  </Text>
+                </View>
+                <Switch
+                  value={openToWork}
+                  onValueChange={setOpenToWork}
+                  trackColor={{ false: '#CBD5E1', true: '#10B981' }}
+                />
+              </View>
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Target Job Titles (comma separated)</Text>
+              <TextInput
+                style={st.input}
+                value={targetTitles}
+                onChangeText={setTargetTitles}
+                placeholder="e.g. Software Engineer, Tech Lead"
+              />
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Target Locations</Text>
+              <TextInput
+                style={st.input}
+                value={targetLocations}
+                onChangeText={setTargetLocations}
+                placeholder="e.g. Bangalore, Remote, Hybrid"
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={st.saveBtn} 
+              onPress={handleSavePreferences}
+              disabled={savingPrefs}
+            >
+              {savingPrefs ? <ActivityIndicator color="#FFFFFF" /> : <Text style={st.saveBtnText}>Save Preferences</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        )}
+
+        {/* TAB 4: RECOMMENDED JOBS */}
+        {activeTab === 'recommended' && (
+          <View style={{ flex: 1, padding: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 }}>
+              🎯 Jobs matching your preferences
+            </Text>
+            <FlatList
+              data={recommendedJobs}
+              keyExtractor={item => item._id || item.id}
+              renderItem={({ item }) => renderJobCard(item)}
+              ListEmptyComponent={() => (
+                <Text style={st.emptyText}>No recommendations currently available.</Text>
+              )}
+            />
+          </View>
+        )}
+
+        {/* TAB 5: POST A JOB */}
+        {activeTab === 'post' && (
+          <ScrollView contentContainerStyle={{ padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 16 }}>
+              Post a Hiring Opportunity 🚀
+            </Text>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Job Title *</Text>
+              <TextInput style={st.input} value={pTitle} onChangeText={setPTitle} placeholder="e.g. Senior Frontend Engineer" />
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Company *</Text>
+              <TextInput style={st.input} value={pCompany} onChangeText={setPCompany} placeholder="e.g. Google" />
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Location *</Text>
+              <TextInput style={st.input} value={pLocation} onChangeText={setPLocation} placeholder="e.g. Bangalore, India" />
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Salary Range (Optional)</Text>
+              <TextInput style={st.input} value={pSalary} onChangeText={setPSalary} placeholder="e.g. ₹15L - ₹25L PA" />
+            </View>
+
+            <View style={st.formGroup}>
+              <Text style={st.label}>Job Description *</Text>
+              <TextInput 
+                style={[st.input, { height: 100, textAlignVertical: 'top' }]} 
+                multiline 
+                value={pDesc} 
+                onChangeText={setPDesc} 
+                placeholder="Describe role responsibilities, team, requirements..." 
+              />
+            </View>
+
+            <TouchableOpacity style={st.saveBtn} onPress={handleCreateJob} disabled={postingJob}>
+              {postingJob ? <ActivityIndicator color="#FFFFFF" /> : <Text style={st.saveBtnText}>Post Job Opportunity</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        )}
+
+      </View>
+
+      {/* EASY APPLY MODAL */}
+      {applyModalVisible && selectedJob && (
+        <Modal visible={true} transparent={true} animationType="slide">
+          <View style={st.modalOverlay}>
+            <View style={st.modalCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A' }}>Easy Apply</Text>
+                <TouchableOpacity onPress={() => setApplyModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#64748B" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#003366' }}>{selectedJob.title}</Text>
+              <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 16 }}>{selectedJob.company} • {selectedJob.location}</Text>
+
+              <Text style={st.label}>Cover Note / Introduction</Text>
+              <TextInput
+                style={[st.input, { height: 80, textAlignVertical: 'top', marginBottom: 16 }]}
+                multiline
+                placeholder="Why are you a great fit for this position?"
+                value={coverNote}
+                onChangeText={setCoverNote}
+              />
+
+              <TouchableOpacity style={st.saveBtn} onPress={handleEasyApplySubmit} disabled={isApplying}>
+                {isApplying ? <ActivityIndicator color="#FFFFFF" /> : <Text style={st.saveBtnText}>Submit Application</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
         </Modal>
       )}
     </SafeAreaView>
@@ -466,78 +547,48 @@ const JobsScreen = ({ navigation, route }) => {
 };
 
 const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF', minHeight: Platform.OS === 'web' ? '100vh' : undefined },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 12, height: 38, marginRight: 12 },
-  iconBtn: { position: 'relative', width: 34, height: 34, justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
-  dot: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 1, borderColor: '#FFFFFF' },
-  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  activeTab: { borderBottomColor: '#0F172A' },
-  tabText: { fontSize: 14.5, fontWeight: '600', color: '#94A3B8' },
-  activeTabText: { color: '#0F172A', fontWeight: '700' },
-
-  // Job Card
-  jobCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', paddingVertical: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', position: 'relative' },
-  companyLogo: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  jobTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
-  jobCompany: { fontSize: 14, color: '#475569', fontWeight: '600', marginBottom: 8 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap' },
-  badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginRight: 6, marginBottom: 6 },
-  badgeText: { fontSize: 11, color: '#64748B', fontWeight: '500' },
-  statsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  statItem: { flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 4 },
-  statText: { fontSize: 11, fontWeight: '600', color: '#64748B', marginLeft: 4 },
-  viewMoreBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4 },
-  viewMoreText: { fontSize: 13, fontWeight: '700', color: '#003366' },
-
-  // Detail
-  detailCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 24, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0' },
-  detailLogo: { width: 80, height: 80, borderRadius: 20, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0' },
-  detailRole: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 6, textAlign: 'center' },
-  detailCompany: { fontSize: 16, fontWeight: '600', color: '#475569', marginBottom: 12 },
-  detailStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 },
-  detailStatCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 12, marginHorizontal: 4, borderWidth: 1, borderColor: '#E2E8F0' },
-  detailStatText: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
-  descSection: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
-  bottomBar: { padding: 20, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
-  applyBtn: { backgroundColor: '#003366', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
-
-  // Editor
-  editorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  editorTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  postHeaderBtn: { backgroundColor: '#0F172A', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  inputLabel: { fontSize: 13.5, fontWeight: '600', color: '#475569', marginBottom: 8 },
-  textInput: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14.5, color: '#0F172A', backgroundColor: '#F8FAFC' },
-  selectorInput: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC' },
-
-  // Resume
-  seekerBanner: { backgroundColor: '#FFFFFF', borderRadius: 8, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: '#E2E8F0' },
-  getListedBtn: { flex: 1, alignItems: 'center', backgroundColor: '#003366', paddingVertical: 10, borderRadius: 6, marginRight: 8 },
-  learnMoreBtn: { flex: 1, alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#003366', paddingVertical: 10, borderRadius: 6 },
-  resumeCard: { backgroundColor: '#FFFFFF', borderRadius: 8, marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
-  resumeAvatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginRight: 16, borderWidth: 1, borderColor: '#E2E8F0' },
-  skillPill: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, marginRight: 6, marginBottom: 6 },
-
-  // Preferences
-  matchCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 12 },
-  matchIcon: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40 },
-  modalItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-
-  // FABs
-  fabContainer: { position: 'absolute', bottom: Platform.OS === 'ios' ? 34 : 24, right: 24, alignItems: 'center', zIndex: 10 },
-  blueFab: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-  fabSmall: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-  extendedFab: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#003366', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 24, elevation: 6, shadowColor: '#003366', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-  webChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0' },
-  webChipActive: { backgroundColor: '#EFF6FF', borderColor: '#003366' },
-  webChipText: { fontSize: 13, color: '#475569', fontWeight: '600' },
-  webChipTextActive: { color: '#003366' },
+  container: { flex: 1 },
+  headerContainer: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  headerTitle: { fontSize: 20, fontWeight: '800', marginBottom: 10 },
+  tabBar: { flexDirection: 'row', gap: 12 },
+  tabItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#F1F5F9' },
+  tabItemActive: { backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE' },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#64748B', marginLeft: 6 },
+  tabTextActive: { color: '#003366', fontWeight: '700' },
+  filterSection: { padding: 16, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 10, paddingHorizontal: 12, height: 42 },
+  searchInput: { flex: 1, fontSize: 14, color: '#0F172A' },
+  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: '#F1F5F9', marginRight: 8 },
+  chipActive: { backgroundColor: '#003366' },
+  chipText: { fontSize: 12, fontWeight: '600', color: '#475569' },
+  chipTextActive: { color: '#FFFFFF' },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  logoBox: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center' },
+  titleText: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
+  companyText: { fontSize: 13, color: '#475569', marginTop: 2 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  tagPill: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: '#EFF6FF' },
+  tagText: { fontSize: 11, fontWeight: '600', color: '#003366' },
+  cardActionRow: { flexDirection: 'row', marginTop: 14, gap: 10 },
+  easyApplyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#003366', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  easyApplyText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  detailsBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, borderBottomWidth: 1, borderColor: '#CBD5E1' },
+  detailsText: { fontSize: 13, fontWeight: '600', color: '#475569' },
+  subTabBar: { flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 10, padding: 4, marginBottom: 16 },
+  subTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  subTabActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  subTabText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  subTabTextActive: { color: '#003366', fontWeight: '700' },
+  emptyBox: { alignItems: 'center', marginTop: 40 },
+  emptyText: { fontSize: 14, color: '#94A3B8', marginTop: 10, textAlign: 'center' },
+  openToWorkCard: { backgroundColor: '#ECFDF5', borderWidth: 1, borderColor: '#A7F3D0', padding: 16, borderRadius: 12, marginBottom: 20 },
+  formGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 6 },
+  input: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#0F172A' },
+  saveBtn: { backgroundColor: '#003366', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20 }
 });
 
 export default JobsScreen;

@@ -158,7 +158,11 @@ export default function AdminJobsScreen({ navigation, route }) {
   };
 
   const postJob = () => {
-    if (!fRole.trim() || !fCompany.trim()) { Alert.alert('Missing', 'Fill in Role and Company.'); return; }
+    if (!fRole.trim() || !fCompany.trim()) { 
+      if (Platform.OS === 'web') window.alert('Missing: Fill in Role and Company.');
+      else Alert.alert('Missing', 'Fill in Role and Company.');
+      return; 
+    }
     setJobs([{
       id: String(Date.now()), role: fRole.trim(), company: fCompany.trim(),
       workMode: fMode || 'Full-Time', experience: fExp.trim() || 'Not specified',
@@ -168,7 +172,8 @@ export default function AdminJobsScreen({ navigation, route }) {
     }, ...jobs]);
     clearForm();
     setScreen('list');
-    Alert.alert('Success', 'Job posted!');
+    if (Platform.OS === 'web') window.alert('Job posted!');
+    else Alert.alert('Success', 'Job posted!');
   };
 
   const deleteJob = (id) => {

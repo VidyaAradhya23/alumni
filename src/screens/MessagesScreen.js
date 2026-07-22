@@ -18,15 +18,22 @@ const MessagesScreen = ({ navigation }) => {
 
   useFocusEffect(
     React.useCallback(() => {
+      let isMounted = true;
       const fetchHistory = async () => {
         try {
           const history = await getChatHistory();
-          if (history) setChatList(history);
+          if (history && isMounted) setChatList(history);
         } catch(err) {
           console.log('Error fetching chat history:', err);
         }
       };
       fetchHistory();
+      const interval = setInterval(fetchHistory, 4000);
+
+      return () => {
+        isMounted = false;
+        clearInterval(interval);
+      };
     }, [])
   );
 

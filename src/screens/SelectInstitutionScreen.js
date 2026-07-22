@@ -5,6 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const institutions = [
+  { id: 'Media Cell Institution', name: 'MCI', fullName: 'Media Cell Institution ⭐ (Target Tenant)', icon: 'camera', featured: true },
+  { id: 'RV Institute of Technology and Management', name: 'RVITM', fullName: 'RV Institute of Technology and Management', icon: 'code-working' },
+  { id: 'RV College of Engineering', name: 'RVCE', fullName: 'RV College of Engineering', icon: 'build' },
+  { id: 'RV University, Bengaluru Campus', name: 'RVU_BLR', fullName: 'RV University, Bengaluru Campus', icon: 'ribbon' },
   { id: 'RV School', name: 'RVS', fullName: 'RV School', icon: 'school' },
   { id: 'RV Girls High School', name: 'RVGHS', fullName: 'RV Girls High School', icon: 'school' },
   { id: 'RV Public School', name: 'RVPS', fullName: 'RV Public School', icon: 'school' },
@@ -17,8 +21,6 @@ const institutions = [
   { id: 'RV PU College, E-City', name: 'RVPU_ECI', fullName: 'RV PU College, E-City', icon: 'book' },
   { id: 'RV PU College, Harohalli', name: 'RVPU_HAR', fullName: 'RV PU College, Harohalli', icon: 'book' },
   { id: 'RV PU College, Mysuru', name: 'RVPU_MYS', fullName: 'RV PU College, Mysuru', icon: 'book' },
-  { id: 'RV College of Engineering', name: 'RVCE', fullName: 'RV College of Engineering', icon: 'build' },
-  { id: 'RV Institute of Technology and Management', name: 'RVITM', fullName: 'RV Institute of Technology and Management', icon: 'code-working' },
   { id: 'RV-Skills', name: 'RVSK', fullName: 'RV-Skills', icon: 'laptop' },
   { id: 'RV College of Architecture', name: 'RVCA', fullName: 'RV College of Architecture', icon: 'color-palette' },
   { id: 'RV Institute of Management', name: 'RVIM', fullName: 'RV Institute of Management', icon: 'trending-up' },
@@ -29,9 +31,7 @@ const institutions = [
   { id: 'RV College of Nursing', name: 'RVCN', fullName: 'RV College of Nursing', icon: 'pulse' },
   { id: 'NMKRV College', name: 'NMKRV', fullName: 'NMKRV College', icon: 'grid' },
   { id: 'SSMRV College', name: 'SSMRV', fullName: 'SSMRV College', icon: 'grid' },
-  { id: 'RV University, Bengaluru Campus', name: 'RVU_BLR', fullName: 'RV University, Bengaluru Campus', icon: 'ribbon' },
   { id: 'RV University, Mysuru Campus', name: 'RVU_MYS', fullName: 'RV University, Mysuru Campus', icon: 'ribbon' },
-  { id: 'Media Cell Institution', name: 'MCI', fullName: 'Media Cell Institution', icon: 'camera' },
 ];
 
 const SelectInstitutionScreen = ({ navigation }) => {

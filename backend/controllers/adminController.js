@@ -7,16 +7,19 @@ const Report = require('../models/Report');
 // @route   GET /api/admin/stats
 exports.getStats = async (req, res) => {
     try {
-        const { institution } = req.query;
+        // Multi-tenant Scoping: If Admin (not Super Admin), force filter to req.user.institution
+        const effectiveInstitution = req.user && req.user.role === 'Admin' 
+            ? (req.user.institution || 'Media Cell Institution')
+            : (req.query.institution || null);
         
         const userFilter = {};
         const pendingUserFilter = { is_approved: false };
         const activeAlumniFilter = { is_approved: true, role: 'Alumni' };
 
-        if (institution && institution !== 'All') {
-            userFilter.institution = institution;
-            pendingUserFilter.institution = institution;
-            activeAlumniFilter.institution = institution;
+        if (effectiveInstitution && effectiveInstitution !== 'All') {
+            userFilter.institution = effectiveInstitution;
+            pendingUserFilter.institution = effectiveInstitution;
+            activeAlumniFilter.institution = effectiveInstitution;
         }
 
         const totalUsers = await User.countDocuments(userFilter);
@@ -43,10 +46,14 @@ exports.getStats = async (req, res) => {
 // @route   GET /api/admin/pending-users
 exports.getPendingUsers = async (req, res) => {
     try {
-        const { institution } = req.query;
+        // Multi-tenant Scoping: If Admin (not Super Admin), force filter to req.user.institution
+        const effectiveInstitution = req.user && req.user.role === 'Admin' 
+            ? (req.user.institution || 'Media Cell Institution')
+            : (req.query.institution || null);
+
         let filter = { is_approved: false };
-        if (institution && institution !== 'All') {
-            filter.institution = institution;
+        if (effectiveInstitution && effectiveInstitution !== 'All') {
+            filter.institution = effectiveInstitution;
         }
 
         const pendingUsers = await User.find(filter)

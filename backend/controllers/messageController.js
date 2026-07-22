@@ -8,12 +8,13 @@ const mongoose = require('mongoose');
 const resolveUserId = async (idParam) => {
     if (!idParam) return null;
     if (mongoose.Types.ObjectId.isValid(idParam)) {
-        return idParam;
+        const userById = await User.findById(idParam);
+        if (userById) return userById._id;
     }
     const foundUser = await User.findOne({ 
         $or: [{ username: idParam }, { email: idParam }, { name: idParam }] 
     });
-    return foundUser ? foundUser._id : null;
+    return foundUser ? foundUser._id : (mongoose.Types.ObjectId.isValid(idParam) ? idParam : null);
 };
 
 // @desc    Send a message
@@ -54,16 +55,27 @@ exports.getConversation = async (req, res) => {
             return res.json([]);
         }
 
+        const currentUserIdStr = currentUserId.toString();
+        const targetIdStr = targetId.toString();
+
         const messages = await Message.find({
             $or: [
                 { sender: currentUserId, receiver: targetId },
-                { sender: targetId, receiver: currentUserId }
+                { sender: targetId, receiver: currentUserId },
+                { sender: currentUserIdStr, receiver: targetIdStr },
+                { sender: targetIdStr, receiver: currentUserIdStr }
             ]
         }).sort('createdAt'); // oldest to newest for chat UI
 
         // Mark received messages as read
         await Message.updateMany(
-            { sender: targetId, receiver: currentUserId, read: false },
+            { 
+                $or: [
+                    { sender: targetId, receiver: currentUserId },
+                    { sender: targetIdStr, receiver: currentUserIdStr }
+                ],
+                read: false 
+            },
             { $set: { read: true } }
         );
         
@@ -89,7 +101,12 @@ exports.getChatHistory = async (req, res) => {
 
         // Find all messages involving the current user
         const messages = await Message.find({
-            $or: [{ sender: req.user._id }, { receiver: req.user._id }]
+            $or: [
+                { sender: req.user._id }, 
+                { receiver: req.user._id },
+                { sender: currentUserId },
+                { receiver: currentUserId }
+            ]
         })
         .sort('-createdAt')
         .populate('sender receiver', 'name email avatar_url role degree institution department');

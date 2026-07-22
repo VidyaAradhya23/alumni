@@ -16,9 +16,40 @@ const ChatScreen = ({ route, navigation }) => {
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [currentUserId, setCurrentUserId] = useState(null);
   const flatListRef = useRef(null);
 
   const storageKey = `chat_messages_${chatUser.id || 'default'}`;
+
+  useEffect(() => {
+    AsyncStorage.getItem('userInfo').then(raw => {
+      if (raw) {
+        try {
+          const info = JSON.parse(raw);
+          if (info._id || info.id) {
+            setCurrentUserId((info._id || info.id).toString());
+          }
+        } catch (e) {}
+      }
+    });
+  }, []);
+
+  const getIsMe = (item) => {
+    if (item.sender === 'me') return true;
+    const senderIdStr = typeof item.sender === 'object' ? (item.sender?._id || item.sender?.id) : item.sender;
+    if (!senderIdStr) return false;
+    
+    if (currentUserId && senderIdStr.toString() === currentUserId.toString()) {
+      return true;
+    }
+    
+    const chatUserIdStr = (chatUser.id || chatUser._id || '').toString();
+    if (chatUserIdStr && senderIdStr.toString() !== chatUserIdStr.toString()) {
+      return true;
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -229,10 +260,7 @@ const ChatScreen = ({ route, navigation }) => {
           data={messages}
           keyExtractor={item => item._id || item.id}
           renderItem={({ item }) => {
-            const senderIdStr = typeof item.sender === 'object' ? (item.sender._id || item.sender.id) : item.sender;
-            const chatUserIdStr = (chatUser.id || chatUser._id || '').toString();
-
-            const isMe = item.sender === 'me' || (senderIdStr && senderIdStr.toString() !== chatUserIdStr);
+            const isMe = getIsMe(item);
             const msgId = item._id || item.id;
             const reaction = selectedReaction[msgId];
 

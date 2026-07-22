@@ -31,11 +31,11 @@ exports.sendMessage = async (req, res) => {
         const message = await Message.create({
             sender: senderId,
             receiver: targetId,
-            text: encrypt(text)
+            text: text, // Plaintext stored directly in MongoDB backend
+            encrypted_text: encrypt(text)
         });
 
         const responseMsg = message.toObject();
-        responseMsg.text = text;
 
         res.status(201).json(responseMsg);
     } catch (error) {
@@ -79,14 +79,18 @@ exports.getConversation = async (req, res) => {
             { $set: { read: true } }
         );
         
-        // Decrypt messages before sending to client
-        const decryptedMessages = messages.map(msg => {
+        // Ensure legacy encrypted messages are decrypted before sending to client
+        const processedMessages = messages.map(msg => {
             const msgObj = msg.toObject();
-            msgObj.text = decrypt(msgObj.text);
+            if (msgObj.text && typeof msgObj.text === 'string' && msgObj.text.startsWith('U2FsdGVkX1')) {
+                try {
+                    msgObj.text = decrypt(msgObj.text);
+                } catch (e) {}
+            }
             return msgObj;
         });
 
-        res.json(decryptedMessages);
+        res.json(processedMessages);
     } catch (error) {
         console.error('getConversation error:', error);
         res.status(500).json({ message: error.message });
@@ -149,7 +153,11 @@ exports.getChatHistory = async (req, res) => {
 
             if (!chatsMap.has(otherUserIdStr)) {
                 const msgObj = msg.toObject ? msg.toObject() : { ...msg };
-                msgObj.text = decrypt(msgObj.text);
+                if (msgObj.text && typeof msgObj.text === 'string' && msgObj.text.startsWith('U2FsdGVkX1')) {
+                    try {
+                        msgObj.text = decrypt(msgObj.text);
+                    } catch (e) {}
+                }
 
                 chatsMap.set(otherUserIdStr, {
                     user: otherUserObj,

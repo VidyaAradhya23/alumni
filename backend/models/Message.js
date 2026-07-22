@@ -15,6 +15,9 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    encrypted_text: {
+        type: String
+    },
     read: {
         type: Boolean,
         default: false

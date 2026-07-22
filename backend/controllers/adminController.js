@@ -129,6 +129,21 @@ exports.updateUserRole = async (req, res) => {
 };
 
 const StudentData = require('../models/StudentData');
+const Message = require('../models/Message');
+
+// @desc    Get all messages stored in MongoDB (Admin view)
+// @route   GET /api/admin/messages
+exports.getAllMessages = async (req, res) => {
+    try {
+        const messages = await Message.find()
+            .populate('sender receiver', 'name email role institution department')
+            .sort({ createdAt: -1 })
+            .limit(100);
+        res.json(messages);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 // @desc    Check potential Mediacell matches for a user
 // @route   GET /api/admin/users/:id/check-match

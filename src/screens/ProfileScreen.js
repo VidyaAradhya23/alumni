@@ -31,6 +31,9 @@ const ProfileScreen = ({ navigation }) => {
   const styles = getStyles(theme);
 
   const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const containerWidth = isWeb ? Math.min(width, 800) : width;
+  const gridItemSize = (containerWidth - 6) / 3;
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState('menu'); // 'menu' | 'profile_edit' | 'profile_settings' | 'security'
   const [activeTab, setActiveTab] = useState('post'); // 'post' | 'messages' | 'reshare' | 'saved' | 'tags'
@@ -225,7 +228,6 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-    const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
   return (
@@ -321,14 +323,7 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name={activeTab === 'post' ? 'grid' : 'grid-outline'} size={20} color={activeTab === 'post' ? theme.primary : theme.textMuted} />
             <Text style={[styles.tabLabel, activeTab === 'post' && styles.activeTabLabel]}>Posts</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'messages' && styles.activeTabButton]} 
-            onPress={() => setActiveTab('messages')}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={activeTab === 'messages' ? 'chatbubbles' : 'chatbubbles-outline'} size={20} color={activeTab === 'messages' ? theme.primary : theme.textMuted} />
-            <Text style={[styles.tabLabel, activeTab === 'messages' && styles.activeTabLabel]}>Messages</Text>
-          </TouchableOpacity>
+
           <TouchableOpacity 
             style={[styles.tabButton, activeTab === 'reshare' && styles.activeTabButton]} 
             onPress={() => setActiveTab('reshare')}
@@ -365,7 +360,7 @@ const ProfileScreen = ({ navigation }) => {
               </View>
             ) : (
               userPosts.map((post) => (
-                <TouchableOpacity key={post._id || post.id} style={[styles.gridItem, { width: (width - 6) / 3, height: (width - 6) / 3 }]} activeOpacity={0.9}>
+                <TouchableOpacity key={post._id || post.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
                   {post.image_url ? (
                     <Image source={{ uri: post.image_url }} style={styles.gridImage} />
                   ) : (
@@ -379,65 +374,11 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         )}
 
-        {activeTab === 'messages' && (
-          <View style={styles.tabContentList}>
-            {profileChats.length === 0 ? (
-              <View style={{ padding: 30, alignItems: 'center' }}>
-                <Ionicons name="chatbubbles-outline" size={48} color="#CBD5E1" />
-                <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No message communications yet</Text>
-              </View>
-            ) : (
-              profileChats.map((item, index) => {
-                const u = item.user || {};
-                const userName = u.name || item.name || 'Alumni Member';
-                const userInst = u.institution || u.department || u.degree || item.role || '';
-                const userId = u._id || u.id || item.id || index.toString();
-                const initials = userName.charAt(0).toUpperCase();
-                const lastText = typeof item.lastMessage === 'string' ? item.lastMessage : (item.lastMessage?.text || '');
-                const timeText = item.lastMessage?.createdAt 
-                  ? new Date(item.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                  : (item.time || '');
-
-                return (
-                  <TouchableOpacity 
-                    key={userId} 
-                    style={styles.listCard}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      navigation.navigate('Chat', { 
-                        user: { 
-                          id: userId, 
-                          name: userName, 
-                          role: userInst, 
-                          initials: initials 
-                        } 
-                      });
-                    }}
-                  >
-                    <View style={styles.cardHeader}>
-                      <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>{initials}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.cardTitle}>{userName}</Text>
-                        {!!userInst && <Text style={{ fontSize: 11, color: '#64748B' }}>{userInst}</Text>}
-                      </View>
-                      <Text style={styles.cardFooterText}>{timeText}</Text>
-                    </View>
-                    <Text style={[styles.cardBodyText, { marginTop: 6, color: '#334155' }]} numberOfLines={2}>
-                      &quot;{lastText}&quot;
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-        )}
 
         {activeTab === 'tags' && (
           <View style={styles.postsGrid}>
             {mockTags.map((tag) => (
-              <TouchableOpacity key={tag.id} style={[styles.gridItem, { width: (width - 6) / 3, height: (width - 6) / 3 }]} activeOpacity={0.9}>
+              <TouchableOpacity key={tag.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
                 <Image source={{ uri: tag.uri }} style={styles.gridImage} />
                 <View style={styles.tagOverlay}>
                   <Ionicons name="person" size={16} color="#FFFFFF" />
@@ -450,7 +391,7 @@ const ProfileScreen = ({ navigation }) => {
         {activeTab === 'saved' && (
           <View style={styles.postsGrid}>
             {mockSaved.map((item) => (
-              <TouchableOpacity key={item.id} style={[styles.gridItem, { width: (width - 6) / 3, height: (width - 6) / 3 }]} activeOpacity={0.9}>
+              <TouchableOpacity key={item.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
                 <Image source={{ uri: item.uri }} style={styles.gridImage} />
               </TouchableOpacity>
             ))}

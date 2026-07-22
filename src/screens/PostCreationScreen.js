@@ -172,135 +172,128 @@ const PostCreationScreen = ({ navigation }) => {
   }, []);
 
   const isWeb = Platform.OS === 'web';
-  const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
+  const webWrapper = isWeb ? { flex: 1, backgroundColor: '#F8FAFC', paddingVertical: 20 } : { flex: 1 };
+  const webContainerStyle = isWeb ? { 
+    alignSelf: 'center', width: '100%', maxWidth: 680, flex: 1, backgroundColor: theme.card, 
+    borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, 
+    shadowOpacity: 0.08, shadowRadius: 24, elevation: 10, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' 
+  } : { flex: 1 };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={webContainerStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.navigate('Main');
-              }
-            }} 
-            style={styles.cancelBtn}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Post</Text>
-          <TouchableOpacity 
-            style={[styles.postBtn, (!content.trim() && !localImageUri || isUploading) && styles.disabledPostBtn]}
-            disabled={(!content.trim() && !localImageUri) || isUploading}
-            onPress={handlePost}
-          >
-            <Text style={styles.postBtnText}>{isUploading ? 'Posting...' : 'Post'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* User Header */}
-          <View style={styles.userSection}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text>
-            </View>
-            <View>
-              <Text style={styles.userName}>{currentUser?.name || 'User'}</Text>
-              <TouchableOpacity style={styles.audienceSelector} onPress={handleToggleAudience} activeOpacity={0.6}>
-                <Ionicons name="people-outline" size={12} color="#003366" />
-                <Text style={styles.audienceText}>{audience}</Text>
-                <Ionicons name="chevron-down" size={12} color="#94A3B8" />
+    <SafeAreaView style={[styles.container, isWeb && { backgroundColor: '#F8FAFC' }]}>
+      <View style={webWrapper}>
+        <View style={webContainerStyle}>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => { if (navigation.canGoBack()) { navigation.goBack(); } else { navigation.navigate('Main'); } }} style={styles.cancelBtn}>
+                <Ionicons name="close" size={24} color="#64748B" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Create Post</Text>
+              <TouchableOpacity style={[styles.postBtn, (!content.trim() && !localImageUri || isUploading) && styles.disabledPostBtn]} disabled={(!content.trim() && !localImageUri) || isUploading} onPress={handlePost}>
+                <Text style={[styles.postBtnText, (!content.trim() && !localImageUri || isUploading) && styles.disabledPostBtnText]}>{isUploading ? 'Posting...' : 'Post'}</Text>
               </TouchableOpacity>
             </View>
-          </View>
 
-          {/* TextInput */}
-          <TextInput
-            style={styles.input}
-            placeholder="Share an update, request a referral, or post an achievement..."
-            multiline
-            maxLength={280}
-            value={content}
-            onChangeText={setContent}
-            placeholderTextColor="#94A3B8"
-            autoFocus
-            spellCheck={false}
-            autoCorrect={false}
-            // For Edge specific blocking if possible via data attributes on web:
-            {...(Platform.OS === 'web' ? { 'data-ms-editor': false } : {})}
-          />
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+              {/* User Header */}
+              <View style={styles.userSection}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}</Text>
+                </View>
+                <View>
+                  <Text style={styles.userName}>{currentUser?.name || 'User'}</Text>
+                  <TouchableOpacity style={styles.audienceSelector} onPress={handleToggleAudience} activeOpacity={0.6}>
+                    <Text style={styles.audienceText}>{audience}</Text>
+                    <Ionicons name="caret-down" size={12} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-          {/* Attached Image Preview */}
-          {localImageUri ? (
-            <View style={styles.previewContainer}>
-              {mimeType && mimeType.startsWith('image/') ? (
-                <Image source={{ uri: localImageUri }} style={styles.previewImage} />
+              {/* TextInput */}
+              <TextInput
+                style={styles.input}
+                placeholder="What do you want to talk about?"
+                multiline
+                maxLength={280}
+                value={content}
+                onChangeText={setContent}
+                placeholderTextColor="#94A3B8"
+                autoFocus
+                spellCheck={false}
+                autoCorrect={false}
+                {...(Platform.OS === 'web' ? { 'data-ms-editor': false } : {})}
+              />
+
+              {/* Attached Image Preview */}
+              {localImageUri ? (
+                <View style={styles.previewContainer}>
+                  {mimeType && mimeType.startsWith('image/') ? (
+                    <Image source={{ uri: localImageUri }} style={styles.previewImage} />
+                  ) : (
+                    <View style={styles.documentPreview}>
+                      <Ionicons name="document-text" size={48} color="#003366" />
+                      <Text style={styles.documentName} numberOfLines={2}>{fileName || 'Document'}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity style={styles.removeImageBtn} onPress={() => { setLocalImageUri(null); setFileName(null); setMimeType('image/jpeg'); }}>
+                    <Ionicons name="close-circle" size={30} color="rgba(15, 23, 42, 0.7)" />
+                  </TouchableOpacity>
+                </View>
               ) : (
-                <View style={styles.documentPreview}>
-                  <Ionicons name="document-text" size={48} color="#003366" />
-                  <Text style={styles.documentName} numberOfLines={2}>{fileName || 'Document'}</Text>
+                <View style={styles.mediaSection}>
+                  <TouchableOpacity style={styles.mediaPlaceholder} onPress={handleSelectMedia} activeOpacity={0.7}>
+                    <View style={styles.iconCircle}><Ionicons name="image-outline" size={24} color="#003366" /></View>
+                    <View>
+                      <Text style={styles.mediaLabel}>Add Photo or Video</Text>
+                      <Text style={styles.mediaSubLabel}>Showcase your achievements</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.mediaPlaceholder, {marginTop: 12}]} onPress={handleSelectDocument} activeOpacity={0.7}>
+                    <View style={styles.iconCircle}><Ionicons name="document-attach-outline" size={24} color="#003366" /></View>
+                    <View>
+                      <Text style={styles.mediaLabel}>Attach Document</Text>
+                      <Text style={styles.mediaSubLabel}>PDFs, Docs, and more</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               )}
-              <TouchableOpacity style={styles.removeImageBtn} onPress={() => { setLocalImageUri(null); setFileName(null); setMimeType('image/jpeg'); }}>
-                <Ionicons name="close-circle" size={26} color="rgba(15, 23, 42, 0.8)" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.mediaSection}>
-              <TouchableOpacity style={styles.mediaPlaceholder} onPress={handleSelectMedia} activeOpacity={0.7}>
-                <Ionicons name="image-outline" size={28} color="#003366" />
-                <Text style={styles.mediaLabel}>Add Photo/Video to Post</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.mediaPlaceholder, {marginTop: 10}]} onPress={handleSelectDocument} activeOpacity={0.7}>
-                <Ionicons name="document-attach-outline" size={28} color="#003366" />
-                <Text style={styles.mediaLabel}>Attach Document / PDF (or Drag & Drop here)</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
-          {/* Quick Hashtags */}
-          <View style={styles.hashtagSection}>
-            <Text style={styles.hashtagLabel}>Quick Tags:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hashtagScroll}>
-              {hashtags.map(tag => (
-                <TouchableOpacity key={tag} style={styles.tagChip} onPress={() => handleAddHashtag(tag)}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </TouchableOpacity>
-              ))}
+              {/* Quick Hashtags */}
+              <View style={styles.hashtagSection}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hashtagScroll}>
+                  {hashtags.map(tag => (
+                    <TouchableOpacity key={tag} style={styles.tagChip} onPress={() => handleAddHashtag(tag)}>
+                      <Ionicons name="add" size={14} color="#64748B" style={{ marginRight: 2 }} />
+                      <Text style={styles.tagText}>{tag.replace('#', '')}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
             </ScrollView>
-          </View>
-        </ScrollView>
 
-        {/* Character Count & Bottom Toolbar */}
-        <View style={styles.footerContainer}>
-          <Text style={[styles.charCount, content.length >= 250 && styles.charCountWarning]}>
-            {content.length}/280
-          </Text>
-          <View style={styles.toolbar}>
-            <TouchableOpacity style={styles.toolBtn} onPress={handleSelectMedia}>
-              <Ionicons name="image" size={24} color="#003366" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.toolBtn} onPress={handleSelectDocument}>
-              <Ionicons name="add" size={26} color="#003366" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.toolBtn} onPress={handleToggleAudience}>
-              <Ionicons name="people" size={24} color="#003366" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.toolBtn} onPress={() => handleAddHashtag('#Institution')}>
-              <Ionicons name="hash" size={24} color="#003366" />
-            </TouchableOpacity>
-          </View>
+            {/* Bottom Toolbar */}
+            <View style={styles.footerContainer}>
+              <View style={styles.toolbar}>
+                <TouchableOpacity style={styles.toolBtn} onPress={handleSelectMedia}>
+                  <Ionicons name="image-outline" size={24} color="#475569" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.toolBtn} onPress={handleSelectDocument}>
+                  <Ionicons name="document-outline" size={24} color="#475569" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.toolBtn} onPress={handleToggleAudience}>
+                  <Ionicons name="people-outline" size={24} color="#475569" />
+                </TouchableOpacity>
+                <View style={{ flex: 1 }} />
+                <Text style={[styles.charCount, content.length >= 250 && styles.charCountWarning]}>
+                  {content.length}/280
+                </Text>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -314,40 +307,41 @@ const getStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
   cancelBtn: {
-    paddingVertical: 4,
-  },
-  cancelText: {
-    fontSize: 15.5,
-    color: theme.textSecondary,
-    fontWeight: '500',
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: theme.text,
   },
   postBtn: {
     backgroundColor: theme.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 24,
   },
   disabledPostBtn: {
-    backgroundColor: theme.border,
+    backgroundColor: '#E2E8F0',
   },
   postBtnText: {
     color: theme.card,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 15,
+  },
+  disabledPostBtnText: {
+    color: '#94A3B8',
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   userSection: {
     flexDirection: 'row',
@@ -355,9 +349,9 @@ const getStyles = (theme) => StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -366,66 +360,82 @@ const getStyles = (theme) => StyleSheet.create({
   avatarText: {
     color: theme.card,
     fontWeight: '800',
-    fontSize: 15,
+    fontSize: 16,
   },
   userName: {
-    fontSize: 15.5,
+    fontSize: 16,
     fontWeight: '700',
     color: theme.text,
+    marginBottom: 2,
   },
   audienceSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginTop: 4,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignSelf: 'flex-start',
+    gap: 4,
   },
   audienceText: {
-    fontSize: 11,
-    color: theme.primary,
-    fontWeight: '700',
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
   },
   input: {
-    fontSize: 16.5,
+    fontSize: 18,
     color: theme.text,
-    minHeight: 120,
+    minHeight: 140,
     textAlignVertical: 'top',
-    lineHeight: 22,
+    lineHeight: 26,
   },
   mediaSection: {
     marginTop: 20,
   },
   mediaPlaceholder: {
+    flexDirection: 'row',
     width: '100%',
-    height: 100,
-    backgroundColor: theme.background,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: theme.border,
-    borderStyle: 'dashed',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    alignItems: 'center',
+    gap: 16,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
   mediaLabel: {
+    fontSize: 15,
+    color: theme.text,
+    fontWeight: '700',
+  },
+  mediaSubLabel: {
     fontSize: 13,
-    color: theme.textSecondary,
-    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 2,
   },
   previewContainer: {
     position: 'relative',
     marginTop: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   previewImage: {
     width: '100%',
-    height: 180,
+    height: 250,
     resizeMode: 'cover',
   },
   documentPreview: {
@@ -433,73 +443,72 @@ const getStyles = (theme) => StyleSheet.create({
     height: 180,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
   documentName: {
     marginTop: 12,
     fontSize: 16,
     fontWeight: '600',
-    color: '#003366',
+    color: theme.text,
     paddingHorizontal: 20,
     textAlign: 'center',
   },
   removeImageBtn: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
   },
   hashtagSection: {
     marginTop: 24,
-  },
-  hashtagLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.textSecondary,
-    marginBottom: 8,
   },
   hashtagScroll: {
     gap: 8,
   },
   tagChip: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: '#E2E8F0',
   },
   tagText: {
-    fontSize: 12,
-    color: theme.primary,
+    fontSize: 13,
+    color: '#64748B',
     fontWeight: '600',
   },
   footerContainer: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    backgroundColor: theme.card,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 16,
+  },
+  toolBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   charCount: {
-    alignSelf: 'flex-end',
-    marginRight: 20,
-    marginTop: 8,
-    fontSize: 12,
-    color: theme.textMuted,
+    fontSize: 13,
+    color: '#64748B',
     fontWeight: '600',
   },
   charCountWarning: {
     color: theme.danger,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 24,
-  },
-  toolBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 

@@ -28,6 +28,7 @@ const ChatScreen = ({ route, navigation }) => {
   const [forwardModalMsg, setForwardModalMsg] = useState(null); // Message to forward
   const [suggestionsList, setSuggestionsList] = useState([]);
   const [forwardSearch, setForwardSearch] = useState('');
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
 
   const flatListRef = useRef(null);
 
@@ -228,6 +229,38 @@ const ChatScreen = ({ route, navigation }) => {
       }
     } catch (err) {
       console.log('Document picker error:', err);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    setShowAttachMenu(false);
+    if (Platform.OS === 'web') {
+      handlePickImage();
+      return;
+    }
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Camera permission is required!');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const dataUrl = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setPendingAttachment({
+          url: dataUrl,
+          type: 'image',
+          name: asset.fileName || 'Photo'
+        });
+      }
+    } catch (err) {
+      console.log('Camera error:', err);
     }
   };
 
@@ -629,6 +662,41 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
         )}
 
+        {/* WhatsApp-Style Attachment Popup Menu */}
+        {showAttachMenu && (
+          <View style={{ backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              onPress={() => { setShowAttachMenu(false); handlePickDocument(); }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#7C3AED', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+                <Ionicons name="document-text" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Send a document</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              onPress={() => { handleTakePhoto(); }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+                <Ionicons name="camera" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Take a photo or video</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              onPress={() => { setShowAttachMenu(false); handlePickImage(); }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#3B82F6', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+                <Ionicons name="images" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Select media from library</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Emoji Quick Picker Row */}
         {isEmojiPickerVisible && (
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', paddingVertical: 8, borderTopWidth: 1, borderColor: '#E2E8F0' }}>
@@ -640,27 +708,20 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Responsive Input Area */}
+        {/* Responsive Input Area — WhatsApp Style */}
         <View style={styles.inputArea}>
-          <TouchableOpacity style={styles.attachBtn} onPress={() => setIsEmojiPickerVisible(!isEmojiPickerVisible)}>
-            <Ionicons name={isEmojiPickerVisible ? "close-circle-outline" : "happy-outline"} size={24} color={isEmojiPickerVisible ? "#3B82F6" : "#64748B"} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.attachBtn} onPress={handlePickImage}>
-            <Ionicons name="image-outline" size={22} color="#003366" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.attachBtn} onPress={handlePickDocument}>
-            <Ionicons name="attach-outline" size={24} color="#003366" />
+          <TouchableOpacity style={styles.attachBtn} onPress={() => { setShowAttachMenu(!showAttachMenu); setIsEmojiPickerVisible(false); }}>
+            <Ionicons name={showAttachMenu ? 'close' : 'attach-outline'} size={24} color={showAttachMenu ? '#3B82F6' : '#64748B'} style={showAttachMenu ? {} : { transform: [{ rotate: '-45deg' }] }} />
           </TouchableOpacity>
 
           <TextInput
             style={styles.textInput}
-            placeholder="Type a message or attach files..."
+            placeholder="Write a message..."
             placeholderTextColor="#94A3B8"
             value={inputText}
             onChangeText={setInputText}
             multiline
+            onFocus={() => setShowAttachMenu(false)}
             onKeyPress={(e) => {
               if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
                 e.preventDefault();
@@ -668,13 +729,23 @@ const ChatScreen = ({ route, navigation }) => {
               }
             }}
           />
-          <TouchableOpacity 
-            style={[styles.sendBtn, (inputText.trim().length > 0 || pendingAttachment) && styles.sendBtnActive]} 
-            onPress={sendMessage}
-            disabled={!inputText.trim() && !pendingAttachment}
-          >
-            <Ionicons name="send" size={16} color="#FFFFFF" style={{ marginLeft: 2 }} />
+
+          <TouchableOpacity style={styles.attachBtn} onPress={() => { setIsEmojiPickerVisible(!isEmojiPickerVisible); setShowAttachMenu(false); }}>
+            <Ionicons name={isEmojiPickerVisible ? 'close-circle-outline' : 'happy-outline'} size={22} color={isEmojiPickerVisible ? '#3B82F6' : '#64748B'} />
           </TouchableOpacity>
+
+          {(inputText.trim().length > 0 || pendingAttachment) ? (
+            <TouchableOpacity 
+              style={[styles.sendBtn, styles.sendBtnActive]} 
+              onPress={sendMessage}
+            >
+              <Ionicons name="send" size={16} color="#FFFFFF" style={{ marginLeft: 2 }} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.attachBtn}>
+              <Ionicons name="mic-outline" size={24} color="#64748B" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Image Full Preview Modal */}

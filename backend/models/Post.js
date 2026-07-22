@@ -16,4 +16,7 @@ const postSchema = new mongoose.Schema({
     ]
 }, { timestamps: true });
 
+// Index for fast timeline feed sorting
+postSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Post', postSchema);

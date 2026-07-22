@@ -196,7 +196,7 @@ const ProfileScreen = ({ navigation }) => {
     const performLogout = async () => {
       setSettingsVisible(false);
       try {
-        await AsyncStorage.removeItem('userInfo');
+        await AsyncStorage.clear();
       } catch (error) {
         console.error('Failed to clear user session', error);
       }

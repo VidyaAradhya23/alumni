@@ -48,7 +48,6 @@ const ChatScreen = ({ route, navigation }) => {
         if (msgs && Array.isArray(msgs) && isMounted) {
           if (msgs.length > 0) {
             setMessages(prev => {
-              // Merge live server msgs with local optimistic msgs to ensure nothing is lost
               const map = new Map();
               prev.forEach(m => map.set(m._id || m.id, m));
               msgs.forEach(m => map.set(m._id || m.id, m));
@@ -56,6 +55,9 @@ const ChatScreen = ({ route, navigation }) => {
               AsyncStorage.setItem(storageKey, JSON.stringify(merged)).catch(() => {});
               return merged;
             });
+          } else {
+            setMessages([]);
+            AsyncStorage.removeItem(storageKey).catch(() => {});
           }
         }
       } catch(err) {

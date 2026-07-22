@@ -42,9 +42,11 @@ const MessagesScreen = ({ navigation }) => {
         try {
           const history = await getChatHistory();
           if (history && Array.isArray(history) && isMounted) {
+            setChatList(history);
             if (history.length > 0) {
-              setChatList(history);
               AsyncStorage.setItem('recent_chats_cache', JSON.stringify(history)).catch(() => {});
+            } else {
+              AsyncStorage.removeItem('recent_chats_cache').catch(() => {});
             }
           }
         } catch(err) {

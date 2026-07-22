@@ -662,37 +662,47 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* WhatsApp-Style Attachment Popup Menu */}
+        {/* WhatsApp-Style Attachment Popup Menu — Monochrome Icons */}
         {showAttachMenu && (
-          <View style={{ backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
+          <View style={{ backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderTopWidth: 1, borderTopColor: isDarkMode ? '#334155' : '#E5E7EB', paddingVertical: 4 }}>
             <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
               onPress={() => { setShowAttachMenu(false); handlePickDocument(); }}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#7C3AED', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-                <Ionicons name="document-text" size={20} color="#FFFFFF" />
-              </View>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Send a document</Text>
+              <Ionicons name="document-text-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
+              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Send a document</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
               onPress={() => { handleTakePhoto(); }}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-                <Ionicons name="camera" size={20} color="#FFFFFF" />
-              </View>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Take a photo or video</Text>
+              <Ionicons name="camera-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
+              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Take a photo or video</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
               onPress={() => { setShowAttachMenu(false); handlePickImage(); }}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: '#3B82F6', justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-                <Ionicons name="images" size={20} color="#FFFFFF" />
-              </View>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>Select media from library</Text>
+              <Ionicons name="images-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
+              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Select media from library</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
+              onPress={() => { setShowAttachMenu(false); }}
+            >
+              <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? '#94A3B8' : '#6B7280', marginRight: 20, width: 26, textAlign: 'center' }}>GIF</Text>
+              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Send a GIF</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 }}
+              onPress={() => { setShowAttachMenu(false); }}
+            >
+              <Ionicons name="at-outline" size={26} color={isDarkMode ? '#94A3B8' : '#6B7280'} style={{ marginRight: 20 }} />
+              <Text style={{ fontSize: 17, fontWeight: '400', color: isDarkMode ? '#E2E8F0' : '#1F2937' }}>Mention a person</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -708,7 +718,7 @@ const ChatScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Responsive Input Area — WhatsApp Style */}
+        {/* Responsive Input Area — WhatsApp Style: 📎 | "Write a message..." | 🎤 */}
         <View style={styles.inputArea}>
           <TouchableOpacity style={styles.attachBtn} onPress={() => { setShowAttachMenu(!showAttachMenu); setIsEmojiPickerVisible(false); }}>
             <Ionicons name={showAttachMenu ? 'close' : 'attach-outline'} size={24} color={showAttachMenu ? '#3B82F6' : '#64748B'} style={showAttachMenu ? {} : { transform: [{ rotate: '-45deg' }] }} />
@@ -729,10 +739,6 @@ const ChatScreen = ({ route, navigation }) => {
               }
             }}
           />
-
-          <TouchableOpacity style={styles.attachBtn} onPress={() => { setIsEmojiPickerVisible(!isEmojiPickerVisible); setShowAttachMenu(false); }}>
-            <Ionicons name={isEmojiPickerVisible ? 'close-circle-outline' : 'happy-outline'} size={22} color={isEmojiPickerVisible ? '#3B82F6' : '#64748B'} />
-          </TouchableOpacity>
 
           {(inputText.trim().length > 0 || pendingAttachment) ? (
             <TouchableOpacity 

@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const activityLogger = require('./middleware/activityLogger');
 
 dotenv.config();
@@ -99,6 +100,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // System Health & Architectural Flow Status Check
 app.get('/api/system-status', async (req, res) => {
@@ -106,14 +108,25 @@ app.get('/api/system-status', async (req, res) => {
     res.json({
         status: 'healthy',
         architecture: {
-            transport: 'HTTPS / WSS',
-            auth: 'JWT Authentication',
-            realtime: 'Socket.IO Active',
-            fileStorage: 'GridFS / Multi-Cloud Storage',
+            transport: 'HTTPS / WSS (Load Balancer & Nginx Proxy Ready)',
+            clients: ['Web Application (React/Next.js)', 'Mobile Application (Flutter)'],
+            modules: [
+                'Authentication Module',
+                'User Management Module',
+                'Alumni Directory Module',
+                'Profile Management Module',
+                'Event Management Module',
+                'Job Portal Module',
+                'Mentorship Module',
+                'Chat Module (Socket.IO)',
+                'Notification Module (FCM Admin SDK)',
+                'Admin Module',
+                'Reports & Analytics Module'
+            ],
             database: 'MongoDB Atlas',
             dbState: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-            indexes: 'Compound Indexes Active',
-            encryption: 'AES-256 Enabled'
+            storage: 'Cloudinary / GridFS / AWS S3',
+            realtime: 'Socket.IO WSS Active'
         },
         timestamp: new Date().toISOString()
     });

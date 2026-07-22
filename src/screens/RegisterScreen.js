@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,8 @@ import {
   Platform, 
   ScrollView,
   Modal,
-  FlatList
+  FlatList,
+  ActivityIndicator
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -201,10 +202,49 @@ const RegisterScreen = ({ navigation }) => {
     joiningYear: ''
   });
   const [agreeEULA, setAgreeEULA] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
   const [isCustomInstitution, setIsCustomInstitution] = useState(false);
+
+  // Inline Email OTP Verification States
+  const [emailState, setEmailState] = useState('idle'); // 'idle' | 'sent' | 'verified'
+  const [inlineOtp, setInlineOtp] = useState(['', '', '', '']);
+  const [sendingOtpLoading, setSendingOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+  const otpRefs = useRef([]);
+
+  const handleSendInlineOtp = async () => {
+    const emailClean = formData.email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      setOtpError('Please enter a valid email address');
+      return;
+    }
+    setSendingOtpLoading(true);
+    setOtpError('');
+    try {
+      await sendOtp(emailClean);
+      setEmailState('sent');
+      setOtpError('');
+    } catch (error) {
+      let msg = error.response?.data?.message || error.message || 'Failed to send OTP';
+      setOtpError(msg);
+    } finally {
+      setSendingOtpLoading(false);
+    }
+  };
+
+  const handleVerifyInlineOtp = () => {
+    const otpCode = inlineOtp.join('');
+    if (otpCode.length < 4) {
+      setOtpError('Please enter the complete 4-digit OTP code');
+      return;
+    }
+    setOtpVerified(true);
+    setEmailState('verified');
+    setOtpError('');
+  };
 
   const handleRegister = async () => {
     const { name, email, password, institution, branch, batchYear, joiningYear } = formData;
@@ -225,6 +265,11 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
+    if (!otpVerified && inlineOtp.join('').length < 4) {
+      alert('Please click "Send OTP" and enter the 4-digit verification code below your email.');
+      return;
+    }
+
     const pwdCheck = validatePasswordStrength(password);
     if (!pwdCheck.valid) {
       alert(pwdCheck.reason);
@@ -237,19 +282,7 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // Check if email already exists using custom backend
-      const emailExists = await checkEmailExists(emailClean);
-
-      if (emailExists) {
-        alert('This email has already been taken. Please use a different email or log in.');
-        setLoading(false);
-        return;
-      }
-
-      await sendOtp(emailClean);
-
-      alert('Verification code sent to your email.');
-      navigation.navigate('OTPVerification', { formData: {
+      await register({
         name,
         email: emailClean,
         password,
@@ -257,8 +290,12 @@ const RegisterScreen = ({ navigation }) => {
         branch: branch,
         department: branch,
         batchYear,
-        joiningYear
-      }});
+        joiningYear,
+        otp: inlineOtp.join('')
+      });
+
+      alert('Registration complete! Your account has been submitted and is currently pending Admin approval.');
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Registration error:', error);
       let errorMsg = 'Registration failed';
@@ -386,15 +423,141 @@ const RegisterScreen = ({ navigation }) => {
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email Address</Text>
-              <TextInput 
-                style={styles.input}
-                placeholder="college or personal email"
-                placeholderTextColor="#94A3B8"
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput 
+                  style={[
+                    styles.input, 
+                    { flex: 1 }, 
+                    emailState === 'verified' && { borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.05)' }
+                  ]}
+                  placeholder="college or personal email"
+                  placeholderTextColor="#94A3B8"
+                  value={formData.email}
+                  onChangeText={(text) => {
+                    setFormData({ ...formData, email: text });
+                    if (emailState !== 'idle') {
+                      setEmailState('idle');
+                      setOtpVerified(false);
+                      setInlineOtp(['', '', '', '']);
+                      setOtpError('');
+                    }
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={emailState !== 'verified'}
+                />
+                {emailState === 'verified' ? (
+                  <View style={{ marginLeft: 10 }}>
+                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={{
+                      marginLeft: 10,
+                      backgroundColor: theme.primary,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    onPress={handleSendInlineOtp}
+                    disabled={sendingOtpLoading}
+                  >
+                    {sendingOtpLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 12 }}>
+                        {emailState === 'sent' ? 'Resend' : 'Send OTP'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Validation Error Banner */}
+              {otpError ? (
+                <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 6, fontWeight: '500' }}>
+                  ⚠️ {otpError}
+                </Text>
+              ) : null}
+
+              {/* Inline OTP Verification Section (Appears directly down below Email field) */}
+              {emailState === 'sent' && !otpVerified ? (
+                <View style={{
+                  marginTop: 12,
+                  padding: 14,
+                  backgroundColor: 'rgba(0, 33, 68, 0.04)',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0, 33, 68, 0.15)'
+                }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text, marginBottom: 10 }}>
+                    📩 Enter 4-Digit OTP sent to {formData.email}:
+                  </Text>
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12 }}>
+                    {[0, 1, 2, 3].map((index) => (
+                      <TextInput
+                        key={index}
+                        ref={(el) => (otpRefs.current[index] = el)}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderWidth: 1.5,
+                          borderColor: inlineOtp[index] ? theme.primary : '#CBD5E1',
+                          borderRadius: 8,
+                          textAlign: 'center',
+                          fontSize: 20,
+                          fontWeight: '700',
+                          color: theme.text,
+                          backgroundColor: theme.card
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        value={inlineOtp[index]}
+                        onChangeText={(val) => {
+                          const newOtp = [...inlineOtp];
+                          newOtp[index] = val.replace(/[^0-9]/g, '');
+                          setInlineOtp(newOtp);
+                          if (val && index < 3) {
+                            otpRefs.current[index + 1]?.focus();
+                          }
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.nativeEvent.key === 'Backspace' && !inlineOtp[index] && index > 0) {
+                            otpRefs.current[index - 1]?.focus();
+                          }
+                        }}
+                      />
+                    ))}
+                  </View>
+
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: theme.primary,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      alignItems: 'center'
+                    }}
+                    onPress={handleVerifyInlineOtp}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>Verify OTP</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+
+              {/* Verified Badge */}
+              {emailState === 'verified' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                  <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '600' }}>
+                    ✅ Email verified successfully!
+                  </Text>
+                  <TouchableOpacity onPress={() => { setEmailState('idle'); setOtpVerified(false); }} style={{ marginLeft: 10 }}>
+                    <Text style={{ color: theme.primary, fontSize: 12, textDecorationLine: 'underline' }}>Change</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.inputContainer}>

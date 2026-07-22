@@ -3,6 +3,7 @@ const StudentData = require('../models/StudentData');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
+const { validateEmailFull } = require('../utils/emailValidator');
 const crypto = require('crypto');
 const OTP = require('../models/OTP');
 const Notification = require('../models/Notification');
@@ -34,35 +35,39 @@ const createRefreshToken = async (userId, req) => {
     return token;
 };
 
-// @desc    Check if email exists
+// @desc    Check if email is valid and available (Format, MX DNS, Disposable, Duplicate)
 // @route   POST /api/auth/check-email
 exports.checkEmailExists = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
+        const validation = await validateEmailFull(email);
+        
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                exists: validation.message.includes('already exists'), 
+                valid: false, 
+                message: validation.message 
+            });
         }
-        const userExists = await User.findOne({ email: email.trim().toLowerCase() });
-        res.json({ exists: !!userExists });
+        
+        res.json({ exists: false, valid: true, message: 'Email address is valid and available' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Send OTP to email
+// @desc    Send OTP to email after full validation
 // @route   POST /api/auth/send-otp
 exports.sendOtp = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
+        const validation = await validateEmailFull(email);
+        
+        if (!validation.valid) {
+            return res.status(400).json({ message: validation.message });
         }
         
         const emailClean = email.trim().toLowerCase();
-        const userExists = await User.findOne({ email: emailClean });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists with this email' });
-        }
 
         const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
         
@@ -73,27 +78,26 @@ exports.sendOtp = async (req, res) => {
         
         const emailSent = await sendOtpEmail(emailClean, otp);
         if (!emailSent) {
-            return res.status(500).json({ message: 'Failed to send OTP email' });
+            return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
         }
 
-        res.json({ message: 'OTP sent successfully' });
+        res.json({ message: 'Verification OTP sent successfully to your email' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Register new user
+// @desc    Register new user (Validate Email -> OTP Verified -> Pending Admin Approval)
 // @route   POST /api/auth/register
 exports.registerUser = async (req, res) => {
     const { name, email, password, institution, branch, batchYear, department, joiningYear, role, otp } = req.body;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email.trim())) {
-        return res.status(400).json({ message: 'Email address is not valid' });
+    if (!email) {
+        return res.status(400).json({ message: 'Email address is required' });
     }
     
     if (!otp) {
-        return res.status(400).json({ message: 'OTP is required' });
+        return res.status(400).json({ message: 'OTP verification code is required' });
     }
 
     if (!password || password.length < 8) {
@@ -105,21 +109,29 @@ exports.registerUser = async (req, res) => {
     }
 
     try {
-        const userExists = await User.findOne({ email: email.trim().toLowerCase() });
+        const emailClean = email.trim().toLowerCase();
 
+        // 1. Full Email Validation Check
+        const validation = await validateEmailFull(emailClean);
+        if (!validation.valid && !validation.message.includes('already exists')) {
+            return res.status(400).json({ message: validation.message });
+        }
+
+        const userExists = await User.findOne({ email: emailClean });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'An account with this email address already exists.' });
         }
 
-        // Verify OTP
-        const validOtp = await OTP.findOne({ email: email.trim().toLowerCase(), otp });
+        // 2. Verify OTP
+        const validOtp = await OTP.findOne({ email: emailClean, otp });
         if (!validOtp) {
-            return res.status(400).json({ message: 'Invalid or expired OTP' });
+            return res.status(400).json({ message: 'Invalid or expired verification OTP' });
         }
 
+        // 3. Complete Registration (Default is_approved: false -> Requires Admin Approval)
         const user = await User.create({
             name,
-            email: email.trim().toLowerCase(),
+            email: emailClean,
             password,
             institution,
             branch: branch || department, // Fallback for old clients
@@ -132,15 +144,16 @@ exports.registerUser = async (req, res) => {
         });
         
         // Delete OTP after successful registration
-        await OTP.deleteMany({ email: email.trim().toLowerCase() });
+        await OTP.deleteMany({ email: emailClean });
 
         // Fire and forget welcome email
         sendWelcomeEmail(user.email, user.name);
 
         res.status(201).json({
-            message: 'Account created successfully. Awaiting admin approval.',
+            message: 'Registration complete! Your account has been submitted and is currently pending Admin approval.',
             _id: user._id,
             email: user.email,
+            is_approved: false
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

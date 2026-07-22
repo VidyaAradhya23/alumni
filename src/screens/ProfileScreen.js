@@ -54,6 +54,8 @@ const ProfileScreen = ({ navigation }) => {
     avatar: '..'
   });
 
+  const [userPosts, setUserPosts] = useState([]);
+
   useFocusEffect(
     useCallback(() => {
     const fetchRecentChats = async () => {
@@ -138,6 +140,7 @@ const ProfileScreen = ({ navigation }) => {
               ...prev,
               posts: myPosts.length.toString(),
             }));
+            setUserPosts(myPosts);
           }
         }
       } catch (e) {
@@ -171,7 +174,6 @@ const ProfileScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [twoFactor, setTwoFactor] = useState(false);
 
-  const posts = [];
   const mockTags = [];
   const mockSaved = [];
   const mockReshares = [];
@@ -300,12 +302,8 @@ const ProfileScreen = ({ navigation }) => {
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.actionButton} onPress={handleOpenEdit} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.actionButton, { flex: 1, marginRight: 12 }]} onPress={handleOpenEdit} activeOpacity={0.7}>
               <Text style={styles.actionButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]} onPress={() => setActiveTab('messages')} activeOpacity={0.7}>
-              <Ionicons name="chatbubbles-outline" size={14} color="#003366" style={{ marginRight: 4 }} />
-              <Text style={[styles.actionButtonText, { color: '#003366' }]}>Messages</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallIconBtn} onPress={handleLogout} activeOpacity={0.7}>
               <Ionicons name="log-out-outline" size={18} color="#FF3B30" />
@@ -360,11 +358,24 @@ const ProfileScreen = ({ navigation }) => {
         {/* Tab Content Section */}
         {activeTab === 'post' && (
           <View style={styles.postsGrid}>
-            {posts.map((post) => (
-              <TouchableOpacity key={post.id} style={[styles.gridItem, { width: (width - 6) / 3, height: (width - 6) / 3 }]} activeOpacity={0.9}>
-                <Image source={{ uri: post.uri }} style={styles.gridImage} />
-              </TouchableOpacity>
-            ))}
+            {userPosts.length === 0 ? (
+              <View style={{ padding: 40, alignItems: 'center', width: '100%' }}>
+                <Ionicons name="grid-outline" size={48} color="#CBD5E1" />
+                <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No posts yet</Text>
+              </View>
+            ) : (
+              userPosts.map((post) => (
+                <TouchableOpacity key={post._id || post.id} style={[styles.gridItem, { width: (width - 6) / 3, height: (width - 6) / 3 }]} activeOpacity={0.9}>
+                  {post.image_url ? (
+                    <Image source={{ uri: post.image_url }} style={styles.gridImage} />
+                  ) : (
+                    <View style={[styles.gridImage, { backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', padding: 8 }]}>
+                      <Text style={{fontSize: 10, color: '#475569'}} numberOfLines={4}>{post.content}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 

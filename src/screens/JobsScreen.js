@@ -104,7 +104,11 @@ const JobsScreen = ({ navigation, route }) => {
     if (!isDesktop) setScreen('detail'); 
   };
 
-  const filtered = jobList.filter(j => j.role.toLowerCase().includes(searchQ.toLowerCase()) || j.company.toLowerCase().includes(searchQ.toLowerCase()) || j.location.toLowerCase().includes(searchQ.toLowerCase()));
+  const filtered = jobList.filter(j => 
+    (j.role || '').toLowerCase().includes((searchQ || '').toLowerCase()) || 
+    (j.company || '').toLowerCase().includes((searchQ || '').toLowerCase()) || 
+    (j.location || '').toLowerCase().includes((searchQ || '').toLowerCase())
+  );
 
   // ─── RENDER DETAIL ──────────────────────────────────────────────
   const renderDetail = () => {

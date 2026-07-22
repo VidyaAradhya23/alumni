@@ -49,7 +49,7 @@ const EngageScreen = ({ navigation }) => {
       
       if (postsRes.status === 'fulfilled' && postsRes.value) {
         const formatted = postsRes.value
-          .filter(p => !blockedUsers.has(p.user._id))
+          .filter(p => p.user && !blockedUsers.has(p.user._id))
           .map(p => ({
           id: p._id,
           user_id: p.user._id,
@@ -278,8 +278,8 @@ const EngageScreen = ({ navigation }) => {
 
   const filteredPosts = postsList.filter(p => 
     !blockedUsers.has(p.user_id) && 
-    (p.content.toLowerCase().includes(searchText.toLowerCase()) || 
-     p.user.toLowerCase().includes(searchText.toLowerCase()))
+    ((p.content || '').toLowerCase().includes((searchText || '').toLowerCase()) || 
+     (p.user || '').toLowerCase().includes((searchText || '').toLowerCase()))
   );
 
   const feedContent = (

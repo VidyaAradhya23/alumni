@@ -127,10 +127,7 @@ const ChatScreen = ({ route, navigation }) => {
         </View>
         <View style={styles.headerUserInfo}>
           <Text style={styles.headerName}>{chatUser.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="lock-closed-outline" size={10} color="#059669" style={{ marginRight: 3 }} />
-            <Text style={styles.headerRole}>{chatUser.role ? `${chatUser.role} • Encrypted` : 'End-to-End Encrypted'}</Text>
-          </View>
+          {!!chatUser.role && <Text style={styles.headerRole}>{chatUser.role}</Text>}
         </View>
         <TouchableOpacity style={styles.infoButton}>
           <Ionicons name="information-circle-outline" size={24} color="#003366" />
@@ -146,14 +143,6 @@ const ChatScreen = ({ route, navigation }) => {
           data={messages}
           keyExtractor={item => item._id || item.id}
           renderItem={renderMessage}
-          ListHeaderComponent={
-            <View style={styles.encryptionNotice}>
-              <Ionicons name="lock-closed" size={13} color="#B45309" style={{ marginRight: 6 }} />
-              <Text style={styles.encryptionNoticeText}>
-                Messages are end-to-end encrypted with AES-256. No one outside of this chat can read them.
-              </Text>
-            </View>
-          }
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
         />

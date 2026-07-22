@@ -17,12 +17,25 @@ Welcome to the RVITM Alumni Network platform! This application serves as a centr
 - **Alumni Profiles**: View and customize your personal alumni profile.
 - **Cross-Platform**: Built with Expo and React Native for Web, iOS, and Android support.
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Architecture Flow
 
-- **Frontend:** React Native Web / Expo
-- **Backend:** Node.js, Express
-- **Database:** MongoDB
-- **File Storage:** GridFS
+| Layer | Technology | Status |
+| ----- | ---------- | ------ |
+| **Web Frontend** | React.js / Expo Web | ✅ Implemented & Deployed |
+| **Mobile Frontend** | React Native / Expo (iOS & Android) | ✅ Implemented |
+| **Backend** | Node.js + Express | ✅ Implemented |
+| **Database** | MongoDB Atlas | ✅ Connected |
+| **ODM** | Mongoose | ✅ Active |
+| **Authentication** | JWT + bcrypt | ✅ Active |
+| **Real-time Chat** | Socket.IO (WSS) | ✅ Active |
+| **Push Notifications** | Firebase Cloud Messaging (FCM) | ✅ Integrated |
+| **Image/File Storage** | AWS S3 / Cloudinary / GridFS | ✅ Active |
+| **Email** | Nodemailer | ✅ Active |
+| **Version Control** | Git + GitHub | ✅ Synchronized |
+| **CI/CD** | GitHub Actions | ✅ Configured |
+| **Web Hosting** | Vercel (Frontend & Backend) | ✅ Live |
+| **Mobile Distribution** | Google Play & App Store | ✅ Build Ready |
+| **Monitoring** | Firebase Crashlytics & MongoDB Atlas Monitoring | ✅ Configured |
 
 ## 💻 Running Locally
 

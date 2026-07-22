@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Image, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Image, Alert, Linking, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getConversation, sendMessage as sendApiMessage } from '../services/messageService';
+import { getConversation, sendMessage as sendApiMessage, reactMessage as apiReactMessage } from '../services/messageService';
+import { getSuggestions } from '../services/authService';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -21,6 +22,13 @@ const ChatScreen = ({ route, navigation }) => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [pendingAttachment, setPendingAttachment] = useState(null); // { url, type, name }
   const [previewImageModal, setPreviewImageModal] = useState(null);
+  
+  // WhatsApp Features States
+  const [replyToMsg, setReplyToMsg] = useState(null); // { _id, text, senderName }
+  const [forwardModalMsg, setForwardModalMsg] = useState(null); // Message to forward
+  const [suggestionsList, setSuggestionsList] = useState([]);
+  const [forwardSearch, setForwardSearch] = useState('');
+
   const flatListRef = useRef(null);
 
   const storageKey = `chat_messages_${chatUser.id || 'default'}`;
@@ -36,6 +44,11 @@ const ChatScreen = ({ route, navigation }) => {
         } catch (e) {}
       }
     });
+
+    getSuggestions().then(res => {
+      if (Array.isArray(res)) setSuggestionsList(res);
+      else if (res && res.data) setSuggestionsList(res.data);
+    }).catch(() => {});
   }, []);
 
   const getIsMe = (item) => {
@@ -222,9 +235,11 @@ const ChatScreen = ({ route, navigation }) => {
     if ((!inputText.trim() && !pendingAttachment) || !chatUser.id) return;
     const textToSend = inputText.trim();
     const attachmentToSend = pendingAttachment;
+    const currentReply = replyToMsg;
 
     setInputText('');
     setPendingAttachment(null);
+    setReplyToMsg(null);
     setIsEmojiPickerVisible(false);
     
     // Optimistic UI update
@@ -232,6 +247,7 @@ const ChatScreen = ({ route, navigation }) => {
       _id: Date.now().toString(), 
       text: textToSend, 
       attachment: attachmentToSend,
+      replyTo: currentReply,
       sender: 'me',
       read: false,
       createdAt: new Date().toISOString()
@@ -244,7 +260,7 @@ const ChatScreen = ({ route, navigation }) => {
     });
     
     try {
-      const realMsg = await sendApiMessage(chatUser.id, textToSend, attachmentToSend);
+      const realMsg = await sendApiMessage(chatUser.id, textToSend, attachmentToSend, currentReply, false);
       if (realMsg) {
         setMessages(prev => {
           const updated = prev.map(m => (m._id === optimisticMsg._id || m.id === optimisticMsg._id) ? realMsg : m);
@@ -254,6 +270,54 @@ const ChatScreen = ({ route, navigation }) => {
       }
     } catch(err) {
       console.log('Failed to send msg to server:', err);
+    }
+  };
+
+  const handleToggleReaction = async (msgId, emoji) => {
+    setMessages(prev => prev.map(m => {
+      const currentId = m._id || m.id;
+      if (currentId !== msgId) return m;
+
+      const currentReactions = Array.isArray(m.reactions) ? [...m.reactions] : [];
+      const userIdx = currentReactions.findIndex(r => (r.user?._id || r.user || r.userId) === currentUserId);
+
+      if (userIdx > -1) {
+        if (currentReactions[userIdx].emoji === emoji) {
+          currentReactions.splice(userIdx, 1);
+        } else {
+          currentReactions[userIdx] = { user: currentUserId, emoji };
+        }
+      } else {
+        currentReactions.push({ user: currentUserId, emoji });
+      }
+
+      return { ...m, reactions: currentReactions };
+    }));
+
+    try {
+      await apiReactMessage(msgId, emoji);
+    } catch (err) {
+      console.log('Reaction sync failed:', err);
+    }
+  };
+
+  const handleForwardMessage = async (targetUser) => {
+    if (!forwardModalMsg || !targetUser._id) return;
+    const fMsg = forwardModalMsg;
+    setForwardModalMsg(null);
+
+    try {
+      await sendApiMessage(
+        targetUser._id, 
+        fMsg.text || '', 
+        fMsg.attachment || null, 
+        null, 
+        true
+      );
+      Alert.alert('Forwarded', `Message forwarded to ${targetUser.name}`);
+    } catch (err) {
+      console.log('Forward error:', err);
+      Alert.alert('Error', 'Failed to forward message');
     }
   };
 
@@ -421,7 +485,9 @@ const ChatScreen = ({ route, navigation }) => {
           renderItem={({ item }) => {
             const isMe = getIsMe(item);
             const msgId = item._id || item.id;
-            const reaction = selectedReaction[msgId];
+            const reactionList = Array.isArray(item.reactions) ? item.reactions : [];
+            const reactionSummary = reactionList.map(r => r.emoji).join(' ');
+            const senderDisplayName = isMe ? 'You' : (chatUser.name || 'Member');
 
             return (
               <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
@@ -430,12 +496,43 @@ const ChatScreen = ({ route, navigation }) => {
                     <Text style={styles.avatarText}>{chatUser.initials}</Text>
                   </View>
                 )}
-                <View style={{ maxWidth: '78%' }}>
+                <View style={{ maxWidth: '82%' }}>
                   <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
+                    
+                    {/* Forwarded Tag */}
+                    {item.isForwarded && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Ionicons name="arrow-redo" size={12} color={isMe ? '#93C5FD' : '#64748B'} style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, fontStyle: 'italic', color: isMe ? '#93C5FD' : '#64748B' }}>Forwarded</Text>
+                      </View>
+                    )}
+
+                    {/* Quoted Reply Preview */}
+                    {item.replyTo && item.replyTo.text ? (
+                      <View style={{ 
+                        borderLeftWidth: 3, 
+                        borderLeftColor: isMe ? '#60A5FA' : '#003366', 
+                        backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#F1F5F9',
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 6,
+                        marginBottom: 6
+                      }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: isMe ? '#FFFFFF' : '#003366' }}>
+                          {item.replyTo.senderName || 'Replied Message'}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: isMe ? 'rgba(255,255,255,0.85)' : '#475569' }} numberOfLines={1}>
+                          {item.replyTo.text}
+                        </Text>
+                      </View>
+                    ) : null}
+
                     {renderMessageAttachment(item.attachment, isMe)}
+
                     {item.text ? (
                       <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
                     ) : null}
+
                     <View style={styles.messageMeta}>
                       <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
                         {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
@@ -451,24 +548,40 @@ const ChatScreen = ({ route, navigation }) => {
                     </View>
                   </View>
 
-                  {/* Reaction badge */}
-                  {reaction ? (
+                  {/* Reaction summary badge */}
+                  {reactionSummary.length > 0 && (
                     <View style={[{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: -8, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 }]}>
-                      <Text style={{ fontSize: 12 }}>{reaction}</Text>
-                    </View>
-                  ) : (
-                    <View style={{ flexDirection: 'row', alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: 2, gap: 8 }}>
-                      <TouchableOpacity onPress={() => handleReaction(msgId, '❤️')} activeOpacity={0.6}>
-                        <Text style={{ fontSize: 10, opacity: 0.5 }}>❤️</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleReaction(msgId, '👍')} activeOpacity={0.6}>
-                        <Text style={{ fontSize: 10, opacity: 0.5 }}>👍</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleReaction(msgId, '🔥')} activeOpacity={0.6}>
-                        <Text style={{ fontSize: 10, opacity: 0.5 }}>🔥</Text>
-                      </TouchableOpacity>
+                      <Text style={{ fontSize: 11 }}>{reactionSummary}</Text>
                     </View>
                   )}
+
+                  {/* Action row (Reactions, Reply, Forward) */}
+                  <View style={{ flexDirection: 'row', alignSelf: isMe ? 'flex-end' : 'flex-start', marginTop: 3, alignItems: 'center', gap: 10 }}>
+                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '❤️')} activeOpacity={0.6}>
+                      <Text style={{ fontSize: 11, opacity: 0.6 }}>❤️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '👍')} activeOpacity={0.6}>
+                      <Text style={{ fontSize: 11, opacity: 0.6 }}>👍</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleToggleReaction(msgId, '🔥')} activeOpacity={0.6}>
+                      <Text style={{ fontSize: 11, opacity: 0.6 }}>🔥</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center' }} 
+                      onPress={() => setReplyToMsg({ _id: msgId, text: item.text || item.attachment?.name || 'Attachment', senderName: senderDisplayName })}
+                    >
+                      <Ionicons name="arrow-undo-outline" size={13} color="#64748B" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => setForwardModalMsg(item)}
+                    >
+                      <Ionicons name="arrow-redo-outline" size={13} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+
                 </View>
               </View>
             );
@@ -476,6 +589,23 @@ const ChatScreen = ({ route, navigation }) => {
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
         />
+
+        {/* Replying-To Preview Banner */}
+        {replyToMsg && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#CBD5E1', borderLeftWidth: 4, borderLeftColor: '#003366' }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#003366' }}>
+                Replying to {replyToMsg.senderName}
+              </Text>
+              <Text style={{ fontSize: 12, color: '#475569' }} numberOfLines={1}>
+                {replyToMsg.text}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setReplyToMsg(null)} style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={20} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Pending Attachment Preview Bar */}
         {pendingAttachment && (
@@ -567,6 +697,54 @@ const ChatScreen = ({ route, navigation }) => {
             />
           </TouchableOpacity>
         )}
+
+        {/* Forward Message Contact Picker Modal */}
+        <Modal visible={Boolean(forwardModalMsg)} animationType="slide" transparent={true}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: theme.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '80%' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text }}>Forward Message</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Select a contact to forward this message to</Text>
+                </View>
+                <TouchableOpacity onPress={() => setForwardModalMsg(null)}>
+                  <Ionicons name="close-circle" size={24} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput 
+                placeholder="Search contact..."
+                placeholderTextColor="#94A3B8"
+                style={{ backgroundColor: '#F1F5F9', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, marginBottom: 14, color: theme.text }}
+                value={forwardSearch}
+                onChangeText={setForwardSearch}
+              />
+
+              <FlatList
+                data={suggestionsList.filter(s => s.name && s.name.toLowerCase().includes(forwardSearch.toLowerCase()))}
+                keyExtractor={item => item._id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}
+                    onPress={() => handleForwardMessage(item)}
+                  >
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>
+                        {(item.name || 'U').charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>{item.name}</Text>
+                      <Text style={{ fontSize: 12, color: '#64748B' }}>{item.institution || item.department || item.degree || 'Alumni'}</Text>
+                    </View>
+                    <Ionicons name="send" size={18} color="#003366" />
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={<Text style={{ padding: 20, textAlign: 'center', color: '#94A3B8' }}>No contacts found.</Text>}
+              />
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </View>
     </SafeAreaView>

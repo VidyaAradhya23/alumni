@@ -23,6 +23,19 @@ const messageSchema = new mongoose.Schema({
         type: { type: String, default: '' }, // 'image', 'document', 'file'
         name: { type: String, default: '' }
     },
+    replyTo: {
+        _id: { type: String, default: '' },
+        text: { type: String, default: '' },
+        senderName: { type: String, default: '' }
+    },
+    isForwarded: {
+        type: Boolean,
+        default: false
+    },
+    reactions: [{
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        emoji: { type: String, required: true }
+    }],
     read: {
         type: Boolean,
         default: false

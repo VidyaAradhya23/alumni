@@ -1,7 +1,12 @@
 import api from './api';
 
-export const sendMessage = async (userId, text, attachment = null) => {
-    const { data } = await api.post(`/messages/${userId}`, { text, attachment });
+export const sendMessage = async (userId, text, attachment = null, replyTo = null, isForwarded = false) => {
+    const { data } = await api.post(`/messages/${userId}`, { text, attachment, replyTo, isForwarded });
+    return data;
+};
+
+export const reactMessage = async (messageId, emoji) => {
+    const { data } = await api.put(`/messages/${messageId}/react`, { emoji });
     return data;
 };
 

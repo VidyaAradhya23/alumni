@@ -21,7 +21,7 @@ const resolveUserId = async (idParam) => {
 // @route   POST /api/messages/:userId
 exports.sendMessage = async (req, res) => {
     try {
-        const { text, attachment } = req.body;
+        const { text, attachment, replyTo, isForwarded } = req.body;
         const targetId = await resolveUserId(req.params.userId);
         const senderId = req.user._id;
 
@@ -34,7 +34,8 @@ exports.sendMessage = async (req, res) => {
             sender: senderId,
             receiver: targetId,
             text: text || '',
-            encrypted_text: text ? encrypt(text) : ''
+            encrypted_text: text ? encrypt(text) : '',
+            isForwarded: Boolean(isForwarded)
         };
 
         if (attachment && attachment.url) {
@@ -45,12 +46,58 @@ exports.sendMessage = async (req, res) => {
             };
         }
 
+        if (replyTo && replyTo.text) {
+            messageData.replyTo = {
+                _id: replyTo._id || '',
+                text: replyTo.text || '',
+                senderName: replyTo.senderName || ''
+            };
+        }
+
         const message = await Message.create(messageData);
         const responseMsg = message.toObject();
 
         res.status(201).json(responseMsg);
     } catch (error) {
         console.error('sendMessage error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle emoji reaction on a message
+// @route   PUT /api/messages/:messageId/react
+exports.reactMessage = async (req, res) => {
+    try {
+        const { emoji } = req.body;
+        const messageId = req.params.messageId;
+        const userId = req.user._id;
+
+        if (!emoji) return res.status(400).json({ message: 'Emoji is required' });
+
+        const message = await Message.findById(messageId);
+        if (!message) return res.status(404).json({ message: 'Message not found' });
+
+        const existingReactionIndex = message.reactions.findIndex(
+            r => r.user && r.user.toString() === userId.toString()
+        );
+
+        if (existingReactionIndex > -1) {
+            if (message.reactions[existingReactionIndex].emoji === emoji) {
+                // Remove reaction if same emoji pressed again
+                message.reactions.splice(existingReactionIndex, 1);
+            } else {
+                // Replace emoji
+                message.reactions[existingReactionIndex].emoji = emoji;
+            }
+        } else {
+            // Add new reaction
+            message.reactions.push({ user: userId, emoji });
+        }
+
+        await message.save();
+        res.json(message);
+    } catch (error) {
+        console.error('reactMessage error:', error);
         res.status(500).json({ message: error.message });
     }
 };

@@ -395,7 +395,7 @@ const linking = {
 };
 
 function RootNavigator() {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator 

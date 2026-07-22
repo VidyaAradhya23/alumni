@@ -73,8 +73,8 @@ const DirectoryScreen = ({ navigation }) => {
 
   const filteredRequests = requests.filter(
     (r) =>
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
+      (r.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+      (r.subtitle || '').toLowerCase().includes((searchQuery || '').toLowerCase())
   );
 
   const renderRequestItem = ({ item }) => (
@@ -277,10 +277,10 @@ const DirectoryScreen = ({ navigation }) => {
   const renderWebDirectoryTab = () => {
     const filteredDirectory = directoryAlumni.filter(
       (a) =>
-        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.branch.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.institution.toLowerCase().includes(searchQuery.toLowerCase())
+        (a.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.branch || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.title || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.institution || '').toLowerCase().includes((searchQuery || '').toLowerCase())
     );
 
     return (
@@ -336,10 +336,10 @@ const DirectoryScreen = ({ navigation }) => {
   const renderDirectoryTab = () => {
     const filteredDirectory = directoryAlumni.filter(
       (a) =>
-        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.branch.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.institution.toLowerCase().includes(searchQuery.toLowerCase())
+        (a.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.branch || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.title || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (a.institution || '').toLowerCase().includes((searchQuery || '').toLowerCase())
     );
 
     return (

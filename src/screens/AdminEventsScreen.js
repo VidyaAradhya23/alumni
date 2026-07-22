@@ -386,11 +386,9 @@ const AdminEventsScreen = ({ navigation, route }) => {
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation && navigation.navigate('Messages')}>
             <Ionicons name="chatbubble-ellipses-outline" size={22} color="#003366" />
-            <View style={styles.dot} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation && navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={22} color="#003366" />
-            <View style={styles.dot} />
           </TouchableOpacity>
         </View>
       </View>

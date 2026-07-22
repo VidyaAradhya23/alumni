@@ -300,6 +300,9 @@ const DashboardScreen = ({ navigation }) => {
   );
 
   // ─── Render ────────────────────────────────────────────
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -332,17 +335,17 @@ const DashboardScreen = ({ navigation }) => {
           <View style={styles.headerIcons}>
             <TouchableOpacity
               style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('Messages')}
+              onPress={() => { setUnreadMessages(0); navigation.navigate('Messages'); }}
             >
               <Ionicons name="chatbubble-ellipses-outline" size={22} color={theme.primary} />
-              <View style={styles.dot} />
+              {unreadMessages > 0 && <View style={styles.dot} />}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('Notifications')}
+              onPress={() => { setUnreadNotifications(0); navigation.navigate('Notifications'); }}
             >
               <Ionicons name="notifications-outline" size={22} color={theme.primary} />
-              <View style={styles.dot} />
+              {unreadNotifications > 0 && <View style={styles.dot} />}
             </TouchableOpacity>
           </View>
         </View>

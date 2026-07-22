@@ -403,7 +403,7 @@ const EngageScreen = ({ navigation }) => {
         ))}
       </View>
 
-      <View style={[[styles.suggestionsSection, { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginTop: 16, elevation: 1, shadowOpacity: 0.1, shadowRadius: 4 }]]}>
+      <View style={[styles.suggestionsSection, { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginTop: 16, elevation: 1, shadowOpacity: 0.1, shadowRadius: 4 }]}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Events</Text>
         </View>

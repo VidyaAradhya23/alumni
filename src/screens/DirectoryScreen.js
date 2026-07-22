@@ -13,10 +13,9 @@ import {
   Alert, Platform, useWindowDimensions} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getSuggestions } from '../services/authService';
 
 const connectionRequests = [];
-
-const directoryAlumni = [];
 
 const DirectoryScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -25,6 +24,32 @@ const DirectoryScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('request');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(connectionRequests);
+  const [dbAlumni, setDbAlumni] = useState([]);
+
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await getSuggestions();
+        if (Array.isArray(res)) {
+          setDbAlumni(res);
+        }
+      } catch (err) {
+        console.log('Error fetching directory users from MongoDB:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const directoryAlumni = dbAlumni.map((u, i) => ({
+    _id: u._id || u.id,
+    id: u._id || u.id || i.toString(),
+    name: u.name,
+    branch: u.department || u.branch || u.batchYear ? `Batch ${u.batchYear}` : '',
+    title: u.designation || u.degree || u.role || 'Alumni',
+    institution: u.institution || 'Alumni Network',
+    initials: u.name ? u.name.charAt(0).toUpperCase() : '?',
+    color: '#003366'
+  }));
 
   // Community States
   const [communityModalVisible, setCommunityModalVisible] = useState(false);

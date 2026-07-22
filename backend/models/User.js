@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     bio: { type: String },
     linkedin: { type: String },
     avatar_url: { type: String },
-    role: { type: String, enum: ['Alumni', 'Admin', 'Super Admin'], default: 'Alumni' },
+    role: { type: String, enum: ['Alumni', 'Admin', 'Super Admin', 'Student'], default: 'Alumni' },
     is_approved: { type: Boolean, default: false },
     isVerifiedByMediacell: { type: Boolean, default: false },
     followers: [{

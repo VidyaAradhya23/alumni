@@ -23,6 +23,7 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
+import { getImageUrl } from '../services/uploadService';
 import useUserRole from '../hooks/useUserRole';
 
 const DashboardScreen = ({ navigation }) => {
@@ -106,7 +107,7 @@ const DashboardScreen = ({ navigation }) => {
             role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
             avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
             content: p.content,
-            image: p.image || null,
+            image: getImageUrl(p.image),
             likes: p.likes?.length || 0,
             commentsCount: p.comments?.length || 0,
             time: getTimeAgo(p.createdAt),

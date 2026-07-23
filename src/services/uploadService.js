@@ -1,7 +1,25 @@
 import axios from 'axios';
-import api from './api';
-
+import api, { API_URL } from './api';
 import { Platform } from 'react-native';
+
+/**
+ * Resolves full qualified URL for image paths.
+ * @param {string} url - Relative or absolute image URL
+ * @returns {string|null} Full image URL
+ */
+export const getImageUrl = (url) => {
+  if (!url) return null;
+  if (typeof url !== 'string') return null;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  // Server origin (e.g., https://backend-pi-bice-97.vercel.app)
+  const serverOrigin = API_URL.replace(/\/api\/?$/, '');
+  if (url.startsWith('/')) {
+    return `${serverOrigin}${url}`;
+  }
+  return `${serverOrigin}/${url}`;
+};
 
 /**
  * Uploads a file (like an image) to the backend.
@@ -35,7 +53,7 @@ export const uploadFile = async (uri, mimeType = 'image/jpeg', name = 'upload.jp
         });
 
         if (response.data && response.data.url) {
-            return response.data.url;
+            return getImageUrl(response.data.url);
         }
         throw new Error('Upload failed, no URL returned');
     } catch (error) {

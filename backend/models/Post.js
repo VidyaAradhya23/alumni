@@ -22,6 +22,7 @@ const postSchema = new mongoose.Schema({
     hideShareCount: { type: Boolean, default: false },
     commentsDisabled: { type: Boolean, default: false },
     isPinned: { type: Boolean, default: false },
+    isReshare: { type: Boolean, default: false },
     tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 

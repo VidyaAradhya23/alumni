@@ -31,7 +31,7 @@ exports.getPosts = async (req, res) => {
 // @desc    Create a post
 // @route   POST /api/posts
 exports.createPost = async (req, res) => {
-    const { content, image, fileType, fileName, tags } = req.body;
+    const { content, image, fileType, fileName, tags, isReshare } = req.body;
 
     try {
         const post = await Post.create({
@@ -40,6 +40,7 @@ exports.createPost = async (req, res) => {
             image,
             fileType,
             fileName,
+            isReshare: !!isReshare,
             tags: Array.isArray(tags) ? tags : []
         });
 

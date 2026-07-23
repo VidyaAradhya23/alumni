@@ -61,6 +61,7 @@ const ProfileScreen = ({ navigation }) => {
   });
 
   const [userPosts, setUserPosts] = useState([]);
+  const [userReshares, setUserReshares] = useState([]);
   const [taggedPosts, setTaggedPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -148,6 +149,12 @@ const ProfileScreen = ({ navigation }) => {
                 p.user && 
                 (p.user._id === userData._id || p.user.id === userData._id)
                 && !p.isArchived
+                && !p.isReshare
+              );
+              let myReshares = postsData.filter(p => 
+                p.user && 
+                (p.user._id === userData._id || p.user.id === userData._id)
+                && p.isReshare
               );
               let myTaggedPosts = postsData.filter(p =>
                 p.user &&
@@ -166,6 +173,7 @@ const ProfileScreen = ({ navigation }) => {
                 posts: myPosts.length.toString(),
               }));
               setUserPosts(myPosts);
+              setUserReshares(myReshares);
               setTaggedPosts(myTaggedPosts);
               setSavedPosts(mySavedPosts);
             }
@@ -263,7 +271,8 @@ const ProfileScreen = ({ navigation }) => {
       await createPost({
         content: `Reshared from @${post.user?.name || 'User'}:\n\n${post.content}`,
         image: post.image_url || post.image,
-        tags: []
+        tags: [],
+        isReshare: true
       });
       if (Platform.OS === 'web') {
         window.alert("Post reshared successfully!");
@@ -599,17 +608,32 @@ const ProfileScreen = ({ navigation }) => {
         )}
 
         {activeTab === 'reshare' && (
-          <View style={styles.tabContentList}>
-            {mockReshares.map(res => (
-              <View key={res.id} style={styles.listCard}>
-                <View style={styles.cardHeader}>
-                  <Ionicons name="repeat" size={18} color="#003366" style={{ marginRight: 8 }} />
-                  <Text style={styles.cardTitle}>Reshared from {res.user}</Text>
-                </View>
-                <Text style={styles.cardBodyText}>&quot;{res.content}&quot;</Text>
-                <Text style={styles.cardFooterText}>{res.date}</Text>
+          <View style={styles.postsGrid}>
+            {userReshares.length === 0 ? (
+              <View style={{ padding: 40, alignItems: 'center', width: '100%' }}>
+                <Ionicons name="repeat-outline" size={48} color="#CBD5E1" />
+                <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No reshared posts yet</Text>
+                <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>Posts you reshare will appear here</Text>
               </View>
-            ))}
+            ) : (
+              userReshares.map((post) => (
+                <TouchableOpacity 
+                  key={post._id || post.id} 
+                  style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} 
+                  activeOpacity={0.85}
+                  onPress={() => setSelectedPost(post)}
+                >
+                  {(post.image || post.image_url) ? (
+                    <Image source={{ uri: getImageUrl(post.image || post.image_url) }} style={styles.gridImage} />
+                  ) : (
+                    <View style={[styles.gridImage, { backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', padding: 10, borderWidth: 0.5, borderColor: '#E2E8F0' }]}>
+                      <Ionicons name="repeat" size={24} color={theme.primary} style={{ marginBottom: 6 }} />
+                      <Text style={{fontSize: 11, color: '#334155', fontWeight: '500', textAlign: 'center'}} numberOfLines={3}>{post.content}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
       </ScrollView>

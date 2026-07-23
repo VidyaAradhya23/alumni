@@ -99,6 +99,7 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
                         personalizations: [{ to: [{ email: userEmail }] }],
                         from: { email: fromEmail, name: 'Alumni Network' },
                         subject: 'Your 6-Digit Verification Code - Alumni Network',
+                        categories: ['transactional-otp'],
                         content: [
                             { type: 'text/plain', value: plainTextBody },
                             { type: 'text/html', value: htmlTemplate }

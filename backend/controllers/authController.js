@@ -70,14 +70,16 @@ exports.sendOtp = async (req, res) => {
 
         const emailClean = email.trim().toLowerCase();
 
-        // 1. Validate Email Format, MX Records & Disposable Filter
-        const validation = await validateEmailFull(emailClean);
+        // 1. Run Full Email Validation & Duplicate Check Concurrently
+        const [validation, existingUser] = await Promise.all([
+            validateEmailFull(emailClean),
+            User.findOne({ email: emailClean })
+        ]);
+
         if (!validation.valid) {
             return res.status(400).json({ message: validation.message });
         }
 
-        // 2. Check Duplicate Email
-        const existingUser = await User.findOne({ email: emailClean });
         if (existingUser) {
             return res.status(400).json({ message: 'An account with this email address already exists.' });
         }

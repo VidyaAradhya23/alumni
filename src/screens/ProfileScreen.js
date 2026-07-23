@@ -36,7 +36,7 @@ const ProfileScreen = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
   const containerWidth = isWeb ? Math.min(width, 800) : width;
-  const gridItemSize = (containerWidth - 6) / 3;
+  const gridItemSize = (containerWidth - 8) / 3;
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState('menu'); // 'menu' | 'profile_edit' | 'profile_settings' | 'security'
   const [activeTab, setActiveTab] = useState('post'); // 'post' | 'messages' | 'reshare' | 'saved' | 'tags'

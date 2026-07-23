@@ -561,66 +561,36 @@ const RegisterScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.inputContainer}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={styles.label}>Institution</Text>
-                <TouchableOpacity onPress={() => {
-                  setIsCustomInstitution(!isCustomInstitution);
-                  setFormData({ ...formData, institution: '', branch: '' });
-                }}>
-                  <Text style={{ color: '#FFD700', fontSize: 12, fontWeight: '700' }}>
-                    {isCustomInstitution ? "Select from list" : "Type custom name"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {isCustomInstitution ? (
-                <TextInput 
-                  style={styles.input}
-                  placeholder="Enter your custom institution name"
-                  placeholderTextColor="#94A3B8"
-                  value={formData.institution}
-                  onChangeText={(text) => setFormData({ ...formData, institution: text, branch: '' })}
-                />
-              ) : (
-                <TouchableOpacity 
-                  style={styles.selector} 
-                  onPress={() => openPicker('institution')}
-                >
-                  <Text style={[styles.selectorText, !formData.institution && { color: theme.textMuted }]}>
-                    {formData.institution || 'Select Institution'}
-                  </Text>
-                  <Text style={styles.arrow}>▼</Text>
-                </TouchableOpacity>
-              )}
+              <Text style={styles.label}>Institution</Text>
+              <TouchableOpacity 
+                style={styles.selector} 
+                onPress={() => openPicker('institution')}
+              >
+                <Text style={[styles.selectorText, !formData.institution && { color: theme.textMuted }]}>
+                  {formData.institution || 'Select Institution'}
+                </Text>
+                <Text style={styles.arrow}>▼</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.row}>
               <View style={[styles.inputContainer, { flex: 1.5, marginRight: 10 }]}>
                 <Text style={styles.label}>Department</Text>
-                {isCustomInstitution ? (
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="e.g. CSE, ECE"
-                    placeholderTextColor="#94A3B8"
-                    value={formData.branch}
-                    onChangeText={(text) => setFormData({ ...formData, branch: text })}
-                  />
-                ) : (
-                  <TouchableOpacity 
-                    style={[styles.selector, !formData.institution && { opacity: 0.6 }]} 
-                    onPress={() => {
-                      if (!formData.institution) {
-                        alert('Please select an institution first');
-                        return;
-                      }
-                      openPicker('branch');
-                    }}
-                  >
-                    <Text style={[styles.selectorText, !formData.branch && { color: theme.textMuted }]}>
-                      {formData.branch || 'Select Dept'}
-                    </Text>
-                    <Text style={styles.arrow}>▼</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity 
+                  style={[styles.selector, !formData.institution && { opacity: 0.6 }]} 
+                  onPress={() => {
+                    if (!formData.institution) {
+                      alert('Please select an institution first');
+                      return;
+                    }
+                    openPicker('branch');
+                  }}
+                >
+                  <Text style={[styles.selectorText, !formData.branch && { color: theme.textMuted }]}>
+                    {formData.branch || 'Select Dept'}
+                  </Text>
+                  <Text style={styles.arrow}>▼</Text>
+                </TouchableOpacity>
               </View>
 
               <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
@@ -670,8 +640,8 @@ const RegisterScreen = ({ navigation }) => {
               <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 1, borderColor: '#FFD700', justifyContent: 'center', alignItems: 'center', marginRight: 10, backgroundColor: agreeEULA ? '#FFD700' : 'transparent' }}>
                 {agreeEULA && <Ionicons name="checkmark" size={16} color={theme.primary} />}
               </View>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.9)', flex: 1, fontSize: 13, lineHeight: 18 }}>
-                I agree to the Terms of Service and EULA. I understand there is zero tolerance for abusive users and objectionable content.
+              <Text style={{ color: 'rgba(255, 255, 255, 0.9)', flex: 1, fontSize: 14, fontWeight: '500' }}>
+                I agree to the Terms of Service
               </Text>
             </TouchableOpacity>
 

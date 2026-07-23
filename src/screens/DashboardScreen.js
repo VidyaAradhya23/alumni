@@ -24,6 +24,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
 import { getImageUrl } from '../services/uploadService';
+import { addComment } from '../services/postService';
+import { sendMessage } from '../services/messageService';
 import useUserRole from '../hooks/useUserRole';
 
 const DashboardScreen = ({ navigation }) => {
@@ -109,6 +111,7 @@ const DashboardScreen = ({ navigation }) => {
             content: p.content,
             image: getImageUrl(p.image),
             likes: p.likes?.length || 0,
+            comments: p.comments || [],
             commentsCount: p.comments?.length || 0,
             time: getTimeAgo(p.createdAt),
           }));
@@ -538,24 +541,78 @@ const DashboardScreen = ({ navigation }) => {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={isWeb ? styles.webModalOverlay : styles.modalOverlay}>
           <View style={isWeb ? styles.webModalContainer : styles.bottomSheet}>
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Comments</Text>
+              <Text style={styles.sheetTitle}>Comments ({selectedPost?.comments?.length || 0})</Text>
               <TouchableOpacity onPress={closeModal}><Ionicons name="close" size={24} color={theme.text} /></TouchableOpacity>
             </View>
-            <FlatList
-              data={mockComments}
-              keyExtractor={item => item.id}
-              renderItem={({item}) => (
-                <View style={styles.commentRow}>
-                  <Text style={styles.commentUser}>{item.user}</Text>
-                  <Text style={styles.commentText}>{item.text}</Text>
-                  <Text style={styles.commentTime}>{item.time}</Text>
+
+            <ScrollView style={{ paddingHorizontal: 16, maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+              {(!selectedPost?.comments || selectedPost.comments.length === 0) ? (
+                <View style={{ paddingVertical: 30, alignItems: 'center' }}>
+                  <Ionicons name="chatbubble-outline" size={36} color="#CBD5E1" />
+                  <Text style={{ marginTop: 8, color: theme.textMuted, fontSize: 13 }}>No comments yet. Start the conversation!</Text>
                 </View>
+              ) : (
+                selectedPost.comments.map((item, index) => (
+                  <View key={item._id || index} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10, marginTop: 2 }}>
+                      <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 11 }}>
+                        {item.user?.name ? item.user.name.substring(0, 2).toUpperCase() : (typeof item.user === 'string' ? item.user.substring(0, 2).toUpperCase() : 'AL')}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, backgroundColor: 'rgba(0, 33, 68, 0.04)', borderRadius: 12, padding: 10 }}>
+                      <Text style={{ fontWeight: '700', fontSize: 13, color: theme.text }}>
+                        {item.user?.name || (typeof item.user === 'string' ? item.user : 'Alumni')}
+                      </Text>
+                      <Text style={{ fontSize: 13, color: theme.text, marginTop: 2 }}>{item.text}</Text>
+                      <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 4 }}>
+                        {item.createdAt ? getTimeAgo(item.createdAt) : 'Just now'}
+                      </Text>
+                    </View>
+                  </View>
+                ))
               )}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-            />
+            </ScrollView>
+
             <View style={styles.commentInputRow}>
-              <TextInput style={styles.commentInput} placeholder="Add a comment..." placeholderTextColor={theme.textMuted} value={commentText} onChangeText={setCommentText} />
-              <TouchableOpacity onPress={() => setCommentText('')}><Text style={styles.commentPostBtn}>Post</Text></TouchableOpacity>
+              <TextInput 
+                style={styles.commentInput} 
+                placeholder="Add a comment..." 
+                placeholderTextColor={theme.textMuted} 
+                value={commentText} 
+                onChangeText={setCommentText} 
+              />
+              <TouchableOpacity 
+                disabled={!commentText.trim()}
+                onPress={async () => {
+                  if (!commentText.trim() || !selectedPost) return;
+                  const textToAdd = commentText.trim();
+                  setCommentText('');
+                  
+                  const targetId = selectedPost.id || selectedPost._id;
+                  const newCommentObj = { 
+                    _id: 'c_' + Date.now(), 
+                    text: textToAdd, 
+                    user: { name: 'You' }, 
+                    createdAt: new Date() 
+                  };
+
+                  let updatedComments = [...(selectedPost.comments || []), newCommentObj];
+                  
+                  try {
+                    const updatedPost = await addComment(targetId, textToAdd);
+                    if (updatedPost && updatedPost.comments) {
+                      updatedComments = updatedPost.comments;
+                    }
+                  } catch (err) {
+                    console.log('Comment posting note:', err?.message || err);
+                  } finally {
+                    setSelectedPost(prev => prev ? ({ ...prev, comments: updatedComments }) : null);
+                    setPosts(prev => prev.map(p => (p.id === targetId || p._id === targetId) ? { ...p, comments: updatedComments, commentsCount: updatedComments.length } : p));
+                  }
+                }}
+              >
+                <Text style={[styles.commentPostBtn, !commentText.trim() && { opacity: 0.5 }]}>Post</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>

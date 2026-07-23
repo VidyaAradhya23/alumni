@@ -136,13 +136,13 @@ exports.registerUser = async (req, res) => {
 
         const userExists = await User.findOne({ email: emailClean });
         if (userExists) {
-            return res.status(400).json({ message: 'An account with this email address already exists.' });
+            return res.status(400).json({ message: 'Email Already Exists' });
         }
 
         // 2. Verify OTP
         const validOtp = await OTP.findOne({ email: emailClean, otp });
         if (!validOtp) {
-            return res.status(400).json({ message: 'Invalid or expired verification OTP' });
+            return res.status(400).json({ message: 'Invalid / Expired OTP' });
         }
 
         // 3. Complete Registration (Default is_approved: false -> Requires Admin Approval)

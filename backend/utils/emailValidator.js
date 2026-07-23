@@ -34,7 +34,7 @@ const DISPOSABLE_DOMAINS = new Set([
  */
 const validateEmailFull = async (email) => {
     if (!email || typeof email !== 'string') {
-        return { valid: false, message: 'Email address is required' };
+        return { valid: false, message: 'Enter a Valid Email' };
     }
 
     const emailClean = email.trim().toLowerCase();
@@ -42,48 +42,48 @@ const validateEmailFull = async (email) => {
     // 1. Format Validation (RFC 5322 regex compliant)
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
     if (!emailRegex.test(emailClean)) {
-        return { valid: false, message: 'Invalid email address format' };
+        return { valid: false, message: 'Enter a Valid Email' };
     }
 
     const parts = emailClean.split('@');
     if (parts.length !== 2) {
-        return { valid: false, message: 'Invalid email address structure' };
+        return { valid: false, message: 'Enter a Valid Email' };
     }
 
     const domain = parts[1];
 
-    // 2. Check Disposable / Temporary Email Domain
-    if (DISPOSABLE_DOMAINS.has(domain)) {
-        return { valid: false, message: 'Disposable or temporary email addresses are not allowed. Please use a permanent email.' };
-    }
-
-    // 3. Check Domain Exists & Has Valid MX (Mail Exchange) Records
+    // 2. Check Domain Exists & Has Valid MX (Mail Exchange) Records
     try {
         const mxRecords = await dns.resolveMx(domain);
         if (!mxRecords || mxRecords.length === 0) {
-            return { valid: false, message: `Domain '@${domain}' does not have valid mail server (MX) records to receive emails.` };
+            return { valid: false, message: 'Email Domain Not Valid' };
         }
     } catch (dnsErr) {
         // Fallback: Check A/AAAA record if MX check fails or times out
         try {
             const aRecords = await dns.resolve(domain);
             if (!aRecords || aRecords.length === 0) {
-                return { valid: false, message: `Domain '@${domain}' could not be resolved on DNS. Please check for typos.` };
+                return { valid: false, message: 'Email Domain Not Valid' };
             }
         } catch (e) {
-            return { valid: false, message: `Email domain '@${domain}' does not exist or has no active mail server.` };
+            return { valid: false, message: 'Email Domain Not Valid' };
         }
+    }
+
+    // 3. Check Disposable / Temporary Email Domain
+    if (DISPOSABLE_DOMAINS.has(domain)) {
+        return { valid: false, message: 'Temporary Emails Not Allowed' };
     }
 
     // 4. Check Duplicate Email in Database
     const existingUser = await User.findOne({ email: emailClean });
     if (existingUser) {
-        return { valid: false, message: 'An account with this email address already exists.' };
+        return { valid: false, message: 'Email Already Exists' };
     }
 
     return {
         valid: true,
-        message: 'Email address is valid, available, and verified for registration.'
+        message: 'Email address is valid and verified for registration.'
     };
 };
 

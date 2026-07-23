@@ -1,6 +1,4 @@
 const dns = require('dns').promises;
-const User = require('../models/User');
-const connectDB = require('../config/db');
 
 // Common Disposable / Temporary Email Provider Domains
 const DISPOSABLE_DOMAINS = new Set([
@@ -28,10 +26,54 @@ const DISPOSABLE_DOMAINS = new Set([
     'mytemp.email'
 ]);
 
+// Well-known email domains — guaranteed valid, skip DNS lookup entirely
+const TRUSTED_DOMAINS = new Set([
+    'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.in', 'yahoo.co.in',
+    'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'protonmail.com', 'proton.me',
+    'rediffmail.com', 'rediff.com',
+    'aol.com',
+    'zoho.com',
+    'yandex.com', 'yandex.ru',
+    'tutanota.com', 'gmx.com', 'mail.com'
+]);
+
+// DNS MX lookup with a hard 2-second timeout
+const resolveMxWithTimeout = (domain, timeoutMs = 2000) => {
+    return new Promise((resolve) => {
+        let settled = false;
+
+        const timer = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                resolve(null); // Timed out — treat as valid (pass through)
+            }
+        }, timeoutMs);
+
+        dns.resolveMx(domain)
+            .then((records) => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(records);
+                }
+            })
+            .catch(() => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(null); // DNS failed — treat as valid (pass through)
+                }
+            });
+    });
+};
+
 /**
- * Validates email format, disposable email check, MX domain record existence, and DB availability.
+ * Validates email format, disposable email check, MX domain record existence.
+ * Skips DNS lookup entirely for trusted/popular domains to eliminate cold-start delay.
  * @param {string} email 
- * @returns {Promise<{ valid: boolean, message?: string, errors?: string[] }>}
+ * @returns {Promise<{ valid: boolean, message?: string }>}
  */
 const validateEmailFull = async (email) => {
     if (!email || typeof email !== 'string') {
@@ -53,38 +95,18 @@ const validateEmailFull = async (email) => {
 
     const domain = parts[1];
 
-    // 2. Check Domain Exists & Has Valid MX (Mail Exchange) Records
-    try {
-        const mxRecords = await dns.resolveMx(domain);
-        if (!mxRecords || mxRecords.length === 0) {
-            return { valid: false, message: 'Email Domain Not Valid' };
-        }
-    } catch (dnsErr) {
-        // Fallback: Check A/AAAA record if MX check fails or times out
-        try {
-            const aRecords = await dns.resolve(domain);
-            if (!aRecords || aRecords.length === 0) {
-                return { valid: false, message: 'Email Domain Not Valid' };
-            }
-        } catch (e) {
-            return { valid: false, message: 'Email Domain Not Valid' };
-        }
-    }
-
-    // 3. Check Disposable / Temporary Email Domain
+    // 2. Check Disposable / Temporary Email Domain (O(1) Set lookup — instant)
     if (DISPOSABLE_DOMAINS.has(domain)) {
         return { valid: false, message: 'Temporary Emails Not Allowed' };
     }
 
-    // 4. Check Duplicate Email in Database
-    try {
-        await connectDB();
-    } catch (e) {
-        console.error('Database connection note in validator:', e);
-    }
-    const existingUser = await User.findOne({ email: emailClean });
-    if (existingUser) {
-        return { valid: false, message: 'Email Already Exists' };
+    // 3. Skip DNS lookup for trusted popular providers (avoids 2-5s cold DNS delay)
+    if (!TRUSTED_DOMAINS.has(domain)) {
+        const mxRecords = await resolveMxWithTimeout(domain, 2000);
+        if (mxRecords !== null && mxRecords.length === 0) {
+            return { valid: false, message: 'Email Domain Not Valid' };
+        }
+        // null = timeout / DNS error = allow through (fail-open for user experience)
     }
 
     return {

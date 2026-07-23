@@ -92,11 +92,9 @@ exports.sendOtp = async (req, res) => {
         // 5. Send OTP via Email Service (with SMTP Retries)
         const emailResult = await sendOtpEmail(emailClean, otp);
         if (!emailResult.success) {
-            console.log(`[OTP SMTP LOG] SMTP delivery note for ${emailClean}: ${emailResult.error}. Auto-fallback OTP: ${otp}`);
-            return res.json({ 
-                message: `Verification code generated (${emailResult.error || 'SMTP delivery note'}). Fallback active.`, 
-                devOtp: otp,
-                smtpError: emailResult.error
+            console.error(`[OTP EMAIL REJECTED] Failed to send email to ${emailClean}:`, emailResult.error);
+            return res.status(400).json({ 
+                message: `Failed to send OTP. Please enter a valid, active email address and try again.` 
             });
         }
 

@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const BlockedUser = require('../models/BlockedUser');
+const Notification = require('../models/Notification');
 
 // @desc    Get all posts
 // @route   GET /api/posts
@@ -46,6 +47,19 @@ exports.createPost = async (req, res) => {
             { path: 'user', select: 'name branch department batchYear avatar_url username' },
             { path: 'tags', select: 'name username avatar_url' }
         ]);
+
+        // Create notifications for tagged users
+        if (Array.isArray(tags) && tags.length > 0) {
+            const notifications = tags.map(tagId => ({
+                recipient: tagId,
+                sender: req.user._id,
+                type: 'mention',
+                title: 'You were tagged in a post',
+                message: `${req.user.name || 'A connection'} tagged you in a new post.`
+            }));
+            await Notification.insertMany(notifications);
+        }
+
         res.status(201).json(fullPost);
     } catch (error) {
         res.status(400).json({ message: error.message });

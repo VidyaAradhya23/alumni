@@ -142,7 +142,11 @@ const ProfileScreen = ({ navigation }) => {
             // 3. Fetch and filter posts using the fetched userData._id
             const postsData = await getPosts().catch(() => []);
             if (postsData) {
-              let myPosts = postsData.filter(p => p.user && (p.user._id === userData._id || p.user.id === userData._id) && !p.isArchived);
+              let myPosts = postsData.filter(p => 
+                p.user && 
+                (p.user._id === userData._id || p.user.id === userData._id || (p.tags && p.tags.some(t => (t._id || t.id || t) === userData._id))) 
+                && !p.isArchived
+              );
               myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
               
               setProfileData(prev => ({

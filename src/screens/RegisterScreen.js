@@ -488,36 +488,52 @@ const RegisterScreen = ({ navigation }) => {
               {/* Inline OTP Verification Section (Appears directly down below Email field) */}
               {emailState === 'sent' && !otpVerified ? (
                 <View style={{
-                  marginTop: 12,
-                  padding: 14,
-                  backgroundColor: 'rgba(0, 33, 68, 0.04)',
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0, 33, 68, 0.15)'
+                  marginTop: 14,
+                  padding: 16,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 14,
+                  borderWidth: 2,
+                  borderColor: theme.primary,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 6,
+                  elevation: 4
                 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text, marginBottom: 10 }}>
-                    📩 Enter 6-Digit OTP sent to {formData.email}:
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                      📩 Enter 6-Digit Verification Code
+                    </Text>
+                    <TouchableOpacity onPress={handleSendInlineOtp} disabled={sendingOtpLoading}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: theme.primary, textDecorationLine: 'underline' }}>
+                        {sendingOtpLoading ? 'Resending...' : 'Resend Code'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={{ fontSize: 12, color: '#475569', marginBottom: 14, lineHeight: 17 }}>
+                    Code sent to <Text style={{ fontWeight: '700', color: '#0F172A' }}>{formData.email}</Text>. (Check your Inbox / Spam folder)
                   </Text>
                   
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
                     {[0, 1, 2, 3, 4, 5].map((index) => (
                       <TextInput
                         key={index}
                         ref={(el) => (otpRefs.current[index] = el)}
                         style={{
-                          width: 42,
-                          height: 44,
-                          borderWidth: 1.5,
-                          borderColor: inlineOtp[index] ? theme.primary : '#CBD5E1',
-                          borderRadius: 8,
+                          width: 44,
+                          height: 48,
+                          borderWidth: 2,
+                          borderColor: inlineOtp[index] ? theme.primary : '#94A3B8',
+                          borderRadius: 10,
                           textAlign: 'center',
-                          fontSize: 18,
-                          fontWeight: '700',
-                          color: theme.text,
-                          backgroundColor: theme.card
+                          fontSize: 20,
+                          fontWeight: '800',
+                          color: '#0F172A',
+                          backgroundColor: inlineOtp[index] ? '#EFF6FF' : '#F8FAFC'
                         }}
                         keyboardType="number-pad"
-                        maxLength={1}
+                        maxLength={6}
                         value={inlineOtp[index]}
                         onChangeText={(val) => {
                           const digitsOnly = val.replace(/[^0-9]/g, '');
@@ -543,12 +559,25 @@ const RegisterScreen = ({ navigation }) => {
                     ))}
                   </View>
 
+                  {otpError ? (
+                    <View style={{ backgroundColor: '#FEF2F2', padding: 8, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#FCA5A5' }}>
+                      <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
+                        ⚠️ {otpError}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   <TouchableOpacity
                     style={{
                       backgroundColor: theme.primary,
-                      paddingVertical: 12,
-                      borderRadius: 8,
+                      paddingVertical: 14,
+                      borderRadius: 10,
                       alignItems: 'center',
+                      shadowColor: theme.primary,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 5,
+                      elevation: 3,
                       opacity: verifyingOtpLoading ? 0.7 : 1
                     }}
                     disabled={verifyingOtpLoading}
@@ -557,7 +586,9 @@ const RegisterScreen = ({ navigation }) => {
                     {verifyingOtpLoading ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Verify OTP Code</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 }}>
+                        Verify OTP Code
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>

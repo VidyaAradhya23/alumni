@@ -34,7 +34,7 @@ const sendWelcomeEmail = async (userEmail, userName) => {
         `;
 
         const mailOptions = {
-            from: process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>',
+            from: process.env.SMTP_FROM || process.env.SENDGRID_FROM_EMAIL || '"Alumni Network" <noreply@alumni.edu>',
             to: userEmail,
             subject: 'Welcome to the Alumni Network! 🎉',
             html: htmlTemplate,
@@ -52,15 +52,15 @@ const sendWelcomeEmail = async (userEmail, userName) => {
 const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
     let lastError = null;
     const hasSendGrid = process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.');
-    const isConfigured = process.env.SMTP_USER && process.env.SMTP_USER !== 'your_email@gmail.com';
+    const isConfigured = process.env.SMTP_USER && process.env.SMTP_USER !== 'your_email@gmail.com' && process.env.SMTP_USER !== 'apikey';
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             let transporter;
-            let fromAddr = process.env.SMTP_FROM || process.env.SENDGRID_FROM_EMAIL || '"Alumni Network" <noreply@alumni.edu>';
+            let fromAddr = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM || 'rvmediadevelopers@gmail.com';
 
-            if (hasSendGrid) {
-                console.log(`[EMAIL DISPATCH] Using SendGrid API for ${userEmail}...`);
+            if (hasSendGrid && attempt === 1) {
+                console.log(`[EMAIL DISPATCH] Attempt 1: Using SendGrid API for ${userEmail}...`);
                 transporter = nodemailer.createTransport({
                     host: 'smtp.sendgrid.net',
                     port: 587,
@@ -70,7 +70,9 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
                         pass: process.env.SENDGRID_API_KEY
                     }
                 });
+                fromAddr = process.env.SENDGRID_FROM_EMAIL || 'rvmediadevelopers@gmail.com';
             } else if (isConfigured) {
+                console.log(`[EMAIL DISPATCH] Using Custom SMTP for ${userEmail}...`);
                 transporter = nodemailer.createTransport({
                     host: process.env.SMTP_HOST || 'smtp.gmail.com',
                     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -91,7 +93,7 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
                     console.error("[SMTP VERIFY NOTICE]:", vErr.message);
                 }
             } else {
-                console.log(`[SMTP Ethereal] Creating auto test account for real SMTP email delivery to ${userEmail}...`);
+                console.log(`[SMTP Ethereal] Creating auto test account for email delivery to ${userEmail}...`);
                 const testAccount = await nodemailer.createTestAccount();
                 transporter = nodemailer.createTransport({
                     host: 'smtp.ethereal.email',

@@ -70,10 +70,10 @@ exports.sendOtp = async (req, res) => {
 
         const emailClean = email.trim().toLowerCase();
 
-        // 1. Run Full Email Validation & Duplicate Check Concurrently
+        // 1. Run email format/disposable validation + duplicate check concurrently
         const [validation, existingUser] = await Promise.all([
             validateEmailFull(emailClean),
-            User.findOne({ email: emailClean })
+            User.findOne({ email: emailClean }).lean()
         ]);
 
         if (!validation.valid) {
@@ -84,19 +84,21 @@ exports.sendOtp = async (req, res) => {
             return res.status(400).json({ message: 'An account with this email address already exists.' });
         }
 
-        // 3. Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+        // 2. Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 4. Store OTP in Database
-        await OTP.deleteMany({ email: emailClean });
-        await OTP.create({ email: emailClean, otp });
+        // 3. Send email AND store OTP concurrently — do NOT await DB write before sending email
+        const [emailResult] = await Promise.all([
+            sendOtpEmail(emailClean, otp),
+            OTP.deleteMany({ email: emailClean })
+                .then(() => OTP.create({ email: emailClean, otp }))
+                .catch(err => console.error('[OTP STORE ERROR]:', err.message))
+        ]);
 
-        // 5. Send OTP via Email Service (with SMTP Retries)
-        const emailResult = await sendOtpEmail(emailClean, otp);
         if (!emailResult.success) {
             console.error(`[OTP EMAIL REJECTED] Failed to send email to ${emailClean}:`, emailResult.error);
-            return res.status(400).json({ 
-                message: `Failed to send OTP. Please enter a valid, active email address and try again.` 
+            return res.status(400).json({
+                message: `Failed to send OTP. Please enter a valid, active email address and try again.`
             });
         }
 

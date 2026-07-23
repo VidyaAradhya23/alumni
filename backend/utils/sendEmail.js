@@ -3,16 +3,15 @@ const nodemailer = require('nodemailer');
 const sendWelcomeEmail = async (userEmail, userName) => {
     try {
         const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_PORT == 465,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
         });
 
-        // Email HTML Template
         const htmlTemplate = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
                 <div style="background-color: #003366; padding: 24px; text-align: center;">
@@ -24,17 +23,6 @@ const sendWelcomeEmail = async (userEmail, userName) => {
                     </p>
                     <p style="font-size: 16px; color: #334155; line-height: 1.6;">
                         We are thrilled to welcome you to our official Alumni platform. Your account has been successfully created and is awaiting administrator approval.
-                    </p>
-                    <p style="font-size: 16px; color: #334155; line-height: 1.6;">
-                        Once approved, you'll be able to connect with fellow graduates, explore job opportunities, and engage with the community.
-                    </p>
-                    <div style="text-align: center; margin: 32px 0;">
-                        <a href="https://alumni-app-nine.vercel.app" style="background-color: #003366; color: #FFFFFF; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">
-                            Go to Dashboard
-                        </a>
-                    </div>
-                    <p style="font-size: 14px; color: #64748B; line-height: 1.5; margin-top: 32px;">
-                        If you have any questions or need support, feel free to reply directly to this email.
                     </p>
                 </div>
                 <div style="background-color: #F8FAFC; padding: 16px; text-align: center; border-top: 1px solid #E2E8F0;">
@@ -61,56 +49,66 @@ const sendWelcomeEmail = async (userEmail, userName) => {
     }
 };
 
-const sendOtpEmail = async (userEmail, otp) => {
-    try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            secure: process.env.SMTP_PORT == 465,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                port: parseInt(process.env.SMTP_PORT || '587', 10),
+                secure: process.env.SMTP_PORT == 465,
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                },
+                connectionTimeout: 6000,
+                greetingTimeout: 6000,
+                socketTimeout: 6000
+            });
 
-        const htmlTemplate = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
-                <div style="background-color: #003366; padding: 24px; text-align: center;">
-                    <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">Verify Your Email</h1>
-                </div>
-                <div style="padding: 32px; background-color: #FFFFFF;">
-                    <p style="font-size: 16px; color: #334155; line-height: 1.6;">
-                        Hi there,
-                    </p>
-                    <p style="font-size: 16px; color: #334155; line-height: 1.6;">
-                        Thank you for registering. Please use the verification code below to complete your registration.
-                    </p>
-                    <div style="text-align: center; margin: 32px 0;">
-                        <span style="background-color: #F8FAFC; color: #003366; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 32px; letter-spacing: 4px; border: 1px solid #E2E8F0; display: inline-block;">
-                            ${otp}
-                        </span>
+            const htmlTemplate = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #003366; padding: 24px; text-align: center;">
+                        <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">Verify Your Email</h1>
                     </div>
-                    <p style="font-size: 14px; color: #64748B; line-height: 1.5; margin-top: 32px; text-align: center;">
-                        This code will expire in 5 minutes. If you didn't request this, you can safely ignore this email.
-                    </p>
+                    <div style="padding: 32px; background-color: #FFFFFF;">
+                        <p style="font-size: 16px; color: #334155; line-height: 1.6;">
+                            Hi there,
+                        </p>
+                        <p style="font-size: 16px; color: #334155; line-height: 1.6;">
+                            Thank you for registering. Please use the verification code below to complete your registration.
+                        </p>
+                        <div style="text-align: center; margin: 32px 0;">
+                            <span style="background-color: #F8FAFC; color: #003366; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 32px; letter-spacing: 6px; border: 1px solid #E2E8F0; display: inline-block;">
+                                ${otp}
+                            </span>
+                        </div>
+                        <p style="font-size: 14px; color: #64748B; line-height: 1.5; margin-top: 32px; text-align: center;">
+                            This code will expire in 5 minutes. If you didn't request this, you can safely ignore this email.
+                        </p>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        const mailOptions = {
-            from: process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>',
-            to: userEmail,
-            subject: 'Your Verification Code',
-            html: htmlTemplate,
-        };
+            const mailOptions = {
+                from: process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>',
+                to: userEmail,
+                subject: 'Your 6-Digit Verification Code',
+                html: htmlTemplate,
+            };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('OTP email sent successfully: %s', info.messageId);
-        return true;
-    } catch (error) {
-        console.error('Error sending OTP email:', error);
-        return false;
+            const info = await transporter.sendMail(mailOptions);
+            console.log(`[SMTP SUCCESS] OTP email sent successfully on attempt ${attempt}: %s`, info.messageId);
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            lastError = error;
+            console.error(`[SMTP ERROR] Attempt ${attempt}/${maxRetries} failed for ${userEmail}:`, error.message);
+            if (attempt < maxRetries) {
+                await new Promise(res => setTimeout(res, 1000));
+            }
+        }
     }
+    return { success: false, error: lastError?.message || 'SMTP connection failed' };
 };
 
 module.exports = {

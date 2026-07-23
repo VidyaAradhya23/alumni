@@ -57,35 +57,48 @@ exports.checkEmailExists = async (req, res) => {
 };
 
 // @desc    Send OTP to email after full validation
+// @desc    Send 6-Digit OTP to email after full validation & duplicate check
 // @route   POST /api/auth/send-otp
 exports.sendOtp = async (req, res) => {
     try {
         const { email } = req.body;
-        const validation = await validateEmailFull(email);
-        
+        if (!email || !email.trim()) {
+            return res.status(400).json({ message: 'Please enter a valid email address' });
+        }
+
+        const emailClean = email.trim().toLowerCase();
+
+        // 1. Validate Email Format, MX Records & Disposable Filter
+        const validation = await validateEmailFull(emailClean);
         if (!validation.valid) {
             return res.status(400).json({ message: validation.message });
         }
-        
-        const emailClean = email.trim().toLowerCase();
 
-        const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
-        
-        // Remove existing OTP for this email if any
+        // 2. Check Duplicate Email
+        const existingUser = await User.findOne({ email: emailClean });
+        if (existingUser) {
+            return res.status(400).json({ message: 'An account with this email address already exists.' });
+        }
+
+        // 3. Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+
+        // 4. Store OTP in Database
         await OTP.deleteMany({ email: emailClean });
-        
         await OTP.create({ email: emailClean, otp });
-        
-        const emailSent = await sendOtpEmail(emailClean, otp);
-        if (!emailSent) {
-            console.log(`[OTP FALLBACK] SMTP Email not sent for ${emailClean}. Generated OTP: ${otp}`);
+
+        // 5. Send OTP via Email Service (with SMTP Retries)
+        const emailResult = await sendOtpEmail(emailClean, otp);
+        if (!emailResult.success) {
+            console.log(`[OTP SMTP LOG] SMTP delivery note for ${emailClean}: ${emailResult.error}. Auto-fallback OTP: ${otp}`);
             return res.json({ 
-                message: 'OTP generated successfully (Email delivery fallback enabled)', 
-                devOtp: otp 
+                message: `Verification code generated (${emailResult.error || 'SMTP delivery note'}). Fallback active.`, 
+                devOtp: otp,
+                smtpError: emailResult.error
             });
         }
 
-        res.json({ message: 'Verification OTP sent successfully to your email' });
+        res.json({ message: '6-digit verification code sent successfully to your email' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

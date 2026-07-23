@@ -210,7 +210,7 @@ const RegisterScreen = ({ navigation }) => {
 
   // Inline Email OTP Verification States
   const [emailState, setEmailState] = useState('idle'); // 'idle' | 'sent' | 'verified'
-  const [inlineOtp, setInlineOtp] = useState(['', '', '', '']);
+  const [inlineOtp, setInlineOtp] = useState(['', '', '', '', '', '']);
   const [sendingOtpLoading, setSendingOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpVerified, setOtpVerified] = useState(false);
@@ -243,8 +243,8 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleVerifyInlineOtp = () => {
     const otpCode = inlineOtp.join('');
-    if (otpCode.length < 4) {
-      setOtpError('Please enter the complete 4-digit OTP code');
+    if (otpCode.length < 6) {
+      setOtpError('Please enter the complete 6-digit OTP code');
       return;
     }
     setOtpVerified(true);
@@ -499,22 +499,22 @@ const RegisterScreen = ({ navigation }) => {
                   borderColor: 'rgba(0, 33, 68, 0.15)'
                 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text, marginBottom: 10 }}>
-                    📩 Enter 4-Digit OTP sent to {formData.email}:
+                    📩 Enter 6-Digit OTP sent to {formData.email}:
                   </Text>
                   
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12 }}>
-                    {[0, 1, 2, 3].map((index) => (
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
                       <TextInput
                         key={index}
                         ref={(el) => (otpRefs.current[index] = el)}
                         style={{
-                          width: 48,
-                          height: 48,
+                          width: 42,
+                          height: 44,
                           borderWidth: 1.5,
                           borderColor: inlineOtp[index] ? theme.primary : '#CBD5E1',
                           borderRadius: 8,
                           textAlign: 'center',
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: '700',
                           color: theme.text,
                           backgroundColor: theme.card
@@ -526,7 +526,7 @@ const RegisterScreen = ({ navigation }) => {
                           const newOtp = [...inlineOtp];
                           newOtp[index] = val.replace(/[^0-9]/g, '');
                           setInlineOtp(newOtp);
-                          if (val && index < 3) {
+                          if (val && index < 5) {
                             otpRefs.current[index + 1]?.focus();
                           }
                         }}

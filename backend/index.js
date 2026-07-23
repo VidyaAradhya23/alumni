@@ -37,8 +37,17 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow Cloudinary/S3 images
 }));
 
-// Mongo Sanitize: prevents NoSQL injection attacks by sanitizing $ and . from req.body/query/params
-app.use(mongoSanitize());
+// Mongo Sanitize: prevents NoSQL injection attacks by sanitizing req.body
+app.use((req, res, next) => {
+    try {
+        if (req.body && typeof req.body === 'object') {
+            mongoSanitize.sanitize(req.body);
+        }
+    } catch (e) {
+        // Ignore read-only getter errors on serverless platforms
+    }
+    next();
+});
 
 // CORS: whitelist allowed origins (production + local dev)
 const allowedOrigins = [
@@ -197,9 +206,8 @@ app.get('/', (req, res) => {
 
 // ─── Error Handler ──────────────────────────────────────────────
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    // Don't leak error details in production
-    const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
+    console.error('[EXPRESS SERVER ERROR]:', err);
+    const message = err.message || 'Internal server error';
     res.status(err.status || 500).json({ message });
 });
 

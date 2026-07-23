@@ -1,5 +1,6 @@
 const dns = require('dns').promises;
 const User = require('../models/User');
+const connectDB = require('../config/db');
 
 // Common Disposable / Temporary Email Provider Domains
 const DISPOSABLE_DOMAINS = new Set([
@@ -76,6 +77,11 @@ const validateEmailFull = async (email) => {
     }
 
     // 4. Check Duplicate Email in Database
+    try {
+        await connectDB();
+    } catch (e) {
+        console.error('Database connection note in validator:', e);
+    }
     const existingUser = await User.findOne({ email: emailClean });
     if (existingUser) {
         return { valid: false, message: 'Email Already Exists' };

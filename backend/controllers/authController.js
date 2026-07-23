@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const StudentData = require('../models/StudentData');
+const connectDB = require('../config/db');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
@@ -61,6 +62,7 @@ exports.checkEmailExists = async (req, res) => {
 // @route   POST /api/auth/send-otp
 exports.sendOtp = async (req, res) => {
     try {
+        await connectDB();
         const { email } = req.body;
         if (!email || !email.trim()) {
             return res.status(400).json({ message: 'Please enter a valid email address' });

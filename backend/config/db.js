@@ -22,17 +22,19 @@ mongoose.connection.on('reconnected', () => {
 });
 
 const connectDB = async () => {
-    if (!process.env.MONGO_URI) {
-        console.warn("WARNING: MONGO_URI is not set. Database operations will fail.");
+    if (mongoose.connection.readyState >= 1) {
+        isConnected = true;
         return;
     }
-    
-    if (isConnected) {
+
+    const mongoUri = process.env.MONGO_URI || 'mongodb+srv://rveducational_db_user:Alumni%40123@cluster0.xk6n9j6.mongodb.net/?appName=Cluster0';
+
+    if (isConnected && mongoose.connection.readyState === 1) {
         return;
     }
 
     try {
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
+        const conn = await mongoose.connect(mongoUri, {
             serverSelectionTimeoutMS: 5000,
             maxPoolSize: 10,
             minPoolSize: 2,

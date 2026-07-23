@@ -537,7 +537,23 @@ const EngageScreen = ({ navigation }) => {
                     <Text style={styles.reshareContent} numberOfLines={1}>{post.content}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.reshareBtn}>
+                <TouchableOpacity 
+                  style={styles.reshareBtn}
+                  onPress={async () => {
+                    try {
+                      await createPost({
+                        content: `Reshared from @${post.user}:\n\n${post.content}`,
+                        image: post.image,
+                        tags: [],
+                        isReshare: true
+                      });
+                      Alert.alert('Success', 'Post reshared successfully!');
+                      setReshareModalVisible(false);
+                    } catch (err) {
+                      Alert.alert('Error', 'Failed to reshare post');
+                    }
+                  }}
+                >
                   <Text style={styles.reshareBtnText}>Reshare</Text>
                 </TouchableOpacity>
               </View>

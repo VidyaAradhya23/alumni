@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, useWindowDimensions, Alert, StatusBar, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, useWindowDimensions, Alert, StatusBar, Modal, TextInput, Platform, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory } from '../services/authService';
+import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory, toggleLikePost } from '../services/authService';
 import { getChatHistory } from '../services/messageService';
 import { uploadFile, getImageUrl } from '../services/uploadService';
+import { addComment, deletePost } from '../services/postService';
 import * as ImagePicker from 'expo-image-picker';
 
 const validatePasswordStrength = (password) => {
@@ -61,6 +62,8 @@ const ProfileScreen = ({ navigation }) => {
 
   const [userPosts, setUserPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [commentInput, setCommentInput] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [highlights, setHighlights] = useState([
     { id: '1', title: 'Campus', icon: 'school-outline' },
     { id: '2', title: 'Work', icon: 'briefcase-outline' },
@@ -996,7 +999,7 @@ const ProfileScreen = ({ navigation }) => {
       {/* Instagram Post Detail Lightbox Modal */}
       <Modal visible={!!selectedPost} transparent animationType="fade" onRequestClose={() => setSelectedPost(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: Platform.OS === 'web' ? 20 : 10 }}>
-          <View style={{ backgroundColor: theme.card, width: '100%', maxWidth: 520, borderRadius: 16, overflow: 'hidden', maxHeight: '90%' }}>
+          <View style={{ backgroundColor: theme.card, width: '100%', maxWidth: 520, borderRadius: 16, overflow: 'hidden', maxHeight: '92%' }}>
             {/* Post Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderBottomWidth: 0.5, borderColor: theme.border }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1008,15 +1011,34 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={{ fontSize: 11, color: theme.textMuted }}>{selectedPost?.createdAt ? new Date(selectedPost.createdAt).toLocaleDateString() : 'Just now'}</Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
-                <Ionicons name="close-circle" size={26} color="#94A3B8" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity 
+                  style={{ marginRight: 10 }}
+                  onPress={() => {
+                    if (!selectedPost) return;
+                    const postContent = selectedPost.content || '';
+                    if (Platform.OS === 'web' && navigator.clipboard) {
+                      navigator.clipboard.writeText(`Check out this post on Institution Alumni: "${postContent}"`);
+                      alert('Post shared! Link copied to clipboard.');
+                    } else {
+                      Share.share({
+                        message: `Check out this post on Institution Alumni:\n"${postContent}"`,
+                      });
+                    }
+                  }}
+                >
+                  <Ionicons name="share-outline" size={22} color={theme.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
+                  <Ionicons name="close-circle" size={26} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 1 }}>
               {/* Post Image or Styled Card */}
               {(selectedPost?.image || selectedPost?.image_url) ? (
-                <Image source={{ uri: getImageUrl(selectedPost.image || selectedPost.image_url) }} style={{ width: '100%', height: 320, resizeMode: 'cover' }} />
+                <Image source={{ uri: getImageUrl(selectedPost.image || selectedPost.image_url) }} style={{ width: '100%', height: 300, resizeMode: 'cover' }} />
               ) : null}
 
               {/* Post Body & Content */}
@@ -1024,39 +1046,151 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={{ fontSize: 15, color: theme.text, lineHeight: 22 }}>{selectedPost?.content}</Text>
               </View>
 
-              {/* Engagement Bar */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 0.5, borderColor: theme.border }}>
+              {/* Engagement Action Bar */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 0.5, borderBottomWidth: 0.5, borderColor: theme.border }}>
+                {/* Like Button */}
                 <TouchableOpacity 
-                  style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20 }}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
                   onPress={async () => {
                     if (selectedPost) {
                       try {
-                        await toggleLikePost(selectedPost._id || selectedPost.id);
-                        const isLiked = selectedPost.likes?.includes(profileData.name);
+                        const targetId = selectedPost._id || selectedPost.id;
+                        await toggleLikePost(targetId);
+                        const currentLikes = selectedPost.likes || [];
+                        const isLiked = currentLikes.some(l => (typeof l === 'string' ? l === profileData.name : l?._id === profileData.name));
                         const updatedLikes = isLiked 
-                          ? (selectedPost.likes || []).filter(l => l !== profileData.name)
-                          : [...(selectedPost.likes || []), profileData.name];
-                        setSelectedPost({ ...selectedPost, likes: updatedLikes });
+                          ? currentLikes.filter(l => (typeof l === 'string' ? l !== profileData.name : l?._id !== profileData.name))
+                          : [...currentLikes, profileData.name];
+                        
+                        setSelectedPost(prev => prev ? ({ ...prev, likes: updatedLikes }) : null);
+                        setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, likes: updatedLikes } : p));
                       } catch (e) {
                         console.error('Like toggle error', e);
                       }
                     }
                   }}
                 >
-                  <Ionicons name={selectedPost?.likes?.length > 0 ? "heart" : "heart-outline"} size={24} color={selectedPost?.likes?.length > 0 ? "#EF4444" : theme.text} />
+                  <Ionicons 
+                    name={selectedPost?.likes?.length > 0 ? "heart" : "heart-outline"} 
+                    size={24} 
+                    color={selectedPost?.likes?.length > 0 ? "#EF4444" : theme.text} 
+                  />
                   <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
                     {selectedPost?.likes?.length || 0} {selectedPost?.likes?.length === 1 ? 'like' : 'likes'}
                   </Text>
                 </TouchableOpacity>
 
+                {/* Comment Count Indicator */}
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
                   <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
                     {selectedPost?.comments?.length || 0} comments
                   </Text>
                 </View>
+
+                {/* Share Button */}
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  onPress={() => {
+                    if (!selectedPost) return;
+                    const postContent = selectedPost.content || '';
+                    if (Platform.OS === 'web' && navigator.clipboard) {
+                      navigator.clipboard.writeText(`Check out this post on Institution Alumni: "${postContent}"`);
+                      alert('Post shared! Link copied to clipboard.');
+                    } else {
+                      Share.share({
+                        message: `Check out this post on Institution Alumni:\n"${postContent}"`,
+                      });
+                    }
+                  }}
+                >
+                  <Ionicons name="paper-plane-outline" size={22} color={theme.primary} />
+                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.primary, fontSize: 14 }}>Share</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Comments Section List */}
+              <View style={{ padding: 16 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text, marginBottom: 12 }}>Comments</Text>
+                {(!selectedPost?.comments || selectedPost.comments.length === 0) ? (
+                  <Text style={{ color: theme.textMuted, fontSize: 13, fontStyle: 'italic', marginVertical: 8 }}>No comments yet. Be the first to comment!</Text>
+                ) : (
+                  selectedPost.comments.map((comment, idx) => (
+                    <View key={comment._id || idx} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
+                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10, marginTop: 2 }}>
+                        <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 11 }}>
+                          {comment.user?.name ? comment.user.name.substring(0, 2).toUpperCase() : (typeof comment.user === 'string' ? comment.user.substring(0, 2).toUpperCase() : 'AL')}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1, backgroundColor: 'rgba(0, 33, 68, 0.04)', borderRadius: 12, padding: 10 }}>
+                        <Text style={{ fontWeight: '700', fontSize: 13, color: theme.text }}>
+                          {comment.user?.name || (typeof comment.user === 'string' ? comment.user : 'Alumni')}
+                        </Text>
+                        <Text style={{ fontSize: 13, color: theme.text, marginTop: 2 }}>{comment.text}</Text>
+                        <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 4 }}>
+                          {comment.createdAt ? new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                )}
               </View>
             </ScrollView>
+
+            {/* Comment Input Bar */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 0.5, borderColor: theme.border, backgroundColor: theme.card }}>
+              <TextInput
+                style={{
+                  flex: 1,
+                  backgroundColor: 'rgba(0, 33, 68, 0.05)',
+                  borderRadius: 20,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  fontSize: 14,
+                  color: theme.text,
+                  maxHeight: 80
+                }}
+                placeholder="Add a comment..."
+                placeholderTextColor={theme.textMuted}
+                value={commentInput}
+                onChangeText={setCommentInput}
+              />
+              <TouchableOpacity
+                style={{
+                  marginLeft: 10,
+                  backgroundColor: commentInput.trim() ? theme.primary : '#CBD5E1',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  justify: 'center',
+                  alignItems: 'center'
+                }}
+                disabled={!commentInput.trim() || submittingComment}
+                onPress={async () => {
+                  if (!commentInput.trim() || !selectedPost) return;
+                  setSubmittingComment(true);
+                  try {
+                    const targetId = selectedPost._id || selectedPost.id;
+                    const updatedPost = await addComment(targetId, commentInput.trim());
+                    if (updatedPost && updatedPost.comments) {
+                      setSelectedPost(prev => prev ? ({ ...prev, comments: updatedPost.comments }) : null);
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, comments: updatedPost.comments } : p));
+                    } else {
+                      const fallbackComment = { text: commentInput.trim(), user: { name: profileData.name }, createdAt: new Date() };
+                      setSelectedPost(prev => prev ? ({ ...prev, comments: [...(prev.comments || []), fallbackComment] }) : null);
+                    }
+                    setCommentInput('');
+                  } catch (err) {
+                    console.error('Add comment error:', err);
+                    alert('Could not add comment. Please try again.');
+                  } finally {
+                    setSubmittingComment(false);
+                  }
+                }}
+              >
+                <Ionicons name="send" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

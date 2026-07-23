@@ -15,6 +15,11 @@ export const likePost = async (postId) => {
     return data;
 };
 
+export const addComment = async (postId, text) => {
+    const { data } = await api.post(`/posts/${postId}/comment`, { text });
+    return data;
+};
+
 export const deletePost = async (postId) => {
     const { data } = await api.delete(`/posts/${postId}`);
     return data;

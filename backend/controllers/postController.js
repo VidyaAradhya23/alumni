@@ -18,6 +18,7 @@ exports.getPosts = async (req, res) => {
 
         const posts = await Post.find({ user: { $nin: blockedUserIds } })
             .populate('user', 'name branch department batchYear avatar_url')
+            .populate('comments.user', 'name avatar_url')
             .sort({ createdAt: -1 });
         res.json(posts);
     } catch (error) {
@@ -86,3 +87,37 @@ exports.deletePost = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Add a comment to a post
+// @route   POST /api/posts/:id/comment
+exports.addComment = async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text || !text.trim()) {
+            return res.status(400).json({ message: 'Comment text is required' });
+        }
+
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const newComment = {
+            user: req.user._id,
+            text: text.trim(),
+            createdAt: new Date()
+        };
+
+        post.comments.push(newComment);
+        await post.save();
+
+        const updatedPost = await Post.findById(req.params.id)
+            .populate('user', 'name branch department batchYear avatar_url')
+            .populate('comments.user', 'name avatar_url');
+
+        res.json(updatedPost);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

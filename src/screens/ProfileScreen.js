@@ -508,8 +508,8 @@ const ProfileScreen = ({ navigation }) => {
                   activeOpacity={0.85}
                   onPress={() => setSelectedPost(post)}
                 >
-                  {post.image_url ? (
-                    <Image source={{ uri: post.image_url }} style={styles.gridImage} />
+                  {post.image ? (
+                    <Image source={{ uri: post.image }} style={styles.gridImage} />
                   ) : (
                     <View style={[styles.gridImage, { backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', padding: 10, borderWidth: 0.5, borderColor: '#E2E8F0' }]}>
                       <Ionicons name="document-text-outline" size={24} color={theme.primary} style={{ marginBottom: 6 }} />

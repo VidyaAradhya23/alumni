@@ -8,11 +8,14 @@ const router = express.Router();
 
 let gfsBucket;
 
-mongoose.connection.once('open', () => {
-    gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-        bucketName: 'uploads'
-    });
-});
+const getGfs = () => {
+    if (!gfsBucket && mongoose.connection.readyState === 1) {
+        gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'uploads'
+        });
+    }
+    return gfsBucket;
+};
 
 // @desc    Upload file to GridFS
 // @route   POST /api/upload
@@ -22,10 +25,15 @@ router.post('/', protect, upload.single('image'), (req, res) => {
             return res.status(400).json({ message: 'Please upload a file' });
         }
 
+        const gfs = getGfs();
+        if (!gfs) {
+            return res.status(500).json({ message: 'GridFS not initialized' });
+        }
+
         const ext = path.extname(req.file.originalname);
         const filename = `${crypto.randomBytes(16).toString('hex')}${ext}`;
 
-        const uploadStream = gfsBucket.openUploadStream(filename, {
+        const uploadStream = gfs.openUploadStream(filename, {
             contentType: req.file.mimetype
         });
 
@@ -51,11 +59,12 @@ router.post('/', protect, upload.single('image'), (req, res) => {
 // @route   GET /api/upload/:filename
 router.get('/:filename', async (req, res) => {
     try {
-        if (!gfsBucket) {
+        const gfs = getGfs();
+        if (!gfs) {
             return res.status(500).json({ message: 'GridFS not initialized' });
         }
 
-        const file = await gfsBucket.find({ filename: req.params.filename }).toArray();
+        const file = await gfs.find({ filename: req.params.filename }).toArray();
         if (!file || file.length === 0) {
             return res.status(404).json({ message: 'No file exists' });
         }
@@ -64,7 +73,7 @@ router.get('/:filename', async (req, res) => {
         res.set('Content-Type', file[0].contentType);
 
         // Read from GridFS
-        const readStream = gfsBucket.openDownloadStreamByName(req.params.filename);
+        const readStream = gfs.openDownloadStreamByName(req.params.filename);
         readStream.pipe(res);
     } catch (error) {
         res.status(500).json({ message: error.message });

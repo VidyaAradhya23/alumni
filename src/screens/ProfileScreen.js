@@ -80,102 +80,85 @@ const ProfileScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-    const fetchRecentChats = async () => {
-      try {
-        const history = await getChatHistory();
-        if (history && Array.isArray(history)) {
-          setProfileChats(history);
+      const fetchRecentChats = async () => {
+        try {
+          const history = await getChatHistory();
+          if (history && Array.isArray(history)) {
+            setProfileChats(history);
+          }
+        } catch (err) {
+          console.log('Error loading profile chats:', err);
         }
-      } catch (err) {
-        console.log('Error loading profile chats:', err);
-      }
-    };
-    fetchRecentChats();
+      };
+      fetchRecentChats();
 
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfile();
-        if (data) {
-          setProfileData(prev => ({
-            ...prev,
-            name: data.name || data.email.split('@')[0],
-            username: data.email.split('@')[0],
-            branch: data.department || 'Not specified',
-            batch: data.batch_year || 'Not specified',
-            bio: data.bio || `Institution Class of ${data.batch_year || ''}`,
-            linkedin: data.linkedin || '',
-            avatar: data.name ? data.name.substring(0, 2).toUpperCase() : 'UU',
-            avatar_url: data.avatar_url || data.profilePicture || ''
-          }));
-        }
-      } catch (e) {
-        console.error('Error fetching profile', e);
-      }
-    };
-
-    const fetchConnections = async () => {
-      try {
-        const [followersData, followingData] = await Promise.all([
-          getFollowers(),
-          getFollowing()
-        ]);
-        
-        if (followersData) {
-          const formattedFollowers = followersData.map(s => ({
-            id: s._id,
-            name: s.name,
-            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
-            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
-          }));
-          setConnections(formattedFollowers);
-        }
-        
-        if (followingData) {
-          const formattedFollowing = followingData.map(s => ({
-            id: s._id,
-            name: s.name,
-            title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
-            avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
-          }));
-          setFollowing(formattedFollowing);
-        }
-
-        setProfileData(prev => ({
-          ...prev,
-          followers: followersData ? followersData.length.toString() : '0',
-          following: followingData ? followingData.length.toString() : '0',
-        }));
-      } catch (e) {
-        console.error('Error fetching connections', e);
-      }
-    };
-
-    const fetchUserPosts = async () => {
-      try {
-        const postsData = await getPosts();
-        if (postsData) {
-          const userInfoStr = await AsyncStorage.getItem('userInfo');
-          if (userInfoStr) {
-            const userInfo = JSON.parse(userInfoStr);
-            let myPosts = postsData.filter(p => (p.user?.name === userInfo.name || p.user?._id === userInfo._id) && !p.isArchived);
-            myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
-            
+      const loadAllData = async () => {
+        try {
+          // 1. Fetch profile first to get the user ID
+          const userData = await getProfile();
+          if (userData) {
             setProfileData(prev => ({
               ...prev,
-              posts: myPosts.length.toString(),
+              name: userData.name || userData.email.split('@')[0],
+              username: userData.email.split('@')[0],
+              branch: userData.department || 'Not specified',
+              batch: userData.batch_year || 'Not specified',
+              bio: userData.bio || `Institution Class of ${userData.batch_year || ''}`,
+              linkedin: userData.linkedin || '',
+              avatar: userData.name ? userData.name.substring(0, 2).toUpperCase() : 'UU',
+              avatar_url: userData.avatar_url || userData.profilePicture || ''
             }));
-            setUserPosts(myPosts);
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching user posts', e);
-      }
-    };
 
-    fetchProfile();
-    fetchConnections();
-    fetchUserPosts();
-  }, [])
+            // 2. Fetch connections
+            const [followersData, followingData] = await Promise.all([
+              getFollowers().catch(() => []),
+              getFollowing().catch(() => [])
+            ]);
+            
+            if (followersData) {
+              setConnections(followersData.map(s => ({
+                id: s._id,
+                name: s.name,
+                title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+                avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+              })));
+            }
+            
+            if (followingData) {
+              setFollowing(followingData.map(s => ({
+                id: s._id,
+                name: s.name,
+                title: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || ''}`.trim(),
+                avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+              })));
+            }
+
+            setProfileData(prev => ({
+              ...prev,
+              followers: followersData ? followersData.length.toString() : '0',
+              following: followingData ? followingData.length.toString() : '0',
+            }));
+
+            // 3. Fetch and filter posts using the fetched userData._id
+            const postsData = await getPosts().catch(() => []);
+            if (postsData) {
+              let myPosts = postsData.filter(p => p.user && (p.user._id === userData._id || p.user.id === userData._id) && !p.isArchived);
+              myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
+              
+              setProfileData(prev => ({
+                ...prev,
+                posts: myPosts.length.toString(),
+              }));
+              setUserPosts(myPosts);
+            }
+          }
+        } catch (e) {
+          console.error('Error loading profile data:', e);
+        }
+      };
+
+      loadAllData();
+    }, [])
   );
 
   // Profile Editing States
@@ -331,7 +314,7 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.profileInfoContainer}>
           <View style={styles.mainInfoRow}>
             {/* Avatar */}
-            <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickProfilePhoto} activeOpacity={0.8}>
+            <View style={styles.avatarWrapper}>
               <View style={styles.storyRing}>
                 <View style={styles.avatar}>
                   {profileData.avatar_url ? (
@@ -340,23 +323,25 @@ const ProfileScreen = ({ navigation }) => {
                     <Text style={styles.avatarText}>{profileData.avatar}</Text>
                   )}
                 </View>
-                <View style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  backgroundColor: theme.primary,
-                  width: 26,
-                  height: 26,
-                  borderRadius: 13,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 2,
-                  borderColor: theme.card
-                }}>
+                <TouchableOpacity 
+                  onPress={handlePickProfilePhoto}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: theme.primary,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 2,
+                    borderColor: theme.card
+                  }}>
                   <Ionicons name="camera" size={14} color="#FFFFFF" />
-                </View>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+            </View>
             
             {/* Stats */}
             <View style={styles.statsContainer}>

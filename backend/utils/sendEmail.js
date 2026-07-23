@@ -49,10 +49,12 @@ const sendWelcomeEmail = async (userEmail, userName) => {
     }
 };
 
-const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
+const sendOtpEmail = async (userEmail, otp, maxRetries = 3) => {
     let lastError = null;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+            console.log(`[SMTP INFO] Attempt ${attempt}/${maxRetries} initializing transporter for ${userEmail}...`);
+            
             const transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST || 'smtp.gmail.com',
                 port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -61,10 +63,18 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
-                connectionTimeout: 6000,
-                greetingTimeout: 6000,
-                socketTimeout: 6000
+                connectionTimeout: 8000,
+                greetingTimeout: 8000,
+                socketTimeout: 8000
             });
+
+            // 1. Verify SMTP Connection
+            try {
+                await transporter.verify();
+                console.log("[SMTP CONNECTED] SMTP Connection Verified Successfully!");
+            } catch (verifyErr) {
+                console.error("[SMTP VERIFY ERROR]:", verifyErr);
+            }
 
             const htmlTemplate = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
@@ -102,7 +112,10 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
             return { success: true, messageId: info.messageId };
         } catch (error) {
             lastError = error;
-            console.error(`[SMTP ERROR] Attempt ${attempt}/${maxRetries} failed for ${userEmail}:`, error.message);
+            console.error(`[SMTP ERROR] Attempt ${attempt}/${maxRetries} failed for ${userEmail}:`, error);
+            if (error.stack) {
+                console.error("[SMTP ERROR STACK]:", error.stack);
+            }
             if (attempt < maxRetries) {
                 await new Promise(res => setTimeout(res, 1000));
             }

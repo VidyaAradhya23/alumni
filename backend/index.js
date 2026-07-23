@@ -25,6 +25,8 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config();
 
+console.log(`[ENV CONFIG] SMTP Host: ${process.env.SMTP_HOST || 'Not Set'} | SMTP User: ${process.env.SMTP_USER || 'Not Set'}`);
+
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;

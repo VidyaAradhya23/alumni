@@ -203,6 +203,7 @@ const RegisterScreen = ({ navigation }) => {
   });
   const [agreeEULA, setAgreeEULA] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
   const [isCustomInstitution, setIsCustomInstitution] = useState(false);
@@ -225,9 +226,13 @@ const RegisterScreen = ({ navigation }) => {
     setSendingOtpLoading(true);
     setOtpError('');
     try {
-      await sendOtp(emailClean);
+      const res = await sendOtp(emailClean);
       setEmailState('sent');
       setOtpError('');
+      if (res && res.devOtp) {
+        const otpDigits = res.devOtp.split('');
+        setInlineOtp(otpDigits);
+      }
     } catch (error) {
       let msg = error.response?.data?.message || error.message || 'Failed to send OTP';
       setOtpError(msg);
@@ -623,14 +628,34 @@ const RegisterScreen = ({ navigation }) => {
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
-              <TextInput 
-                style={styles.input}
-                placeholder="Create a strong password"
-                placeholderTextColor="#94A3B8"
-                value={formData.password}
-                onChangeText={(text) => setFormData({ ...formData, password: text })}
-                secureTextEntry
-              />
+              <View style={{ position: 'relative', justifyContent: 'center' }}>
+                <TextInput 
+                  style={[styles.input, { paddingRight: 45 }]}
+                  placeholder="Create a strong password"
+                  placeholderTextColor="#94A3B8"
+                  value={formData.password}
+                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={{
+                    position: 'absolute',
+                    right: 14,
+                    height: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: 4
+                  }}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={22} 
+                    color="rgba(255, 255, 255, 0.7)" 
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity 

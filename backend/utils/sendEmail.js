@@ -51,14 +51,26 @@ const sendWelcomeEmail = async (userEmail, userName) => {
 
 const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
     let lastError = null;
+    const hasSendGrid = process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.');
     const isConfigured = process.env.SMTP_USER && process.env.SMTP_USER !== 'your_email@gmail.com';
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             let transporter;
-            let fromAddr = process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>';
+            let fromAddr = process.env.SMTP_FROM || process.env.SENDGRID_FROM_EMAIL || '"Alumni Network" <noreply@alumni.edu>';
 
-            if (isConfigured) {
+            if (hasSendGrid) {
+                console.log(`[EMAIL DISPATCH] Using SendGrid API for ${userEmail}...`);
+                transporter = nodemailer.createTransport({
+                    host: 'smtp.sendgrid.net',
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: 'apikey',
+                        pass: process.env.SENDGRID_API_KEY
+                    }
+                });
+            } else if (isConfigured) {
                 transporter = nodemailer.createTransport({
                     host: process.env.SMTP_HOST || 'smtp.gmail.com',
                     port: parseInt(process.env.SMTP_PORT || '587', 10),

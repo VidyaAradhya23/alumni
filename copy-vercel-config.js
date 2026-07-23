@@ -18,10 +18,10 @@ function copyDirRecursive(src, dest) {
   }
 }
 
-// 1. Write to dist/vercel.json (for static builders)
 const distDir = path.join(__dirname, 'dist');
-const distVercelFile = path.join(distDir, 'vercel.json');
 
+// 1. Write to dist/vercel.json (for static builders)
+const distVercelFile = path.join(distDir, 'vercel.json');
 const vercelJsonConfig = {
   cleanUrls: false,
   rewrites: [
@@ -38,7 +38,7 @@ if (!fs.existsSync(distDir)) {
 fs.writeFileSync(distVercelFile, JSON.stringify(vercelJsonConfig, null, 2), 'utf8');
 console.log('Successfully wrote vercel.json to dist/vercel.json');
 
-// 2. Write to .vercel/output/config.json (for Build Output API / Zero Config Expo builders)
+// 2. Write to .vercel/output/config.json (for Build Output API)
 const vercelOutputDir = path.join(__dirname, '.vercel', 'output');
 const configJsonFile = path.join(vercelOutputDir, 'config.json');
 
@@ -60,6 +60,9 @@ console.log('Successfully wrote config.json to .vercel/output/config.json');
 const vercelStaticDir = path.join(vercelOutputDir, 'static');
 console.log('Copying build output from dist/ to .vercel/output/static for Build Output API...');
 try {
+  if (fs.existsSync(vercelStaticDir)) {
+    fs.rmSync(vercelStaticDir, { recursive: true, force: true });
+  }
   if (fs.existsSync(distDir)) {
     copyDirRecursive(distDir, vercelStaticDir);
     console.log('Successfully copied all dist files to .vercel/output/static.');
@@ -68,10 +71,16 @@ try {
   console.error('Error copying to .vercel/output/static:', error);
 }
 
-// 4. Copy dist contents to the project root directory (for cases where Vercel serves from '.')
+// 4. Copy dist contents to the project root directory and sync index.html
 console.log('Copying build output from dist/ to project root...');
 try {
   if (fs.existsSync(distDir)) {
+    // Clean old _expo directory in root to prevent stale bundles
+    const rootExpoDir = path.join(__dirname, '_expo');
+    if (fs.existsSync(rootExpoDir)) {
+      fs.rmSync(rootExpoDir, { recursive: true, force: true });
+    }
+
     const files = fs.readdirSync(distDir);
     for (const file of files) {
       const srcPath = path.join(distDir, file);

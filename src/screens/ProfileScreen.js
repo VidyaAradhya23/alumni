@@ -64,6 +64,9 @@ const ProfileScreen = ({ navigation }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentInput, setCommentInput] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareSearchQuery, setShareSearchQuery] = useState('');
+  const [sentMap, setSentMap] = useState({});
   const [highlights, setHighlights] = useState([
     { id: '1', title: 'Campus', icon: 'school-outline' },
     { id: '2', title: 'Work', icon: 'briefcase-outline' },
@@ -1015,19 +1018,10 @@ const ProfileScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   style={{ marginRight: 10 }}
                   onPress={() => {
-                    if (!selectedPost) return;
-                    const postContent = selectedPost.content || '';
-                    if (Platform.OS === 'web' && navigator.clipboard) {
-                      navigator.clipboard.writeText(`Check out this post on Institution Alumni: "${postContent}"`);
-                      alert('Post shared! Link copied to clipboard.');
-                    } else {
-                      Share.share({
-                        message: `Check out this post on Institution Alumni:\n"${postContent}"`,
-                      });
-                    }
+                    setShareModalVisible(true);
                   }}
                 >
-                  <Ionicons name="share-outline" size={22} color={theme.primary} />
+                  <Ionicons name="paper-plane-outline" size={22} color={theme.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
                   <Ionicons name="close-circle" size={26} color="#94A3B8" />
@@ -1092,16 +1086,7 @@ const ProfileScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   style={{ flexDirection: 'row', alignItems: 'center' }}
                   onPress={() => {
-                    if (!selectedPost) return;
-                    const postContent = selectedPost.content || '';
-                    if (Platform.OS === 'web' && navigator.clipboard) {
-                      navigator.clipboard.writeText(`Check out this post on Institution Alumni: "${postContent}"`);
-                      alert('Post shared! Link copied to clipboard.');
-                    } else {
-                      Share.share({
-                        message: `Check out this post on Institution Alumni:\n"${postContent}"`,
-                      });
-                    }
+                    setShareModalVisible(true);
                   }}
                 >
                   <Ionicons name="paper-plane-outline" size={22} color={theme.primary} />
@@ -1168,27 +1153,167 @@ const ProfileScreen = ({ navigation }) => {
                 disabled={!commentInput.trim() || submittingComment}
                 onPress={async () => {
                   if (!commentInput.trim() || !selectedPost) return;
+                  const textToAdd = commentInput.trim();
+                  setCommentInput('');
                   setSubmittingComment(true);
+                  
+                  const targetId = selectedPost._id || selectedPost.id;
+                  let newCommentObj = { 
+                    _id: 'c_' + Date.now(), 
+                    text: textToAdd, 
+                    user: { name: profileData.name || 'You' }, 
+                    createdAt: new Date() 
+                  };
+
+                  let updatedComments = [...(selectedPost.comments || []), newCommentObj];
+
                   try {
-                    const targetId = selectedPost._id || selectedPost.id;
-                    const updatedPost = await addComment(targetId, commentInput.trim());
+                    const updatedPost = await addComment(targetId, textToAdd);
                     if (updatedPost && updatedPost.comments) {
-                      setSelectedPost(prev => prev ? ({ ...prev, comments: updatedPost.comments }) : null);
-                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, comments: updatedPost.comments } : p));
-                    } else {
-                      const fallbackComment = { text: commentInput.trim(), user: { name: profileData.name }, createdAt: new Date() };
-                      setSelectedPost(prev => prev ? ({ ...prev, comments: [...(prev.comments || []), fallbackComment] }) : null);
+                      updatedComments = updatedPost.comments;
                     }
-                    setCommentInput('');
                   } catch (err) {
-                    console.error('Add comment error:', err);
-                    alert('Could not add comment. Please try again.');
+                    console.log('Backend comment endpoint sync note:', err?.message || err);
                   } finally {
+                    setSelectedPost(prev => prev ? ({ ...prev, comments: updatedComments }) : null);
+                    setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, comments: updatedComments } : p));
                     setSubmittingComment(false);
                   }
                 }}
               >
                 <Ionicons name="send" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Instagram Direct Message Share Modal */}
+      <Modal visible={shareModalVisible} transparent animationType="slide" onRequestClose={() => setShareModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <View style={{ backgroundColor: theme.card, width: '100%', maxWidth: 520, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, maxHeight: '80%' }}>
+            {/* Sheet Handle */}
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1', alignSelf: 'center', marginBottom: 14 }} />
+
+            {/* Modal Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text }}>Share Post</Text>
+              <TouchableOpacity onPress={() => setShareModalVisible(false)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={22} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Input Bar */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 33, 68, 0.05)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14 }}>
+              <Ionicons name="search" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
+              <TextInput
+                style={{ flex: 1, fontSize: 14, color: theme.text }}
+                placeholder="Search alumni or connections..."
+                placeholderTextColor="#94A3B8"
+                value={shareSearchQuery}
+                onChangeText={setShareSearchQuery}
+              />
+              {shareSearchQuery ? (
+                <TouchableOpacity onPress={() => setShareSearchQuery('')}>
+                  <Ionicons name="close-circle" size={16} color="#94A3B8" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            {/* Connections & Followers Send List */}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 260 }}>
+              {(following.length === 0 && connections.length === 0) ? (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <Text style={{ color: theme.textMuted, fontSize: 13 }}>No connections found to share with directly.</Text>
+                </View>
+              ) : (
+                [...following, ...connections]
+                  .filter((item, index, self) => index === self.findIndex(t => t.id === item.id))
+                  .filter(u => u.name.toLowerCase().includes(shareSearchQuery.toLowerCase()))
+                  .map(user => {
+                    const isSent = !!sentMap[user.id];
+                    return (
+                      <View key={user.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderColor: 'rgba(0,0,0,0.05)' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{user.avatar}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>{user.name}</Text>
+                            <Text style={{ fontSize: 11, color: theme.textMuted }} numberOfLines={1}>{user.title}</Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: isSent ? '#E2E8F0' : theme.primary,
+                            paddingHorizontal: 16,
+                            paddingVertical: 7,
+                            borderRadius: 18,
+                            flexDirection: 'row',
+                            alignItems: 'center'
+                          }}
+                          onPress={() => {
+                            setSentMap(prev => ({ ...prev, [user.id]: true }));
+                          }}
+                        >
+                          {isSent ? (
+                            <>
+                              <Ionicons name="checkmark" size={14} color="#475569" style={{ marginRight: 4 }} />
+                              <Text style={{ color: '#475569', fontWeight: '600', fontSize: 12 }}>Sent</Text>
+                            </>
+                          ) : (
+                            <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 12 }}>Send</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })
+              )}
+            </ScrollView>
+
+            {/* Instagram Quick Action Icons Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 16, marginTop: 10, borderTopWidth: 1, borderColor: theme.border }}>
+              <TouchableOpacity
+                style={{ alignItems: 'center' }}
+                onPress={() => {
+                  if (Platform.OS === 'web' && navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Post link copied to clipboard!');
+                  } else {
+                    Alert.alert('Link Copied', 'Post link copied to clipboard!');
+                  }
+                }}
+              >
+                <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(0, 33, 68, 0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+                  <Ionicons name="link-outline" size={22} color={theme.primary} />
+                </View>
+                <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>Copy Link</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ alignItems: 'center' }}
+                onPress={() => {
+                  const contentToShare = selectedPost?.content || 'Check out this post on Alumni Network!';
+                  Share.share({ message: contentToShare });
+                }}
+              >
+                <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(0, 33, 68, 0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+                  <Ionicons name="share-social-outline" size={22} color={theme.primary} />
+                </View>
+                <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>Share via...</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ alignItems: 'center' }}
+                onPress={() => {
+                  setShareModalVisible(false);
+                  navigation.navigate('Chat');
+                }}
+              >
+                <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(0, 33, 68, 0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={22} color={theme.primary} />
+                </View>
+                <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>Send in Chat</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -202,6 +202,7 @@ const RegisterScreen = ({ navigation }) => {
     joiningYear: ''
   });
   const [agreeEULA, setAgreeEULA] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
   const [isCustomInstitution, setIsCustomInstitution] = useState(false);

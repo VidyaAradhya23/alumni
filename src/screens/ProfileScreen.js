@@ -63,6 +63,7 @@ const ProfileScreen = ({ navigation }) => {
   const [userPosts, setUserPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentInput, setCommentInput] = useState('');
+  const commentInputRef = useRef(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [shareSearchQuery, setShareSearchQuery] = useState('');
@@ -1017,11 +1018,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TouchableOpacity 
                   style={{ marginRight: 10 }}
-                  onPress={() => {
-                    setShareModalVisible(true);
-                  }}
+                  onPress={() => setShareModalVisible(true)}
                 >
-                  <Ionicons name="paper-plane-outline" size={22} color={theme.primary} />
+                  <Ionicons name="share-outline" size={22} color={theme.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
                   <Ionicons name="close-circle" size={26} color="#94A3B8" />
@@ -1049,15 +1048,11 @@ const ProfileScreen = ({ navigation }) => {
                     if (selectedPost) {
                       try {
                         const targetId = selectedPost._id || selectedPost.id;
-                        await toggleLikePost(targetId);
-                        const currentLikes = selectedPost.likes || [];
-                        const isLiked = currentLikes.some(l => (typeof l === 'string' ? l === profileData.name : l?._id === profileData.name));
-                        const updatedLikes = isLiked 
-                          ? currentLikes.filter(l => (typeof l === 'string' ? l !== profileData.name : l?._id !== profileData.name))
-                          : [...currentLikes, profileData.name];
-                        
-                        setSelectedPost(prev => prev ? ({ ...prev, likes: updatedLikes }) : null);
-                        setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, likes: updatedLikes } : p));
+                        const updatedPost = await toggleLikePost(targetId);
+                        if (updatedPost) {
+                          setSelectedPost(prev => prev ? ({ ...prev, likes: updatedPost.likes }) : null);
+                          setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, likes: updatedPost.likes } : p));
+                        }
                       } catch (e) {
                         console.error('Like toggle error', e);
                       }
@@ -1075,12 +1070,16 @@ const ProfileScreen = ({ navigation }) => {
                 </TouchableOpacity>
 
                 {/* Comment Count Indicator */}
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center' }} 
+                  activeOpacity={0.7}
+                  onPress={() => commentInputRef.current?.focus()}
+                >
                   <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
                   <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
                     {selectedPost?.comments?.length || 0} comments
                   </Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Share Button */}
                 <TouchableOpacity 
@@ -1125,6 +1124,7 @@ const ProfileScreen = ({ navigation }) => {
             {/* Comment Input Bar */}
             <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 0.5, borderColor: theme.border, backgroundColor: theme.card }}>
               <TextInput
+                ref={commentInputRef}
                 style={{
                   flex: 1,
                   backgroundColor: 'rgba(0, 33, 68, 0.05)',
@@ -1147,7 +1147,7 @@ const ProfileScreen = ({ navigation }) => {
                   width: 40,
                   height: 40,
                   borderRadius: 20,
-                  justify: 'center',
+                  justifyContent: 'center',
                   alignItems: 'center'
                 }}
                 disabled={!commentInput.trim() || submittingComment}

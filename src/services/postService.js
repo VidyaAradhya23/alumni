@@ -36,6 +36,16 @@ export const toggleSavePost = async (postId) => {
     return data;
 };
 
+export const getSavedPosts = async () => {
+    const { data } = await api.get('/posts/saved');
+    return data;
+};
+
+export const resharePost = async (postId, note = '') => {
+    const { data } = await api.post(`/posts/${postId}/reshare`, { note });
+    return data;
+};
+
 export const updatePostSettings = async (postId, settings) => {
     const { data } = await api.put(`/posts/${postId}/settings`, settings);
     return data;

@@ -17,6 +17,10 @@ const postSchema = new mongoose.Schema({
             createdAt: { type: Date, default: Date.now }
         }
     ],
+    savedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    reshares: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    originalPost: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
+    originalAuthorName: { type: String },
     isArchived: { type: Boolean, default: false },
     hideLikeCount: { type: Boolean, default: false },
     hideShareCount: { type: Boolean, default: false },

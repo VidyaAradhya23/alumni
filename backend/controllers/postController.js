@@ -146,18 +146,79 @@ exports.toggleSavePost = async (req, res) => {
     try {
         const user = req.user;
         const postId = req.params.id;
+        const post = await Post.findById(postId);
         
-        const isSaved = user.savedPosts && user.savedPosts.includes(postId);
-        
-        if (isSaved) {
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const isSavedUser = user.savedPosts && user.savedPosts.includes(postId);
+        if (isSavedUser) {
             user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId.toString());
+            post.savedBy = (post.savedBy || []).filter(id => id.toString() !== user._id.toString());
         } else {
             if (!user.savedPosts) user.savedPosts = [];
             user.savedPosts.push(postId);
+            if (!post.savedBy) post.savedBy = [];
+            post.savedBy.push(user._id);
         }
         
-        await user.save();
-        res.json({ savedPosts: user.savedPosts });
+        await Promise.all([user.save(), post.save()]);
+        res.json({ saved: !isSavedUser, savedPosts: user.savedPosts });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user's saved posts
+// @route   GET /api/posts/saved
+exports.getSavedPosts = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate({
+            path: 'savedPosts',
+            populate: {
+                path: 'user',
+                select: 'name branch department batchYear avatar_url'
+            }
+        });
+        res.json(user.savedPosts || []);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Reshare a post to user's feed
+// @route   POST /api/posts/:id/reshare
+exports.resharePost = async (req, res) => {
+    try {
+        const originalPost = await Post.findById(req.params.id).populate('user', 'name');
+        if (!originalPost) {
+            return res.status(404).json({ message: 'Original post not found' });
+        }
+
+        // Increment reshares on original post
+        if (!originalPost.reshares) originalPost.reshares = [];
+        if (!originalPost.reshares.includes(req.user._id)) {
+            originalPost.reshares.push(req.user._id);
+            await originalPost.save();
+        }
+
+        // Create new reshared post entry in feed
+        const { note } = req.body;
+        const resharedPost = await Post.create({
+            user: req.user._id,
+            content: note ? `${note}\n\n🔄 Reshared from @${originalPost.user?.name || 'Alumni'}: ${originalPost.content || ''}` : `🔄 Reshared from @${originalPost.user?.name || 'Alumni'}: ${originalPost.content || ''}`,
+            image: originalPost.image,
+            fileType: originalPost.fileType,
+            fileName: originalPost.fileName,
+            originalPost: originalPost._id,
+            originalAuthorName: originalPost.user?.name || 'Alumni Member'
+        });
+
+        const populatedReshare = await Post.findById(resharedPost._id)
+            .populate('user', 'name branch department batchYear avatar_url');
+
+        res.status(201).json({ message: 'Post reshared to your feed successfully!', post: populatedReshare, resharesCount: originalPost.reshares.length });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

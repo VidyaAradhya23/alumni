@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar, Modal, FlatList } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadFile } from '../services/uploadService';
 import { createPost } from '../services/postService';
+import { getFollowers, getFollowing } from '../services/authService';
 
 const hashtags = ['#Institution', '#AlumniMeet', '#Mentorship', '#TechTalk', '#Careers', '#ClassOf2024'];
 
@@ -22,6 +23,11 @@ const PostCreationScreen = ({ navigation }) => {
 
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Tagging states
+  const [taggedUsers, setTaggedUsers] = useState([]);
+  const [tagModalVisible, setTagModalVisible] = useState(false);
+  const [connections, setConnections] = useState([]);
+
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -32,7 +38,19 @@ const PostCreationScreen = ({ navigation }) => {
         }
       } catch (err) {}
     };
+    const fetchConnections = async () => {
+      try {
+        const [followers, following] = await Promise.all([getFollowers(), getFollowing()]);
+        // Combine and remove duplicates
+        const allConnections = [...followers, ...following];
+        const uniqueConnections = Array.from(new Map(allConnections.map(user => [user._id, user])).values());
+        setConnections(uniqueConnections);
+      } catch (error) {
+        console.error('Error fetching connections:', error);
+      }
+    };
     fetchUser();
+    fetchConnections();
   }, []);
 
   const handlePost = async () => {
@@ -53,7 +71,8 @@ const PostCreationScreen = ({ navigation }) => {
         content: content.trim(),
         image: imageUrl,
         fileType: mimeType,
-        fileName: fileName
+        fileName: fileName,
+        tags: taggedUsers.map(u => u._id)
       });
 
       setIsUploading(false);
@@ -106,10 +125,10 @@ const PostCreationScreen = ({ navigation }) => {
 
   const handleSelectMedia = async () => {
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.7,
+        allowsEditing: false, // Don't force cropping for post images
+        quality: 0.3, // Compress to fit under Vercel 4.5MB limit
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -282,8 +301,14 @@ const PostCreationScreen = ({ navigation }) => {
                 <TouchableOpacity style={styles.toolBtn} onPress={handleSelectDocument}>
                   <Ionicons name="document-outline" size={24} color="#475569" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toolBtn} onPress={handleToggleAudience}>
-                  <Ionicons name="people-outline" size={24} color="#475569" />
+                {/* Tag Users Action */}
+                <TouchableOpacity style={styles.toolBtn} onPress={() => setTagModalVisible(true)}>
+                  <Ionicons name="people-outline" size={24} color={taggedUsers.length > 0 ? theme.primary : "#475569"} />
+                  {taggedUsers.length > 0 && (
+                    <View style={{position: 'absolute', top: -5, right: -5, backgroundColor: theme.primary, borderRadius: 10, width: 16, height: 16, justifyContent: 'center', alignItems: 'center'}}>
+                      <Text style={{color: 'white', fontSize: 10, fontWeight: 'bold'}}>{taggedUsers.length}</Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
                 <View style={{ flex: 1 }} />
                 <Text style={[styles.charCount, content.length >= 250 && styles.charCountWarning]}>
@@ -294,6 +319,56 @@ const PostCreationScreen = ({ navigation }) => {
           </KeyboardAvoidingView>
         </View>
       </View>
+
+      {/* Tag Users Modal */}
+      <Modal visible={tagModalVisible} animationType="slide" transparent={true} onRequestClose={() => setTagModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Tag Connections</Text>
+              <TouchableOpacity onPress={() => setTagModalVisible(false)}><Ionicons name="close" size={24} color="#334155" /></TouchableOpacity>
+            </View>
+            <FlatList
+              data={connections}
+              keyExtractor={item => item._id}
+              contentContainerStyle={{ padding: 16 }}
+              ListEmptyComponent={<Text style={{textAlign: 'center', color: '#64748B', marginTop: 20}}>No connections found.</Text>}
+              renderItem={({ item }) => {
+                const isSelected = taggedUsers.some(u => u._id === item._id);
+                return (
+                  <TouchableOpacity 
+                    style={{flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9'}}
+                    onPress={() => {
+                      if (isSelected) {
+                        setTaggedUsers(prev => prev.filter(u => u._id !== item._id));
+                      } else {
+                        setTaggedUsers(prev => [...prev, item]);
+                      }
+                    }}
+                  >
+                    <View style={{width: 40, height: 40, borderRadius: 20, backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center', marginRight: 12, overflow: 'hidden'}}>
+                      {item.avatar_url ? (
+                        <Image source={{uri: item.avatar_url}} style={{width: '100%', height: '100%'}} />
+                      ) : (
+                        <Text style={{color: '#64748B', fontWeight: 'bold'}}>{item.name ? item.name.substring(0,2).toUpperCase() : 'U'}</Text>
+                      )}
+                    </View>
+                    <Text style={{flex: 1, fontSize: 16, color: '#1E293B', fontWeight: '500'}}>{item.name}</Text>
+                    <View style={{width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: isSelected ? theme.primary : '#CBD5E1', backgroundColor: isSelected ? theme.primary : 'transparent', justifyContent: 'center', alignItems: 'center'}}>
+                      {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+            <View style={{padding: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0'}}>
+              <TouchableOpacity style={[styles.postBtn, {width: '100%', borderRadius: 8}]} onPress={() => setTagModalVisible(false)}>
+                <Text style={styles.postBtnText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -420,9 +495,39 @@ const getStyles = (theme) => StyleSheet.create({
     fontWeight: '700',
   },
   mediaSubLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748B',
-    marginTop: 2,
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: theme.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    minHeight: '50%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
   },
   previewContainer: {
     position: 'relative',

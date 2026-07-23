@@ -181,10 +181,10 @@ const ProfileScreen = ({ navigation }) => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8,
+        quality: 0.2, // Heavily compress avatars to fit under Vercel's 4.5MB limit
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -1000,7 +1000,16 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{profileData.avatar}</Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>{profileData.name}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
+                    {profileData.name}
+                    {selectedPost?.tags && selectedPost.tags.length > 0 && (
+                      <Text style={{fontWeight: '400', color: theme.textMuted}}>
+                        {' is with '}
+                        <Text style={{fontWeight: '600', color: theme.text}}>{selectedPost.tags[0].name}</Text>
+                        {selectedPost.tags.length > 1 && ` and ${selectedPost.tags.length - 1} other${selectedPost.tags.length > 2 ? 's' : ''}`}
+                      </Text>
+                    )}
+                  </Text>
                   <Text style={{ fontSize: 11, color: theme.textMuted }}>{selectedPost?.createdAt ? new Date(selectedPost.createdAt).toLocaleDateString() : 'Just now'}</Text>
                 </View>
               </View>

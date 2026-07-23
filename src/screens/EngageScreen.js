@@ -59,7 +59,8 @@ const EngageScreen = ({ navigation }) => {
           image: p.image_url,
           likes: 0,
           time: new Date(p.created_at).toLocaleDateString(),
-          content: p.content
+          content: p.content,
+          tags: p.tags || []
         }));
         setPostsList(formatted);
       }
@@ -310,7 +311,16 @@ const EngageScreen = ({ navigation }) => {
               <View style={styles.postHeader}>
                 <View style={styles.postAvatar}><Text style={styles.postAvatarText}>{post.avatar}</Text></View>
                 <View style={[styles.postInfo, { flex: 1 }]}>
-                  <Text style={styles.postUserName}>{post.user}</Text>
+                  <Text style={styles.postUserName}>
+                    {post.user}
+                    {post.tags && post.tags.length > 0 && (
+                      <Text style={{fontWeight: '400', color: '#64748B'}}>
+                        {' is with '}
+                        <Text style={{fontWeight: '600', color: '#0F172A'}}>{post.tags[0].name}</Text>
+                        {post.tags.length > 1 && ` and ${post.tags.length - 1} other${post.tags.length > 2 ? 's' : ''}`}
+                      </Text>
+                    )}
+                  </Text>
                   <Text style={styles.postSubtitle}>{post.subtitle}</Text>
                 </View>
                 <TouchableOpacity style={styles.followBtn}>

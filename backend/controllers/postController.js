@@ -17,8 +17,9 @@ exports.getPosts = async (req, res) => {
         });
 
         const posts = await Post.find({ user: { $nin: blockedUserIds } })
-            .populate('user', 'name branch department batchYear avatar_url')
-            .populate('comments.user', 'name avatar_url')
+            .populate('user', 'name branch department batchYear avatar_url username')
+            .populate('tags', 'name username avatar_url')
+            .populate('comments.user', 'name avatar_url username')
             .sort({ createdAt: -1 });
         res.json(posts);
     } catch (error) {
@@ -29,7 +30,7 @@ exports.getPosts = async (req, res) => {
 // @desc    Create a post
 // @route   POST /api/posts
 exports.createPost = async (req, res) => {
-    const { content, image, fileType, fileName } = req.body;
+    const { content, image, fileType, fileName, tags } = req.body;
 
     try {
         const post = await Post.create({
@@ -37,10 +38,14 @@ exports.createPost = async (req, res) => {
             content,
             image,
             fileType,
-            fileName
+            fileName,
+            tags: Array.isArray(tags) ? tags : []
         });
 
-        const fullPost = await post.populate('user', 'name branch department batchYear avatar_url');
+        const fullPost = await post.populate([
+            { path: 'user', select: 'name branch department batchYear avatar_url username' },
+            { path: 'tags', select: 'name username avatar_url' }
+        ]);
         res.status(201).json(fullPost);
     } catch (error) {
         res.status(400).json({ message: error.message });

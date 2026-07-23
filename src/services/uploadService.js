@@ -32,7 +32,6 @@ export const getImageUrl = (url) => {
 const compressImageWeb = async (uri, mimeType) => {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = 'Anonymous';
         img.onload = () => {
             const canvas = document.createElement('canvas');
             const MAX_WIDTH = 1200;

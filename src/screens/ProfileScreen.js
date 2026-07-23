@@ -1258,7 +1258,8 @@ const ProfileScreen = ({ navigation }) => {
                             try {
                               const postText = selectedPost?.content ? `Shared Post:\n"${selectedPost.content}"` : 'Shared a post with you!';
                               const attachmentUrl = getImageUrl(selectedPost?.image || selectedPost?.image_url) || null;
-                              await sendMessage(targetUserId, postText, attachmentUrl);
+                              const attachment = attachmentUrl ? { url: attachmentUrl, type: 'image', name: 'Shared Image' } : null;
+                              await sendMessage(targetUserId, postText, attachment);
                             } catch (err) {
                               console.error('Error sending direct message share:', err);
                             }

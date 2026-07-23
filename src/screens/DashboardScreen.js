@@ -24,7 +24,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
 import { getImageUrl } from '../services/uploadService';
-import { addComment } from '../services/postService';
+import { addComment, createPost } from '../services/postService';
 import { sendMessage } from '../services/messageService';
 import useUserRole from '../hooks/useUserRole';
 
@@ -59,6 +59,46 @@ const DashboardScreen = ({ navigation }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [eventsAndJobs, setEventsAndJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleReshare = (post) => {
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm(`Reshare ${post.user}'s post to your feed?`);
+      if (confirm) {
+        doReshare(post);
+      }
+    } else {
+      Alert.alert(
+        "Reshare Post",
+        `Reshare ${post.user}'s post to your feed?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reshare", onPress: () => doReshare(post) }
+        ]
+      );
+    }
+  };
+
+  const doReshare = async (post) => {
+    try {
+      await createPost({
+        content: `Reshared from @${post.user}:\n\n${post.content}`,
+        image: post.image,
+        tags: []
+      });
+      if (Platform.OS === 'web') {
+        window.alert("Post reshared successfully!");
+      } else {
+        Alert.alert("Success", "Post reshared successfully!");
+      }
+    } catch (err) {
+      console.error('Failed to reshare:', err);
+      if (Platform.OS === 'web') {
+        window.alert("Failed to reshare post. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to reshare post.");
+      }
+    }
+  };
 
   const openModal = (type, post) => {
     setSelectedPost(post);
@@ -263,7 +303,7 @@ const DashboardScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6} onPress={() => openModal('comments', post)}>
             <Ionicons name="chatbubble-outline" size={24} color={theme.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6} onPress={() => openModal('reshare', post)}>
+          <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6} onPress={() => handleReshare(post)}>
             <Ionicons name="repeat-outline" size={26} color={theme.text} />
           </TouchableOpacity>
           <TouchableOpacity

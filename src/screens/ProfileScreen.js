@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory, toggleLikePost } from '../services/authService';
 import { getChatHistory, sendMessage } from '../services/messageService';
 import { uploadFile, getImageUrl } from '../services/uploadService';
-import { addComment, deletePost, toggleSavePost, updatePostSettings, editPost } from '../services/postService';
+import { addComment, deletePost, toggleSavePost, updatePostSettings, editPost, createPost } from '../services/postService';
 import * as ImagePicker from 'expo-image-picker';
 
 const validatePasswordStrength = (password) => {
@@ -238,7 +238,48 @@ const ProfileScreen = ({ navigation }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [twoFactor, setTwoFactor] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleReshare = (post) => {
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm(`Reshare this post to your feed?`);
+      if (confirm) {
+        doReshare(post);
+      }
+    } else {
+      Alert.alert(
+        "Reshare Post",
+        `Reshare this post to your feed?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reshare", onPress: () => doReshare(post) }
+        ]
+      );
+    }
+  };
+
+  const doReshare = async (post) => {
+    try {
+      await createPost({
+        content: `Reshared from @${post.user?.name || 'User'}:\n\n${post.content}`,
+        image: post.image_url || post.image,
+        tags: []
+      });
+      if (Platform.OS === 'web') {
+        window.alert("Post reshared successfully!");
+      } else {
+        Alert.alert("Success", "Post reshared successfully!");
+      }
+      setSelectedPost(null);
+    } catch (err) {
+      console.error('Failed to reshare:', err);
+      if (Platform.OS === 'web') {
+        window.alert("Failed to reshare post. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to reshare post.");
+      }
+    }
+  };
 
   const mockTags = [];
   // Removed mockSaved
@@ -1146,8 +1187,17 @@ const ProfileScreen = ({ navigation }) => {
                     setShareModalVisible(true);
                   }}
                 >
-                  <Ionicons name="paper-plane-outline" size={22} color={theme.primary} />
-                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.primary, fontSize: 14 }}>Share</Text>
+                  <Ionicons name="paper-plane-outline" size={22} color={theme.text} />
+                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>Share</Text>
+                </TouchableOpacity>
+
+                {/* Reshare Button */}
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                  onPress={() => handleReshare(selectedPost)}
+                >
+                  <Ionicons name="repeat-outline" size={22} color={theme.primary} />
+                  <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.primary, fontSize: 14 }}>Reshare</Text>
                 </TouchableOpacity>
               </View>
 

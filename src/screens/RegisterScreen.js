@@ -229,10 +229,8 @@ const RegisterScreen = ({ navigation }) => {
       const res = await sendOtp(emailClean);
       setEmailState('sent');
       setOtpError('');
-      if (res && res.devOtp) {
-        const otpDigits = res.devOtp.split('');
-        setInlineOtp(otpDigits);
-      }
+      // Keep OTP input boxes empty so user enters the 6-digit code received in email
+      setInlineOtp(['', '', '', '', '', '']);
     } catch (error) {
       let msg = error.response?.data?.message || error.message || 'Failed to send OTP';
       setOtpError(msg);

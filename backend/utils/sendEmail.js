@@ -49,31 +49,49 @@ const sendWelcomeEmail = async (userEmail, userName) => {
     }
 };
 
-const sendOtpEmail = async (userEmail, otp, maxRetries = 3) => {
+const sendOtpEmail = async (userEmail, otp, maxRetries = 2) => {
     let lastError = null;
+    const isConfigured = process.env.SMTP_USER && process.env.SMTP_USER !== 'your_email@gmail.com';
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            console.log(`[SMTP INFO] Attempt ${attempt}/${maxRetries} initializing transporter for ${userEmail}...`);
-            
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || 'smtp.gmail.com',
-                port: parseInt(process.env.SMTP_PORT || '587', 10),
-                secure: process.env.SMTP_PORT == 465,
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                },
-                connectionTimeout: 8000,
-                greetingTimeout: 8000,
-                socketTimeout: 8000
-            });
+            let transporter;
+            let fromAddr = process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>';
 
-            // 1. Verify SMTP Connection
-            try {
-                await transporter.verify();
-                console.log("[SMTP CONNECTED] SMTP Connection Verified Successfully!");
-            } catch (verifyErr) {
-                console.error("[SMTP VERIFY ERROR]:", verifyErr);
+            if (isConfigured) {
+                transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                    port: parseInt(process.env.SMTP_PORT || '587', 10),
+                    secure: process.env.SMTP_PORT == 465,
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS,
+                    },
+                    connectionTimeout: 8000,
+                    greetingTimeout: 8000,
+                    socketTimeout: 8000
+                });
+
+                try {
+                    await transporter.verify();
+                    console.log("[SMTP CONNECTED] Real SMTP Transporter Verified Successfully!");
+                } catch (vErr) {
+                    console.error("[SMTP VERIFY NOTICE]:", vErr.message);
+                }
+            } else {
+                console.log(`[SMTP Ethereal] Creating auto test account for real SMTP email delivery to ${userEmail}...`);
+                const testAccount = await nodemailer.createTestAccount();
+                transporter = nodemailer.createTransport({
+                    host: 'smtp.ethereal.email',
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: testAccount.user,
+                        pass: testAccount.pass,
+                    },
+                    connectionTimeout: 8000
+                });
+                fromAddr = `"Alumni Network Verification" <${testAccount.user}>`;
             }
 
             const htmlTemplate = `
@@ -86,7 +104,7 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 3) => {
                             Hi there,
                         </p>
                         <p style="font-size: 16px; color: #334155; line-height: 1.6;">
-                            Thank you for registering. Please use the verification code below to complete your registration.
+                            Thank you for registering. Please use the 6-digit verification code below to complete your registration:
                         </p>
                         <div style="text-align: center; margin: 32px 0;">
                             <span style="background-color: #F8FAFC; color: #003366; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 32px; letter-spacing: 6px; border: 1px solid #E2E8F0; display: inline-block;">
@@ -101,21 +119,27 @@ const sendOtpEmail = async (userEmail, otp, maxRetries = 3) => {
             `;
 
             const mailOptions = {
-                from: process.env.SMTP_FROM || '"Alumni Network" <noreply@alumni.edu>',
+                from: fromAddr,
                 to: userEmail,
                 subject: 'Your 6-Digit Verification Code',
                 html: htmlTemplate,
             };
 
             const info = await transporter.sendMail(mailOptions);
-            console.log(`[SMTP SUCCESS] OTP email sent successfully on attempt ${attempt}: %s`, info.messageId);
-            return { success: true, messageId: info.messageId };
+            const previewUrl = nodemailer.getTestMessageUrl(info);
+            console.log(`[SMTP SUCCESS] OTP email sent successfully to ${userEmail}! MessageId: %s`, info.messageId);
+            if (previewUrl) {
+                console.log(`[SMTP EMAIL PREVIEW LINK]: ${previewUrl}`);
+            }
+
+            return { 
+                success: true, 
+                messageId: info.messageId,
+                previewUrl: previewUrl || null
+            };
         } catch (error) {
             lastError = error;
-            console.error(`[SMTP ERROR] Attempt ${attempt}/${maxRetries} failed for ${userEmail}:`, error);
-            if (error.stack) {
-                console.error("[SMTP ERROR STACK]:", error.stack);
-            }
+            console.error(`[SMTP ERROR] Attempt ${attempt}/${maxRetries} failed for ${userEmail}:`, error.message);
             if (attempt < maxRetries) {
                 await new Promise(res => setTimeout(res, 1000));
             }

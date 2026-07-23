@@ -1330,6 +1330,120 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </Modal>
 
+      {/* 3-Dots Post Options Modal */}
+      <Modal visible={postOptionsModalVisible} transparent animationType="slide" onRequestClose={() => setPostOptionsModalVisible(false)}>
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setPostOptionsModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            style={{ 
+              backgroundColor: '#1C1C1E', 
+              width: '100%', 
+              borderTopLeftRadius: 24, 
+              borderTopRightRadius: 24, 
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 34 : 24
+            }}
+          >
+            {/* Sheet Handle */}
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#48484A', alignSelf: 'center', marginBottom: 20 }} />
+
+            {/* Top Action Row (Save & QR Code) */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16 }}>
+              <TouchableOpacity 
+                style={{ flex: 1, backgroundColor: '#2C2C2E', borderRadius: 12, padding: 12, alignItems: 'center', marginRight: 8 }}
+                onPress={() => {
+                  setPostOptionsModalVisible(false);
+                  alert('Feature coming soon: Save Post');
+                }}
+              >
+                <Ionicons name="bookmark-outline" size={24} color="#FFFFFF" style={{ marginBottom: 4 }} />
+                <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '500' }}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={{ flex: 1, backgroundColor: '#2C2C2E', borderRadius: 12, padding: 12, alignItems: 'center', marginLeft: 8 }}
+                onPress={() => {
+                  setPostOptionsModalVisible(false);
+                  alert('Feature coming soon: QR Code');
+                }}
+              >
+                <Ionicons name="qr-code-outline" size={24} color="#FFFFFF" style={{ marginBottom: 4 }} />
+                <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '500' }}>QR code</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* List Actions */}
+            <View style={{ backgroundColor: '#2C2C2E', borderRadius: 12, marginHorizontal: 16, overflow: 'hidden' }}>
+              
+              {/* Option Item Component */}
+              {constRenderOption = (icon, label, color, onPress, isLast = false) => (
+                <TouchableOpacity 
+                  style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    padding: 16, 
+                    borderBottomWidth: isLast ? 0 : 0.5, 
+                    borderBottomColor: '#3A3A3C' 
+                  }}
+                  onPress={onPress}
+                >
+                  <Ionicons name={icon} size={22} color={color} style={{ marginRight: 16 }} />
+                  <Text style={{ color: color, fontSize: 16 }}>{label}</Text>
+                </TouchableOpacity>
+              )}
+
+              {constRenderOption('logo-facebook', 'Shared to Facebook', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Share to Facebook'); })}
+              {constRenderOption('time-outline', 'Archive', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Archive Post'); })}
+              {constRenderOption('heart-dislike-outline', 'Hide like count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide like count'); })}
+              {constRenderOption('eye-off-outline', 'Hide share count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide share count'); })}
+              {constRenderOption('chatbubble-ellipses-outline', 'Turn off commenting', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Turn off commenting'); })}
+              {constRenderOption('pencil-outline', 'Edit', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Edit Post'); })}
+              {constRenderOption('crop-outline', 'Adjust preview', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Adjust preview'); })}
+              {constRenderOption('pin-outline', 'Pin to main grid', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Pin to main grid'); })}
+              
+              {/* Delete Action */}
+              <TouchableOpacity 
+                style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Post",
+                    "Are you sure you want to delete this post?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      { 
+                        text: "Delete", 
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            const targetId = selectedPost?._id || selectedPost?.id;
+                            if (targetId) {
+                              await deletePost(targetId);
+                              setUserPosts(prev => prev.filter(p => (p._id !== targetId && p.id !== targetId)));
+                              setSelectedPost(null);
+                              setPostOptionsModalVisible(false);
+                            }
+                          } catch (err) {
+                            console.error('Delete post error:', err);
+                            alert('Failed to delete post.');
+                          }
+                        }
+                      }
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="trash-outline" size={22} color="#FF3B30" style={{ marginRight: 16 }} />
+                <Text style={{ color: '#FF3B30', fontSize: 16 }}>Delete</Text>
+              </TouchableOpacity>
+
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
     </View>
     </SafeAreaView>
   );

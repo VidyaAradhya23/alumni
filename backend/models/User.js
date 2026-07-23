@@ -50,7 +50,10 @@ const userSchema = new mongoose.Schema({
 
     // Profile Enhancement
     skills: [{ type: String }],
-    headline: { type: String }
+    headline: { type: String },
+    
+    // Post Management
+    savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }]
 }, { timestamps: true });
 
 // Database search indexes for fast lookup and user filtering

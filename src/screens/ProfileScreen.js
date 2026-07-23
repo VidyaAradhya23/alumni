@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory, toggleLikePost } from '../services/authService';
 import { getChatHistory, sendMessage } from '../services/messageService';
 import { uploadFile, getImageUrl } from '../services/uploadService';
-import { addComment, deletePost } from '../services/postService';
+import { addComment, deletePost, toggleSavePost, updatePostSettings, editPost } from '../services/postService';
 import * as ImagePicker from 'expo-image-picker';
 
 const validatePasswordStrength = (password) => {
@@ -67,6 +67,8 @@ const ProfileScreen = ({ navigation }) => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [postOptionsModalVisible, setPostOptionsModalVisible] = useState(false);
+  const [editPostModalVisible, setEditPostModalVisible] = useState(false);
+  const [editPostText, setEditPostText] = useState('');
   const [shareSearchQuery, setShareSearchQuery] = useState('');
   const [sentMap, setSentMap] = useState({});
   const [highlights, setHighlights] = useState([
@@ -152,11 +154,12 @@ const ProfileScreen = ({ navigation }) => {
       try {
         const postsData = await getPosts();
         if (postsData) {
-          // Count posts by current user (we'll filter after getting profile)
           const userInfoStr = await AsyncStorage.getItem('userInfo');
           if (userInfoStr) {
             const userInfo = JSON.parse(userInfoStr);
-            const myPosts = postsData.filter(p => p.user?.name === userInfo.name || p.user?._id === userInfo._id);
+            let myPosts = postsData.filter(p => (p.user?.name === userInfo.name || p.user?._id === userInfo._id) && !p.isArchived);
+            myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
+            
             setProfileData(prev => ({
               ...prev,
               posts: myPosts.length.toString(),
@@ -1066,7 +1069,7 @@ const ProfileScreen = ({ navigation }) => {
                     color={selectedPost?.likes?.length > 0 ? "#EF4444" : theme.text} 
                   />
                   <Text style={{ marginLeft: 6, fontWeight: '600', color: theme.text, fontSize: 14 }}>
-                    {selectedPost?.likes?.length || 0} {selectedPost?.likes?.length === 1 ? 'like' : 'likes'}
+                    {selectedPost?.hideLikeCount ? 'Likes hidden' : `${selectedPost?.likes?.length || 0} ${selectedPost?.likes?.length === 1 ? 'like' : 'likes'}`}
                   </Text>
                 </TouchableOpacity>
 
@@ -1123,68 +1126,74 @@ const ProfileScreen = ({ navigation }) => {
             </ScrollView>
 
             {/* Comment Input Bar */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 0.5, borderColor: theme.border, backgroundColor: theme.card }}>
-              <TextInput
-                ref={commentInputRef}
-                style={{
-                  flex: 1,
-                  backgroundColor: 'rgba(0, 33, 68, 0.05)',
-                  borderRadius: 20,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  fontSize: 14,
-                  color: theme.text,
-                  maxHeight: 80
-                }}
-                placeholder="Add a comment..."
-                placeholderTextColor={theme.textMuted}
-                value={commentInput}
-                onChangeText={setCommentInput}
-              />
-              <TouchableOpacity
-                style={{
-                  marginLeft: 10,
-                  backgroundColor: commentInput.trim() ? theme.primary : '#CBD5E1',
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-                disabled={!commentInput.trim() || submittingComment}
-                onPress={async () => {
-                  if (!commentInput.trim() || !selectedPost) return;
-                  const textToAdd = commentInput.trim();
-                  setCommentInput('');
-                  setSubmittingComment(true);
-                  
-                  const targetId = selectedPost._id || selectedPost.id;
-                  let newCommentObj = { 
-                    _id: 'c_' + Date.now(), 
-                    text: textToAdd, 
-                    user: { name: profileData.name || 'You' }, 
-                    createdAt: new Date() 
-                  };
+            {selectedPost?.commentsDisabled ? (
+              <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: theme.border, alignItems: 'center' }}>
+                <Text style={{ color: theme.textMuted, fontSize: 14 }}>Comments are disabled for this post.</Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderTopWidth: 0.5, borderColor: theme.border, backgroundColor: theme.card }}>
+                <TextInput
+                  ref={commentInputRef}
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0, 33, 68, 0.05)',
+                    borderRadius: 20,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    fontSize: 14,
+                    color: theme.text,
+                    maxHeight: 80
+                  }}
+                  placeholder="Add a comment..."
+                  placeholderTextColor={theme.textMuted}
+                  value={commentInput}
+                  onChangeText={setCommentInput}
+                />
+                <TouchableOpacity
+                  style={{
+                    marginLeft: 10,
+                    backgroundColor: commentInput.trim() ? theme.primary : '#CBD5E1',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                  disabled={!commentInput.trim() || submittingComment}
+                  onPress={async () => {
+                    if (!commentInput.trim() || !selectedPost) return;
+                    const textToAdd = commentInput.trim();
+                    setCommentInput('');
+                    setSubmittingComment(true);
+                    
+                    const targetId = selectedPost._id || selectedPost.id;
+                    let newCommentObj = { 
+                      _id: 'c_' + Date.now(), 
+                      text: textToAdd, 
+                      user: { name: profileData.name || 'You' }, 
+                      createdAt: new Date() 
+                    };
 
-                  let updatedComments = [...(selectedPost.comments || []), newCommentObj];
+                    let updatedComments = [...(selectedPost.comments || []), newCommentObj];
 
-                  try {
-                    const updatedPost = await addComment(targetId, textToAdd);
-                    if (updatedPost && updatedPost.comments) {
-                      updatedComments = updatedPost.comments;
+                    try {
+                      const updatedPost = await addComment(targetId, textToAdd);
+                      if (updatedPost && updatedPost.comments) {
+                        updatedComments = updatedPost.comments;
+                      }
+                    } catch (err) {
+                      console.log('Backend comment endpoint sync note:', err?.message || err);
+                    } finally {
+                      setSelectedPost(prev => prev ? ({ ...prev, comments: updatedComments }) : null);
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, comments: updatedComments } : p));
+                      setSubmittingComment(false);
                     }
-                  } catch (err) {
-                    console.log('Backend comment endpoint sync note:', err?.message || err);
-                  } finally {
-                    setSelectedPost(prev => prev ? ({ ...prev, comments: updatedComments }) : null);
-                    setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? { ...p, comments: updatedComments } : p));
-                    setSubmittingComment(false);
-                  }
-                }}
-              >
-                <Ionicons name="send" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
+                  }}
+                >
+                  <Ionicons name="send" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1355,9 +1364,18 @@ const ProfileScreen = ({ navigation }) => {
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16 }}>
               <TouchableOpacity 
                 style={{ flex: 1, backgroundColor: '#2C2C2E', borderRadius: 12, padding: 12, alignItems: 'center', marginRight: 8 }}
-                onPress={() => {
-                  setPostOptionsModalVisible(false);
-                  alert('Feature coming soon: Save Post');
+                onPress={async () => {
+                  try {
+                    setPostOptionsModalVisible(false);
+                    const targetId = selectedPost?._id || selectedPost?.id;
+                    if (targetId) {
+                      await toggleSavePost(targetId);
+                      alert('Post saved to your profile.');
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    alert('Error saving post.');
+                  }
                 }}
               >
                 <Ionicons name="bookmark-outline" size={24} color="#FFFFFF" style={{ marginBottom: 4 }} />
@@ -1367,7 +1385,8 @@ const ProfileScreen = ({ navigation }) => {
                 style={{ flex: 1, backgroundColor: '#2C2C2E', borderRadius: 12, padding: 12, alignItems: 'center', marginLeft: 8 }}
                 onPress={() => {
                   setPostOptionsModalVisible(false);
-                  alert('Feature coming soon: QR Code');
+                  const targetId = selectedPost?._id || selectedPost?.id;
+                  alert('QR Code for Post ID:\n' + targetId);
                 }}
               >
                 <Ionicons name="qr-code-outline" size={24} color="#FFFFFF" style={{ marginBottom: 4 }} />
@@ -1399,14 +1418,69 @@ const ProfileScreen = ({ navigation }) => {
 
                 return (
                   <>
-                    {renderOption('logo-facebook', 'Shared to Facebook', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Share to Facebook'); })}
-                    {renderOption('time-outline', 'Archive', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Archive Post'); })}
-                    {renderOption('heart-dislike-outline', 'Hide like count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide like count'); })}
-                    {renderOption('eye-off-outline', 'Hide share count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide share count'); })}
-                    {renderOption('chatbubble-ellipses-outline', 'Turn off commenting', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Turn off commenting'); })}
-                    {renderOption('pencil-outline', 'Edit', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Edit Post'); })}
-                    {renderOption('crop-outline', 'Adjust preview', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Adjust preview'); })}
-                    {renderOption('pin-outline', 'Pin to main grid', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Pin to main grid'); })}
+                    {renderOption('logo-facebook', 'Shared to Facebook', '#FFFFFF', () => { 
+                      setPostOptionsModalVisible(false); 
+                      Share.share({ message: `Check out this post! https://facebook.com/sharer/sharer.php?u=alumniapp.com/post/${selectedPost?._id || selectedPost?.id}` });
+                    })}
+                    {renderOption('time-outline', selectedPost?.isArchived ? 'Unarchive' : 'Archive', '#FFFFFF', async () => { 
+                      setPostOptionsModalVisible(false);
+                      const targetId = selectedPost?._id || selectedPost?.id;
+                      if (!targetId) return;
+                      const newState = !selectedPost?.isArchived;
+                      await updatePostSettings(targetId, { isArchived: newState });
+                      setUserPosts(prev => prev.filter(p => (p._id !== targetId && p.id !== targetId)));
+                      setSelectedPost(null);
+                      alert(newState ? 'Post archived and removed from grid.' : 'Post unarchived.');
+                    })}
+                    {renderOption(selectedPost?.hideLikeCount ? 'heart-outline' : 'heart-dislike-outline', selectedPost?.hideLikeCount ? 'Show like count' : 'Hide like count', '#FFFFFF', async () => { 
+                      setPostOptionsModalVisible(false);
+                      const targetId = selectedPost?._id || selectedPost?.id;
+                      if (!targetId) return;
+                      const newState = !selectedPost?.hideLikeCount;
+                      const updated = await updatePostSettings(targetId, { hideLikeCount: newState });
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? updated : p));
+                      setSelectedPost(updated);
+                    })}
+                    {renderOption(selectedPost?.hideShareCount ? 'eye-outline' : 'eye-off-outline', selectedPost?.hideShareCount ? 'Show share count' : 'Hide share count', '#FFFFFF', async () => { 
+                      setPostOptionsModalVisible(false);
+                      const targetId = selectedPost?._id || selectedPost?.id;
+                      if (!targetId) return;
+                      const newState = !selectedPost?.hideShareCount;
+                      const updated = await updatePostSettings(targetId, { hideShareCount: newState });
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? updated : p));
+                      setSelectedPost(updated);
+                    })}
+                    {renderOption(selectedPost?.commentsDisabled ? 'chatbubble-outline' : 'chatbubble-ellipses-outline', selectedPost?.commentsDisabled ? 'Turn on commenting' : 'Turn off commenting', '#FFFFFF', async () => { 
+                      setPostOptionsModalVisible(false);
+                      const targetId = selectedPost?._id || selectedPost?.id;
+                      if (!targetId) return;
+                      const newState = !selectedPost?.commentsDisabled;
+                      const updated = await updatePostSettings(targetId, { commentsDisabled: newState });
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? updated : p));
+                      setSelectedPost(updated);
+                    })}
+                    {renderOption('pencil-outline', 'Edit', '#FFFFFF', () => { 
+                      setPostOptionsModalVisible(false); 
+                      setEditPostText(selectedPost?.content || '');
+                      setEditPostModalVisible(true);
+                    })}
+                    {renderOption('crop-outline', 'Adjust preview', '#FFFFFF', () => { 
+                      setPostOptionsModalVisible(false); 
+                      alert('Preview adjustments require external cropping tools (coming soon).');
+                    })}
+                    {renderOption(selectedPost?.isPinned ? 'pin' : 'pin-outline', selectedPost?.isPinned ? 'Unpin from main grid' : 'Pin to main grid', '#FFFFFF', async () => { 
+                      setPostOptionsModalVisible(false);
+                      const targetId = selectedPost?._id || selectedPost?.id;
+                      if (!targetId) return;
+                      const newState = !selectedPost?.isPinned;
+                      const updated = await updatePostSettings(targetId, { isPinned: newState });
+                      setUserPosts(prev => {
+                        let newPosts = prev.map(p => (p._id === targetId || p.id === targetId) ? updated : p);
+                        newPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
+                        return newPosts;
+                      });
+                      setSelectedPost(updated);
+                    })}
                   </>
                 );
               })()}
@@ -1449,6 +1523,60 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Edit Post Modal */}
+      <Modal visible={editPostModalVisible} transparent animationType="fade" onRequestClose={() => setEditPostModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ width: '100%', backgroundColor: theme.card, borderRadius: 12, padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>Edit Post</Text>
+            
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: theme.border,
+                borderRadius: 8,
+                padding: 12,
+                color: theme.text,
+                minHeight: 100,
+                textAlignVertical: 'top'
+              }}
+              multiline
+              value={editPostText}
+              onChangeText={setEditPostText}
+              placeholder="Write your post here..."
+              placeholderTextColor={theme.textMuted}
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
+              <TouchableOpacity 
+                style={{ padding: 10, marginRight: 10 }}
+                onPress={() => setEditPostModalVisible(false)}
+              >
+                <Text style={{ color: theme.textMuted, fontWeight: '600' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={{ padding: 10, backgroundColor: theme.primary, borderRadius: 8 }}
+                onPress={async () => {
+                  try {
+                    const targetId = selectedPost?._id || selectedPost?.id;
+                    if (targetId && editPostText.trim()) {
+                      const updated = await editPost(targetId, editPostText.trim());
+                      setUserPosts(prev => prev.map(p => (p._id === targetId || p.id === targetId) ? updated : p));
+                      setSelectedPost(updated);
+                      setEditPostModalVisible(false);
+                    }
+                  } catch (err) {
+                    console.error('Edit error:', err);
+                    alert('Failed to edit post.');
+                  }
+                }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: '600' }}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
     </View>

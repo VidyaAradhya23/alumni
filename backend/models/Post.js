@@ -13,7 +13,12 @@ const postSchema = new mongoose.Schema({
             text: { type: String, required: true },
             createdAt: { type: Date, default: Date.now }
         }
-    ]
+    ],
+    isArchived: { type: Boolean, default: false },
+    hideLikeCount: { type: Boolean, default: false },
+    hideShareCount: { type: Boolean, default: false },
+    commentsDisabled: { type: Boolean, default: false },
+    isPinned: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Index for fast timeline feed sorting

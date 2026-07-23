@@ -30,3 +30,18 @@ export const reportItem = async (reportData) => {
     const { data } = await api.post('/reports', reportData);
     return data;
 };
+
+export const toggleSavePost = async (postId) => {
+    const { data } = await api.put(`/posts/${postId}/save`);
+    return data;
+};
+
+export const updatePostSettings = async (postId, settings) => {
+    const { data } = await api.put(`/posts/${postId}/settings`, settings);
+    return data;
+};
+
+export const editPost = async (postId, content) => {
+    const { data } = await api.put(`/posts/${postId}/edit`, { content });
+    return data;
+};

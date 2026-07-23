@@ -380,52 +380,7 @@ const ProfileScreen = ({ navigation }) => {
             ) : null}
           </View>
 
-          {/* Instagram Story Highlights */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 14, paddingLeft: 4 }}>
-            {highlights.map(h => (
-              <View key={h.id} style={{ alignItems: 'center', marginRight: 18 }}>
-                <View style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  padding: 2.5,
-                  borderWidth: 2,
-                  borderColor: theme.primary,
-                  backgroundColor: theme.card,
-                  justify: 'center',
-                  alignItems: 'center'
-                }}>
-                  <View style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 30,
-                    backgroundColor: theme.background,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <Ionicons name={h.icon} size={24} color={theme.primary} />
-                  </View>
-                </View>
-                <Text style={{ fontSize: 11, color: theme.text, marginTop: 4, fontWeight: '500' }}>{h.title}</Text>
-              </View>
-            ))}
-            <TouchableOpacity style={{ alignItems: 'center', marginRight: 18 }} onPress={handleOpenEdit}>
-              <View style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                borderWidth: 1.5,
-                borderColor: '#CBD5E1',
-                borderStyle: 'dashed',
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: theme.card
-              }}>
-                <Ionicons name="add" size={26} color="#64748B" />
-              </View>
-              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>New</Text>
-            </TouchableOpacity>
-          </ScrollView>
+
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>

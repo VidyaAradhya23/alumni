@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, changePassword, deleteAccount, getPosts, getFollowers, getFollowing, toggleFollowUser, logout, setup2FA, verify2FA, disable2FA, getActiveSessions, revokeSession, getLoginHistory, toggleLikePost } from '../services/authService';
-import { getChatHistory } from '../services/messageService';
+import { getChatHistory, sendMessage } from '../services/messageService';
 import { uploadFile, getImageUrl } from '../services/uploadService';
 import { addComment, deletePost } from '../services/postService';
 import * as ImagePicker from 'expo-image-picker';
@@ -1252,8 +1252,16 @@ const ProfileScreen = ({ navigation }) => {
                             flexDirection: 'row',
                             alignItems: 'center'
                           }}
-                          onPress={() => {
-                            setSentMap(prev => ({ ...prev, [user.id]: true }));
+                          onPress={async () => {
+                            const targetUserId = user.id || user._id;
+                            setSentMap(prev => ({ ...prev, [targetUserId]: true }));
+                            try {
+                              const postText = selectedPost?.content ? `Shared Post:\n"${selectedPost.content}"` : 'Shared a post with you!';
+                              const attachmentUrl = getImageUrl(selectedPost?.image || selectedPost?.image_url) || null;
+                              await sendMessage(targetUserId, postText, attachmentUrl);
+                            } catch (err) {
+                              console.error('Error sending direct message share:', err);
+                            }
                           }}
                         >
                           {isSent ? (

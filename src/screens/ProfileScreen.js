@@ -145,16 +145,18 @@ const ProfileScreen = ({ navigation }) => {
             // 3. Fetch and filter posts using the fetched userData._id
             const postsData = await getPosts().catch(() => []);
             if (postsData) {
+              const isReshared = (p) => p.isReshare || (p.content && p.content.startsWith('Reshared from @'));
+              
               let myPosts = postsData.filter(p => 
                 p.user && 
                 (p.user._id === userData._id || p.user.id === userData._id)
                 && !p.isArchived
-                && !p.isReshare
+                && !isReshared(p)
               );
               let myReshares = postsData.filter(p => 
                 p.user && 
                 (p.user._id === userData._id || p.user.id === userData._id)
-                && p.isReshare
+                && isReshared(p)
               );
               let myTaggedPosts = postsData.filter(p =>
                 p.user &&

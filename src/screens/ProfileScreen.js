@@ -66,6 +66,7 @@ const ProfileScreen = ({ navigation }) => {
   const commentInputRef = useRef(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [postOptionsModalVisible, setPostOptionsModalVisible] = useState(false);
   const [shareSearchQuery, setShareSearchQuery] = useState('');
   const [sentMap, setSentMap] = useState({});
   const [highlights, setHighlights] = useState([
@@ -1018,9 +1019,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TouchableOpacity 
                   style={{ marginRight: 10 }}
-                  onPress={() => setShareModalVisible(true)}
+                  onPress={() => setPostOptionsModalVisible(true)}
                 >
-                  <Ionicons name="share-outline" size={22} color={theme.primary} />
+                  <Ionicons name="ellipsis-horizontal" size={24} color={theme.text} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setSelectedPost(null)} style={{ padding: 4 }}>
                   <Ionicons name="close-circle" size={26} color="#94A3B8" />

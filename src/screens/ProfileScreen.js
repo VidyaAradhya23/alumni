@@ -62,6 +62,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const [userPosts, setUserPosts] = useState([]);
   const [taggedPosts, setTaggedPosts] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentInput, setCommentInput] = useState('');
   const commentInputRef = useRef(null);
@@ -153,8 +154,12 @@ const ProfileScreen = ({ navigation }) => {
                 (p.tags && p.tags.some(t => (t._id || t.id || t) === userData._id))
                 && !p.isArchived
               );
+              let mySavedPosts = postsData.filter(p =>
+                userData.savedPosts && userData.savedPosts.includes(p._id)
+              );
               myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
               myTaggedPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
+              mySavedPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
               
               setProfileData(prev => ({
                 ...prev,
@@ -162,6 +167,7 @@ const ProfileScreen = ({ navigation }) => {
               }));
               setUserPosts(myPosts);
               setTaggedPosts(myTaggedPosts);
+              setSavedPosts(mySavedPosts);
             }
           }
         } catch (e) {
@@ -235,7 +241,7 @@ const ProfileScreen = ({ navigation }) => {
   const [twoFactor, setTwoFactor] = useState(false);
 
   const mockTags = [];
-  const mockSaved = [];
+  // Removed mockSaved
   const mockReshares = [];
 
   const handleSettings = () => {
@@ -522,12 +528,33 @@ const ProfileScreen = ({ navigation }) => {
         )}
 
         {activeTab === 'saved' && (
-          <View style={styles.postsGrid}>
-            {mockSaved.map((item) => (
-              <TouchableOpacity key={item.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
-                <Image source={{ uri: item.uri }} style={styles.gridImage} />
-              </TouchableOpacity>
+          <View style={styles.tabContent}>
+            {savedPosts.map((item) => (
+              <PostCard 
+                key={item._id} 
+                post={item}
+                onLike={() => handleLikePost(item._id)}
+                onComment={() => {
+                  setSelectedPost(item);
+                  setCommentInput('');
+                }}
+                onShare={() => {
+                  setSelectedPost(item);
+                  setShareModalVisible(true);
+                }}
+                onOptions={() => {
+                  setSelectedPost(item);
+                  setPostOptionsModalVisible(true);
+                }}
+              />
             ))}
+            {savedPosts.length === 0 && (
+              <View style={styles.emptyStateContainer}>
+                <Ionicons name="bookmark-outline" size={48} color={theme.textMuted} style={styles.emptyStateIcon} />
+                <Text style={styles.emptyStateText}>No saved posts yet</Text>
+                <Text style={styles.emptyStateSubText}>Posts you save will appear here</Text>
+              </View>
+            )}
           </View>
         )}
 

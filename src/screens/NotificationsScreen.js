@@ -80,6 +80,7 @@ const NotificationsScreen = ({ navigation }) => {
       case 'event': return 'calendar-outline';
       case 'referral': return 'checkmark-circle-outline';
       case 'announcement': return 'megaphone-outline';
+      case 'mention': return 'at-circle-outline';
       default: return 'notifications-outline';
     }
   };
@@ -92,6 +93,7 @@ const NotificationsScreen = ({ navigation }) => {
       case 'event': return '#F3E8FF';
       case 'referral': return '#DCFCE7';
       case 'announcement': return '#FFEDD5';
+      case 'mention': return '#FCE7F3';
       default: return '#F1F5F9';
     }
   };
@@ -104,6 +106,7 @@ const NotificationsScreen = ({ navigation }) => {
       case 'event': return '#9333EA';
       case 'referral': return '#16A34A';
       case 'announcement': return '#EA580C';
+      case 'mention': return '#DB2777';
       default: return '#64748B';
     }
   };

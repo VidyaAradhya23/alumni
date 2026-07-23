@@ -61,6 +61,7 @@ const ProfileScreen = ({ navigation }) => {
   });
 
   const [userPosts, setUserPosts] = useState([]);
+  const [taggedPosts, setTaggedPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentInput, setCommentInput] = useState('');
   const commentInputRef = useRef(null);
@@ -144,16 +145,23 @@ const ProfileScreen = ({ navigation }) => {
             if (postsData) {
               let myPosts = postsData.filter(p => 
                 p.user && 
-                (p.user._id === userData._id || p.user.id === userData._id || (p.tags && p.tags.some(t => (t._id || t.id || t) === userData._id))) 
+                (p.user._id === userData._id || p.user.id === userData._id)
+                && !p.isArchived
+              );
+              let myTaggedPosts = postsData.filter(p =>
+                p.user &&
+                (p.tags && p.tags.some(t => (t._id || t.id || t) === userData._id))
                 && !p.isArchived
               );
               myPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
+              myTaggedPosts.sort((a, b) => (b.isPinned === a.isPinned) ? 0 : (b.isPinned ? 1 : -1));
               
               setProfileData(prev => ({
                 ...prev,
                 posts: myPosts.length.toString(),
               }));
               setUserPosts(myPosts);
+              setTaggedPosts(myTaggedPosts);
             }
           }
         } catch (e) {
@@ -480,14 +488,36 @@ const ProfileScreen = ({ navigation }) => {
 
         {activeTab === 'tags' && (
           <View style={styles.postsGrid}>
-            {mockTags.map((tag) => (
-              <TouchableOpacity key={tag.id} style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} activeOpacity={0.9}>
-                <Image source={{ uri: tag.uri }} style={styles.gridImage} />
-                <View style={styles.tagOverlay}>
-                  <Ionicons name="person" size={16} color="#FFFFFF" />
+            {taggedPosts.length === 0 ? (
+              <View style={{ width: '100%', padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                  <Ionicons name="pricetag-outline" size={32} color="#94A3B8" />
                 </View>
-              </TouchableOpacity>
-            ))}
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 8 }}>No tagged posts</Text>
+                <Text style={{ fontSize: 14, color: theme.textMuted, textAlign: 'center' }}>When people tag you in photos or posts, they'll appear here.</Text>
+              </View>
+            ) : (
+              taggedPosts.map((post) => (
+                <TouchableOpacity 
+                  key={post._id || post.id} 
+                  style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} 
+                  activeOpacity={0.85}
+                  onPress={() => setSelectedPost(post)}
+                >
+                  {(post.image || post.image_url) ? (
+                    <Image source={{ uri: getImageUrl(post.image || post.image_url) }} style={styles.gridImage} />
+                  ) : (
+                    <View style={[styles.gridImage, { backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', padding: 10, borderWidth: 0.5, borderColor: '#E2E8F0' }]}>
+                      <Ionicons name="document-text-outline" size={24} color={theme.primary} style={{ marginBottom: 6 }} />
+                      <Text style={{fontSize: 11, color: '#334155', fontWeight: '500', textAlign: 'center'}} numberOfLines={3}>{post.content}</Text>
+                    </View>
+                  )}
+                  <View style={styles.tagOverlay}>
+                    <Ionicons name="person" size={16} color="#FFFFFF" />
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 

@@ -528,32 +528,31 @@ const ProfileScreen = ({ navigation }) => {
         )}
 
         {activeTab === 'saved' && (
-          <View style={styles.tabContent}>
-            {savedPosts.map((item) => (
-              <PostCard 
-                key={item._id} 
-                post={item}
-                onLike={() => handleLikePost(item._id)}
-                onComment={() => {
-                  setSelectedPost(item);
-                  setCommentInput('');
-                }}
-                onShare={() => {
-                  setSelectedPost(item);
-                  setShareModalVisible(true);
-                }}
-                onOptions={() => {
-                  setSelectedPost(item);
-                  setPostOptionsModalVisible(true);
-                }}
-              />
-            ))}
-            {savedPosts.length === 0 && (
-              <View style={styles.emptyStateContainer}>
-                <Ionicons name="bookmark-outline" size={48} color={theme.textMuted} style={styles.emptyStateIcon} />
-                <Text style={styles.emptyStateText}>No saved posts yet</Text>
-                <Text style={styles.emptyStateSubText}>Posts you save will appear here</Text>
+          <View style={styles.postsGrid}>
+            {savedPosts.length === 0 ? (
+              <View style={{ padding: 40, alignItems: 'center', width: '100%' }}>
+                <Ionicons name="bookmark-outline" size={48} color="#CBD5E1" />
+                <Text style={{ marginTop: 12, fontSize: 14, color: '#64748B' }}>No saved posts yet</Text>
+                <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>Posts you save will appear here</Text>
               </View>
+            ) : (
+              savedPosts.map((post) => (
+                <TouchableOpacity 
+                  key={post._id || post.id} 
+                  style={[styles.gridItem, { width: gridItemSize, height: gridItemSize }]} 
+                  activeOpacity={0.85}
+                  onPress={() => setSelectedPost(post)}
+                >
+                  {(post.image || post.image_url) ? (
+                    <Image source={{ uri: getImageUrl(post.image || post.image_url) }} style={styles.gridImage} />
+                  ) : (
+                    <View style={[styles.gridImage, { backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', padding: 10, borderWidth: 0.5, borderColor: '#E2E8F0' }]}>
+                      <Ionicons name="document-text-outline" size={24} color={theme.primary} style={{ marginBottom: 6 }} />
+                      <Text style={{fontSize: 11, color: '#334155', fontWeight: '500', textAlign: 'center'}} numberOfLines={3}>{post.content}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
             )}
           </View>
         )}

@@ -104,6 +104,28 @@ exports.sendOtp = async (req, res) => {
     }
 };
 
+// @desc    Verify 6-digit OTP code against MongoDB
+// @route   POST /api/auth/verify-otp
+exports.verifyOtp = async (req, res) => {
+    try {
+        await connectDB();
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email address and OTP code are required' });
+        }
+
+        const emailClean = email.trim().toLowerCase();
+        const validOtp = await OTP.findOne({ email: emailClean, otp: otp.trim() });
+        if (!validOtp) {
+            return res.status(400).json({ message: 'Invalid or expired OTP code' });
+        }
+
+        return res.json({ success: true, message: 'OTP verified successfully' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register new user (Validate Email -> OTP Verified -> Pending Admin Approval)
 // @route   POST /api/auth/register
 exports.registerUser = async (req, res) => {

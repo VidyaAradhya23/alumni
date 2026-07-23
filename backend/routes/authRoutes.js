@@ -7,6 +7,7 @@ const {
     getUsers, 
     getSuggestions,
     sendOtp,
+    verifyOtp,
     oauthLogin, 
     linkedinAuthCallback,
     checkEmailExists,
@@ -37,6 +38,7 @@ const router = express.Router();
 
 router.post('/check-email', checkEmailExists);
 router.post('/send-otp', otpLimiter, otpValidation, sendOtp);
+router.post('/verify-otp', verifyOtp);
 router.post('/register', registerValidation, registerUser);
 router.post('/login', authLimiter, loginValidation, loginUser);
 router.post('/logout', protect, logoutUser);

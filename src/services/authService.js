@@ -20,6 +20,11 @@ export const sendOtp = async (email) => {
     return data;
 };
 
+export const verifyOtp = async (email, otp) => {
+    const { data } = await api.post('/auth/verify-otp', { email, otp });
+    return data;
+};
+
 export const getProfile = async () => {
     const { data } = await api.get('/auth/profile');
     return data;

@@ -19,7 +19,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import api, { API_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { register, checkEmailExists, sendOtp } from '../services/authService';
+import { register, checkEmailExists, sendOtp, verifyOtp } from '../services/authService';
 
 WebBrowser.maybeCompleteAuthSession();
 const institutions = [
@@ -212,6 +212,7 @@ const RegisterScreen = ({ navigation }) => {
   const [emailState, setEmailState] = useState('idle'); // 'idle' | 'sent' | 'verified'
   const [inlineOtp, setInlineOtp] = useState(['', '', '', '', '', '']);
   const [sendingOtpLoading, setSendingOtpLoading] = useState(false);
+  const [verifyingOtpLoading, setVerifyingOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpVerified, setOtpVerified] = useState(false);
   const otpRefs = useRef([]);
@@ -239,15 +240,27 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
-  const handleVerifyInlineOtp = () => {
-    const otpCode = inlineOtp.join('');
+  const handleVerifyInlineOtp = async () => {
+    const otpCode = inlineOtp.join('').trim();
     if (otpCode.length < 6) {
       setOtpError('Please enter the complete 6-digit OTP code');
       return;
     }
-    setOtpVerified(true);
-    setEmailState('verified');
+    setVerifyingOtpLoading(true);
     setOtpError('');
+    try {
+      await verifyOtp(formData.email.trim().toLowerCase(), otpCode);
+      setOtpVerified(true);
+      setEmailState('verified');
+      setOtpError('');
+    } catch (error) {
+      let msg = error.response?.data?.message || error.message || 'Invalid or expired OTP code';
+      setOtpVerified(false);
+      setEmailState('sent');
+      setOtpError(msg);
+    } finally {
+      setVerifyingOtpLoading(false);
+    }
   };
 
   const handleRegister = async () => {
@@ -507,12 +520,19 @@ const RegisterScreen = ({ navigation }) => {
                         maxLength={1}
                         value={inlineOtp[index]}
                         onChangeText={(val) => {
-                          const newOtp = [...inlineOtp];
-                          newOtp[index] = val.replace(/[^0-9]/g, '');
-                          setInlineOtp(newOtp);
-                          if (val && index < 5) {
-                            otpRefs.current[index + 1]?.focus();
+                          const digitsOnly = val.replace(/[^0-9]/g, '');
+                          if (digitsOnly.length === 6) {
+                            setInlineOtp(digitsOnly.split(''));
+                            otpRefs.current[5]?.focus();
+                          } else {
+                            const newOtp = [...inlineOtp];
+                            newOtp[index] = digitsOnly.slice(-1);
+                            setInlineOtp(newOtp);
+                            if (digitsOnly && index < 5) {
+                              otpRefs.current[index + 1]?.focus();
+                            }
                           }
+                          setOtpError('');
                         }}
                         onKeyPress={(e) => {
                           if (e.nativeEvent.key === 'Backspace' && !inlineOtp[index] && index > 0) {
@@ -526,13 +546,19 @@ const RegisterScreen = ({ navigation }) => {
                   <TouchableOpacity
                     style={{
                       backgroundColor: theme.primary,
-                      paddingVertical: 10,
+                      paddingVertical: 12,
                       borderRadius: 8,
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      opacity: verifyingOtpLoading ? 0.7 : 1
                     }}
+                    disabled={verifyingOtpLoading}
                     onPress={handleVerifyInlineOtp}
                   >
-                    <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>Verify OTP</Text>
+                    {verifyingOtpLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Verify OTP Code</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               ) : null}

@@ -1379,30 +1379,37 @@ const ProfileScreen = ({ navigation }) => {
             <View style={{ backgroundColor: '#2C2C2E', borderRadius: 12, marginHorizontal: 16, overflow: 'hidden' }}>
               
               {/* Option Item Component */}
-              {constRenderOption = (icon, label, color, onPress, isLast = false) => (
-                <TouchableOpacity 
-                  style={{ 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
-                    padding: 16, 
-                    borderBottomWidth: isLast ? 0 : 0.5, 
-                    borderBottomColor: '#3A3A3C' 
-                  }}
-                  onPress={onPress}
-                >
-                  <Ionicons name={icon} size={22} color={color} style={{ marginRight: 16 }} />
-                  <Text style={{ color: color, fontSize: 16 }}>{label}</Text>
-                </TouchableOpacity>
-              )}
+              {(() => {
+                const renderOption = (icon, label, color, onPress, isLast = false) => (
+                  <TouchableOpacity 
+                    key={label}
+                    style={{ 
+                      flexDirection: 'row', 
+                      alignItems: 'center', 
+                      padding: 16, 
+                      borderBottomWidth: isLast ? 0 : 0.5, 
+                      borderBottomColor: '#3A3A3C' 
+                    }}
+                    onPress={onPress}
+                  >
+                    <Ionicons name={icon} size={22} color={color} style={{ marginRight: 16 }} />
+                    <Text style={{ color: color, fontSize: 16 }}>{label}</Text>
+                  </TouchableOpacity>
+                );
 
-              {constRenderOption('logo-facebook', 'Shared to Facebook', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Share to Facebook'); })}
-              {constRenderOption('time-outline', 'Archive', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Archive Post'); })}
-              {constRenderOption('heart-dislike-outline', 'Hide like count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide like count'); })}
-              {constRenderOption('eye-off-outline', 'Hide share count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide share count'); })}
-              {constRenderOption('chatbubble-ellipses-outline', 'Turn off commenting', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Turn off commenting'); })}
-              {constRenderOption('pencil-outline', 'Edit', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Edit Post'); })}
-              {constRenderOption('crop-outline', 'Adjust preview', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Adjust preview'); })}
-              {constRenderOption('pin-outline', 'Pin to main grid', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Pin to main grid'); })}
+                return (
+                  <>
+                    {renderOption('logo-facebook', 'Shared to Facebook', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Share to Facebook'); })}
+                    {renderOption('time-outline', 'Archive', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Archive Post'); })}
+                    {renderOption('heart-dislike-outline', 'Hide like count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide like count'); })}
+                    {renderOption('eye-off-outline', 'Hide share count', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Hide share count'); })}
+                    {renderOption('chatbubble-ellipses-outline', 'Turn off commenting', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Turn off commenting'); })}
+                    {renderOption('pencil-outline', 'Edit', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Edit Post'); })}
+                    {renderOption('crop-outline', 'Adjust preview', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Adjust preview'); })}
+                    {renderOption('pin-outline', 'Pin to main grid', '#FFFFFF', () => { setPostOptionsModalVisible(false); alert('Feature coming soon: Pin to main grid'); })}
+                  </>
+                );
+              })()}
               
               {/* Delete Action */}
               <TouchableOpacity 

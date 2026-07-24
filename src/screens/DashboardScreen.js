@@ -207,11 +207,36 @@ const DashboardScreen = ({ navigation }) => {
     }
   };
 
+  const refreshPostsFeed = async () => {
+    try {
+      const postsData = await getPosts();
+      if (Array.isArray(postsData)) {
+        const formatted = postsData.map(p => ({
+          id: p._id,
+          user: p.user?.name || 'Alumni',
+          authorId: p.user?._id || null,
+          role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
+          avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+          content: p.content,
+          image: getImageUrl(p.image),
+          likes: p.likes?.length || 0,
+          comments: p.comments || [],
+          commentsCount: p.comments?.length || 0,
+          time: getTimeAgo(p.createdAt),
+        }));
+        setPosts(formatted);
+      }
+    } catch (e) {
+      console.error('Error refreshing posts feed:', e);
+    }
+  };
+
   const toggleFollow = async (authorId) => {
     if (!authorId) return;
     try {
       setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
       await toggleFollowUser(authorId);
+      await refreshPostsFeed();
     } catch (error) {
       setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
       console.error('Error toggling follow:', error);
@@ -222,6 +247,7 @@ const DashboardScreen = ({ navigation }) => {
     try {
       setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       await toggleFollowUser(id);
+      await refreshPostsFeed();
     } catch (error) {
       setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       console.error('Error toggling follow:', error);
@@ -442,7 +468,21 @@ const DashboardScreen = ({ navigation }) => {
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                {posts.map(post => renderPostCard(post))}
+                {posts.length > 0 ? (
+                  posts.map(post => renderPostCard(post))
+                ) : (
+                  <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 24, alignItems: 'center', marginVertical: 12, borderWidth: 1, borderColor: theme.border }}>
+                    <Ionicons name="people-outline" size={48} color={theme.primary} style={{ marginBottom: 12 }} />
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 6, textAlign: 'center' }}>No Followed Alumni Posts Yet</Text>
+                    <Text style={{ fontSize: 13, color: theme.textMuted, textAlign: 'center', lineHeight: 18, marginBottom: 16 }}>Follow alumni members from "People you may know" or the Directory to view their posts in your feed!</Text>
+                    <TouchableOpacity 
+                      style={{ backgroundColor: theme.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 }}
+                      onPress={() => navigation.navigate('Directory', { tab: 'directory' })}
+                    >
+                      <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Explore Alumni Directory</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </ScrollView>
             </View>
 

@@ -1,11 +1,15 @@
 const Post = require('../models/Post');
+const User = require('../models/User');
 const BlockedUser = require('../models/BlockedUser');
 const Notification = require('../models/Notification');
+const connectDB = require('../config/db');
 
-// @desc    Get all posts
+// @desc    Get all posts (Filtered to Followed Alumni, Own Posts & Official Announcements)
 // @route   GET /api/posts
 exports.getPosts = async (req, res) => {
     try {
+        await connectDB();
+
         // Fetch users the current user has blocked or who have blocked the current user
         const blockedRecords = await BlockedUser.find({
             $or: [{ blocker: req.user._id }, { blocked: req.user._id }]
@@ -17,13 +21,37 @@ exports.getPosts = async (req, res) => {
                 : record.blocker;
         });
 
-        const posts = await Post.find({ user: { $nin: blockedUserIds } })
-            .populate('user', 'name branch department batchYear avatar_url username')
+        // Fetch current user details including following list and role
+        const currentUser = await User.findById(req.user._id).select('following role');
+
+        let query = { user: { $nin: blockedUserIds } };
+
+        // For Alumni and Student roles: display ONLY posts from followed users, own posts, and official announcements
+        if (currentUser && currentUser.role !== 'Super Admin' && currentUser.role !== 'Admin') {
+            const followedUserIds = (currentUser.following || []).map(id => id.toString());
+            
+            // Include Admin and Super Admin user IDs so official announcements remain visible
+            const adminUsers = await User.find({ role: { $in: ['Admin', 'Super Admin'] } }).select('_id');
+            const adminUserIds = adminUsers.map(a => a._id.toString());
+
+            const allowedCreatorIds = Array.from(new Set([
+                req.user._id.toString(),
+                ...followedUserIds,
+                ...adminUserIds
+            ]));
+
+            query.user = { $in: allowedCreatorIds, $nin: blockedUserIds };
+        }
+
+        const posts = await Post.find(query)
+            .populate('user', 'name branch department batchYear avatar_url username role institution')
             .populate('tags', 'name username avatar_url')
             .populate('comments.user', 'name avatar_url username')
             .sort({ createdAt: -1 });
+
         res.json(posts);
     } catch (error) {
+        console.error('[GET POSTS CONTROLLER ERROR]:', error.message);
         res.status(500).json({ message: error.message });
     }
 };

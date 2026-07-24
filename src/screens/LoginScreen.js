@@ -214,7 +214,7 @@ const LoginScreen = ({ navigation }) => {
 
             <TouchableOpacity 
               style={{ alignSelf: 'flex-end', marginBottom: 16 }}
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() => navigation.navigate('ForgotPassword', { email: email ? email.trim() : '' })}
             >
               <Text style={{ color: theme.primary, fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
             </TouchableOpacity>

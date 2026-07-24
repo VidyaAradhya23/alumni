@@ -138,7 +138,6 @@ exports.updateUserRole = async (req, res) => {
     }
 };
 
-const StudentData = require('../models/StudentData');
 const Message = require('../models/Message');
 
 // @desc    Get all messages stored in MongoDB (Admin view)

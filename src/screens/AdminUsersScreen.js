@@ -159,13 +159,21 @@ const AdminUsersScreen = ({ navigation, route }) => {
   }, [isFocused, activeTab, adminInstitution]);
 
   const handleCheckMatch = async (userId) => {
+    if (!userId || userId === 'undefined') {
+      alert('User ID is invalid for sheet match lookup.');
+      return;
+    }
     try {
       setCheckingMatch(prev => ({ ...prev, [userId]: true }));
       const { checkMatch } = require('../services/adminService');
       const response = await checkMatch(userId);
-      setSheetMatches(prev => ({ ...prev, [userId]: response.matches || [] }));
+      const matchesFound = response && response.matches ? response.matches : [];
+      setSheetMatches(prev => ({ ...prev, [userId]: matchesFound }));
+      if (matchesFound.length === 0) {
+        alert('No matching record found in official roster sheet data.');
+      }
     } catch (err) {
-      alert('Error checking sheet match: ' + err.message);
+      alert('Error checking sheet match: ' + (err.message || 'Server error'));
     } finally {
       setCheckingMatch(prev => ({ ...prev, [userId]: false }));
     }
@@ -410,10 +418,11 @@ const AdminUsersScreen = ({ navigation, route }) => {
   );
 
   const renderPendingItem = ({ item }) => {
+    const userId = item._id || item.id;
     const batchYear = item.batch_year || item.batchYear || item.leavingYear;
     const joiningYear = item.joining_year || item.joiningYear;
-    const matches = sheetMatches[item.id] || [];
-    const isChecking = checkingMatch[item.id];
+    const matches = sheetMatches[userId] || [];
+    const isChecking = checkingMatch[userId];
     
     return (
       <View style={styles.friendCard}>
@@ -432,7 +441,7 @@ const AdminUsersScreen = ({ navigation, route }) => {
             {!matches.length ? (
               <TouchableOpacity 
                 style={{ backgroundColor: '#E1EFFF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' }}
-                onPress={() => handleCheckMatch(item.id)}
+                onPress={() => handleCheckMatch(userId)}
                 disabled={isChecking}
               >
                 <Ionicons name="search" size={13} color="#1E40AF" style={{ marginRight: 4 }} />

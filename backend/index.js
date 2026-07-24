@@ -146,6 +146,15 @@ app.use(async (req, res, next) => {
 app.use(activityLogger);
 
 // ─── API Routes ─────────────────────────────────────────────────
+app.get('/api/health', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://rveducational_db_user:Alumni%40123@cluster0.xk6n9j6.mongodb.net/?appName=Cluster0', { serverSelectionTimeoutMS: 5000 });
+        res.json({ status: 'ok', message: 'MongoDB connected' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', error: e.message, code: e.code });
+    }
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/mentorship', mentorshipRoutes);

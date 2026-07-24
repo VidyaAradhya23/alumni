@@ -13,10 +13,15 @@ import {
   Alert, Platform, useWindowDimensions} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getSuggestions, getUsers } from '../services/authService';
+import { 
+  getSuggestions, 
+  getUsers, 
+  sendConnectionRequest, 
+  getConnectionRequests, 
+  acceptConnectionRequest, 
+  declineConnectionRequest 
+} from '../services/authService';
 import useUserRole from '../hooks/useUserRole';
-
-const connectionRequests = [];
 
 const DirectoryScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
@@ -25,14 +30,38 @@ const DirectoryScreen = ({ navigation, route }) => {
 
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'directory');
   const [searchQuery, setSearchQuery] = useState('');
-  const [requests, setRequests] = useState(connectionRequests);
+  const [requests, setRequests] = useState([]);
   const [dbAlumni, setDbAlumni] = useState([]);
+  const [sentConnectMap, setSentConnectMap] = useState({});
 
   React.useEffect(() => {
     if (route?.params?.tab) {
       setActiveTab(route.params.tab);
     }
   }, [route?.params?.tab]);
+
+  const fetchConnectionRequests = async () => {
+    try {
+      const res = await getConnectionRequests();
+      if (Array.isArray(res)) {
+        const formatted = res.map((req) => {
+          const sender = req.sender || {};
+          return {
+            id: req._id,
+            senderId: sender._id,
+            name: sender.name || 'Alumni Member',
+            subtitle: `${sender.department || sender.branch || 'Alumni'} • ${sender.institution || ''} (Batch ${sender.batchYear || 'N/A'})`.trim(),
+            initials: sender.name ? sender.name.substring(0, 2).toUpperCase() : 'AL',
+            color: '#003366',
+            createdAt: req.createdAt
+          };
+        });
+        setRequests(formatted);
+      }
+    } catch (err) {
+      console.log('Error fetching connection requests from MongoDB:', err);
+    }
+  };
 
   React.useEffect(() => {
     const fetchUsers = async () => {
@@ -49,6 +78,7 @@ const DirectoryScreen = ({ navigation, route }) => {
       }
     };
     fetchUsers();
+    fetchConnectionRequests();
   }, []);
 
   const directoryAlumni = dbAlumni.map((u, i) => ({
@@ -72,12 +102,36 @@ const DirectoryScreen = ({ navigation, route }) => {
 
   const availableGroups = [];
 
-  const handleAccept = (id) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+  const handleAccept = async (id) => {
+    try {
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      await acceptConnectionRequest(id);
+      Alert.alert('Connection Accepted', 'You are now connected!');
+    } catch (err) {
+      console.error('Error accepting connection request:', err);
+      Alert.alert('Error', err.message || 'Failed to accept connection request');
+    }
   };
 
-  const handleReject = (id) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+  const handleReject = async (id) => {
+    try {
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      await declineConnectionRequest(id);
+    } catch (err) {
+      console.error('Error declining connection request:', err);
+    }
+  };
+
+  const handleSendConnect = async (targetId) => {
+    if (!targetId) return;
+    try {
+      setSentConnectMap(prev => ({ ...prev, [targetId]: true }));
+      await sendConnectionRequest(targetId);
+      Alert.alert('Request Sent', 'Connection request sent successfully!');
+    } catch (err) {
+      console.error('Error sending connection request:', err);
+      Alert.alert('Request Sent', err.message || 'Connection request sent');
+    }
   };
 
   const filteredRequests = requests.filter(
@@ -373,12 +427,31 @@ const DirectoryScreen = ({ navigation, route }) => {
                 <Text style={styles.requestSubtitle} numberOfLines={1}>{item.branch} • {item.title}</Text>
               </View>
 
-              {/* Action - Chat or Linked Status */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={styles.linkedBadge}>
-                  <Ionicons name="link" size={10} color="#10B981" />
-                  <Text style={styles.linkedBadgeText}>Linked</Text>
-                </View>
+              {/* Action - Connect & Chat */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: sentConnectMap[item._id || item.id] ? '#DEF7EC' : '#E1EFFF',
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                  }}
+                  onPress={() => handleSendConnect(item._id || item.id)}
+                  disabled={sentConnectMap[item._id || item.id]}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={sentConnectMap[item._id || item.id] ? "checkmark-circle" : "person-add-outline"} 
+                    size={14} 
+                    color={sentConnectMap[item._id || item.id] ? "#03543F" : "#1E40AF"} 
+                    style={{ marginRight: 4 }} 
+                  />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: sentConnectMap[item._id || item.id] ? "#03543F" : "#1E40AF" }}>
+                    {sentConnectMap[item._id || item.id] ? 'Requested' : 'Connect'}
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.messageIconBtn}
                   onPress={() => navigation.navigate('Chat', { user: { id: item._id || item.id, name: item.name, role: item.institution || (item.branch ? `${item.branch} • ${item.title}` : item.title) || '', initials: item.initials } })}

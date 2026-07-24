@@ -11,6 +11,7 @@ const Notification = require('../models/Notification');
 const TokenBlacklist = require('../models/TokenBlacklist');
 const RefreshToken = require('../models/RefreshToken');
 const ActivityLog = require('../models/ActivityLog');
+const ConnectionRequest = require('../models/ConnectionRequest');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const { OAuth2Client } = require('google-auth-library');
@@ -1177,6 +1178,155 @@ exports.revokeSession = async (req, res) => {
         res.json({ message: 'Session revoked successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// ─── Connection Request Management Controllers ────────────────────
+
+// @desc    Send a connection request to an alumni / user
+// @route   POST /api/auth/connect/:id
+exports.sendConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const recipientId = req.params.id;
+        const senderId = req.user._id;
+
+        if (senderId.toString() === recipientId.toString()) {
+            return res.status(400).json({ message: 'You cannot send a connection request to yourself' });
+        }
+
+        const recipient = await User.findById(recipientId);
+        if (!recipient) {
+            return res.status(404).json({ message: 'Target user not found' });
+        }
+
+        // Check for existing connection request
+        let request = await ConnectionRequest.findOne({
+            sender: senderId,
+            recipient: recipientId
+        });
+
+        if (request) {
+            if (request.status === 'accepted') {
+                return res.status(400).json({ message: 'You are already connected with this user' });
+            }
+            request.status = 'pending';
+            await request.save();
+        } else {
+            request = await ConnectionRequest.create({
+                sender: senderId,
+                recipient: recipientId,
+                status: 'pending'
+            });
+        }
+
+        // Dispatch Notification to recipient
+        await Notification.create({
+            recipient: recipientId,
+            sender: senderId,
+            type: 'follow',
+            title: 'New Connection Request',
+            message: `${req.user.name || 'An alumni'} sent you a connection request.`
+        });
+
+        res.status(200).json({ success: true, message: 'Connection request sent successfully', request });
+    } catch (error) {
+        console.error('[SEND CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Get all pending incoming connection requests for current user
+// @route   GET /api/auth/connection-requests
+exports.getConnectionRequests = async (req, res) => {
+    try {
+        await connectDB();
+        const requests = await ConnectionRequest.find({
+            recipient: req.user._id,
+            status: 'pending'
+        })
+        .populate('sender', 'name email institution branch department batchYear company designation location avatar_url role')
+        .sort({ createdAt: -1 });
+
+        res.json(requests);
+    } catch (error) {
+        console.error('[GET CONNECTION REQUESTS ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Accept a connection request
+// @route   POST /api/auth/connection-requests/:id/accept
+exports.acceptConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const requestId = req.params.id;
+
+        const request = await ConnectionRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ message: 'Connection request not found' });
+        }
+
+        if (request.recipient.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to accept this request' });
+        }
+
+        request.status = 'accepted';
+        await request.save();
+
+        // Mutually connect both users by updating following / followers lists
+        const sender = await User.findById(request.sender);
+        const recipient = await User.findById(request.recipient);
+
+        if (sender && recipient) {
+            if (!sender.following.includes(recipient._id)) sender.following.push(recipient._id);
+            if (!sender.followers.includes(recipient._id)) sender.followers.push(recipient._id);
+            await sender.save();
+
+            if (!recipient.following.includes(sender._id)) recipient.following.push(sender._id);
+            if (!recipient.followers.includes(sender._id)) recipient.followers.push(sender._id);
+            await recipient.save();
+        }
+
+        // Notify sender that their request was accepted
+        await Notification.create({
+            recipient: request.sender,
+            sender: req.user._id,
+            type: 'follow',
+            title: 'Connection Request Accepted',
+            message: `${req.user.name || 'An alumni'} accepted your connection request.`
+        });
+
+        res.json({ success: true, message: 'Connection request accepted successfully' });
+    } catch (error) {
+        console.error('[ACCEPT CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Decline a connection request
+// @route   POST /api/auth/connection-requests/:id/decline
+exports.declineConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const requestId = req.params.id;
+
+        const request = await ConnectionRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ message: 'Connection request not found' });
+        }
+
+        if (request.recipient.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to decline this request' });
+        }
+
+        request.status = 'declined';
+        await request.save();
+
+        res.json({ success: true, message: 'Connection request declined' });
+    } catch (error) {
+        console.error('[DECLINE CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
     }
 };
 

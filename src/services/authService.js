@@ -168,3 +168,23 @@ export const revokeSession = async (sessionId) => {
     return data;
 };
 
+export const sendConnectionRequest = async (recipientId) => {
+    const { data } = await api.post(`/auth/connect/${recipientId}`);
+    return data;
+};
+
+export const getConnectionRequests = async () => {
+    const { data } = await api.get('/auth/connection-requests');
+    return data;
+};
+
+export const acceptConnectionRequest = async (requestId) => {
+    const { data } = await api.post(`/auth/connection-requests/${requestId}/accept`);
+    return data;
+};
+
+export const declineConnectionRequest = async (requestId) => {
+    const { data } = await api.post(`/auth/connection-requests/${requestId}/decline`);
+    return data;
+};
+

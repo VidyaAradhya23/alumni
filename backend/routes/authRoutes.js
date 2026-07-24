@@ -29,7 +29,11 @@ const {
     loginVerify2FA,
     disable2FA,
     getActiveSessions,
-    revokeSession
+    revokeSession,
+    sendConnectionRequest,
+    getConnectionRequests,
+    acceptConnectionRequest,
+    declineConnectionRequest
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { authLimiter, otpLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
@@ -69,6 +73,12 @@ router.delete('/sessions/:sessionId', protect, revokeSession);
 router.post('/follow/:id', protect, toggleFollow);
 router.get('/followers', protect, getFollowers);
 router.get('/following', protect, getFollowing);
+
+// Connection Requests
+router.post('/connect/:id', protect, sendConnectionRequest);
+router.get('/connection-requests', protect, getConnectionRequests);
+router.post('/connection-requests/:id/accept', protect, acceptConnectionRequest);
+router.post('/connection-requests/:id/decline', protect, declineConnectionRequest);
 
 router.get('/notifications', protect, getNotifications);
 router.put('/notifications/:id/read', protect, markNotificationsRead);

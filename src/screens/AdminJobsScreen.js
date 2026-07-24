@@ -165,12 +165,25 @@ export default function AdminJobsScreen({ navigation, route }) {
       return; 
     }
     try {
+      let mappedWorkplace = 'On-site';
+      let mappedJobType = 'Full-time';
+      
+      if (fMode === 'Remote' || fMode === 'Hybrid') {
+          mappedWorkplace = fMode;
+      } else if (fMode === 'Full-Time') {
+          mappedJobType = 'Full-time';
+      } else if (fMode === 'Part-Time') {
+          mappedJobType = 'Part-time';
+      } else if (fMode) {
+          mappedJobType = fMode; // 'Contract' or 'Internship'
+      }
+
       const newJob = await createJobPosting({
         title: fRole.trim(),
         company: fCompany.trim(),
         location: fLoc.trim() || 'Not specified',
-        workplaceType: fMode || 'On-site',
-        jobType: 'Full-time',
+        workplaceType: mappedWorkplace,
+        jobType: mappedJobType,
         experienceLevel: fExp.trim() || 'Not specified',
         salaryRange: '',
         description: fDesc.trim() || 'No description provided.'
@@ -192,8 +205,8 @@ export default function AdminJobsScreen({ navigation, route }) {
       if (Platform.OS === 'web') window.alert('Job posted to Alumni portal!');
       else Alert.alert('Success', 'Job posted to Alumni portal!');
     } catch (err) {
-      if (Platform.OS === 'web') window.alert('Failed to post job');
-      else Alert.alert('Error', 'Failed to post job');
+      if (Platform.OS === 'web') window.alert('Failed to post job: ' + (err.response?.data?.message || err.message));
+      else Alert.alert('Error', 'Failed to post job: ' + (err.response?.data?.message || err.message));
     }
   };
 

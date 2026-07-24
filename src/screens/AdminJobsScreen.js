@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { createJobPosting } from '../services/jobService';
 
 const DUMMY_JOBS = [];
 
@@ -157,23 +158,43 @@ export default function AdminJobsScreen({ navigation, route }) {
     setFRole(''); setFCompany(''); setFMode(''); setFExp(''); setFLoc(''); setFDesc(''); 
   };
 
-  const postJob = () => {
+  const postJob = async () => {
     if (!fRole.trim() || !fCompany.trim()) { 
       if (Platform.OS === 'web') window.alert('Missing: Fill in Role and Company.');
       else Alert.alert('Missing', 'Fill in Role and Company.');
       return; 
     }
-    setJobs([{
-      id: String(Date.now()), role: fRole.trim(), company: fCompany.trim(),
-      workMode: fMode || 'Full-Time', experience: fExp.trim() || 'Not specified',
-      location: fLoc.trim() || 'Not specified', views: 0, applied: 0, shared: 0,
-      description: fDesc.trim() || 'No description provided.',
-      institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
-    }, ...jobs]);
-    clearForm();
-    setScreen('list');
-    if (Platform.OS === 'web') window.alert('Job posted!');
-    else Alert.alert('Success', 'Job posted!');
+    try {
+      const newJob = await createJobPosting({
+        title: fRole.trim(),
+        company: fCompany.trim(),
+        location: fLoc.trim() || 'Not specified',
+        workplaceType: fMode || 'On-site',
+        jobType: 'Full-time',
+        experienceLevel: fExp.trim() || 'Not specified',
+        salaryRange: '',
+        description: fDesc.trim() || 'No description provided.'
+      });
+
+      setJobs([{
+        id: newJob._id || String(Date.now()), 
+        role: newJob.title, 
+        company: newJob.company,
+        workMode: newJob.workplaceType, 
+        experience: newJob.experienceLevel || fExp.trim() || 'Not specified',
+        location: newJob.location, 
+        views: 0, applied: 0, shared: 0,
+        description: newJob.description,
+        institution: isSuperAdmin ? selectedInstitution === 'All' ? 'RVCE' : selectedInstitution : 'RVITM',
+      }, ...jobs]);
+      clearForm();
+      setScreen('list');
+      if (Platform.OS === 'web') window.alert('Job posted to Alumni portal!');
+      else Alert.alert('Success', 'Job posted to Alumni portal!');
+    } catch (err) {
+      if (Platform.OS === 'web') window.alert('Failed to post job');
+      else Alert.alert('Error', 'Failed to post job');
+    }
   };
 
   const deleteJob = (id) => {

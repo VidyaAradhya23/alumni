@@ -482,18 +482,32 @@ exports.deleteAccount = async (req, res) => {
 // @route   GET /api/auth/suggestions
 exports.getSuggestions = async (req, res) => {
     try {
+        await connectDB();
         const currentUser = await User.findById(req.user._id);
         const query = {
             _id: { $ne: req.user._id },
             is_approved: true,
         };
-        // If the current user has an institution, filter by it
-        if (currentUser.institution) {
-            query.institution = currentUser.institution;
+
+        if (currentUser && currentUser.institution) {
+            const instStr = currentUser.institution.trim();
+            if (instStr.toLowerCase().includes('media') || instStr.toLowerCase().includes('mci')) {
+                query.institution = { $regex: 'media|mci', $options: 'i' };
+            } else {
+                query.institution = { $regex: instStr, $options: 'i' };
+            }
         }
-        const suggestions = await User.find(query)
+
+        let suggestions = await User.find(query)
             .select('name email institution department degree batchYear company designation avatar_url role')
-            .limit(10);
+            .limit(100);
+
+        if (suggestions.length === 0) {
+            suggestions = await User.find({ _id: { $ne: req.user._id }, is_approved: true })
+                .select('name email institution department degree batchYear company designation avatar_url role')
+                .limit(100);
+        }
+
         res.json(suggestions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -504,8 +518,30 @@ exports.getSuggestions = async (req, res) => {
 // @route   GET /api/auth/users
 exports.getUsers = async (req, res) => {
     try {
-        // Exclude password and tokens
-        const users = await User.find({}).select('-password -passwordResetToken -passwordResetExpires');
+        await connectDB();
+        const { institution, search } = req.query;
+        let query = {};
+
+        if (institution && institution !== 'All') {
+            const instStr = institution.trim();
+            if (instStr.toLowerCase().includes('media') || instStr.toLowerCase().includes('mci')) {
+                query.institution = { $regex: 'media|mci', $options: 'i' };
+            } else {
+                query.institution = { $regex: instStr, $options: 'i' };
+            }
+        }
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { institution: { $regex: search, $options: 'i' } },
+                { company: { $regex: search, $options: 'i' } },
+                { designation: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const users = await User.find(query).select('-password -passwordResetToken -passwordResetExpires').sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -71,6 +71,11 @@ export const getSuggestions = async () => {
     return data;
 };
 
+export const getUsers = async (params = {}) => {
+    const { data } = await api.get('/auth/users', { params });
+    return data;
+};
+
 export const toggleFollowUser = async (userId) => {
     const { data } = await api.post(`/auth/follow/${userId}`);
     return data;

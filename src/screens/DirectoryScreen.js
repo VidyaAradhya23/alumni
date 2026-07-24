@@ -13,7 +13,7 @@ import {
   Alert, Platform, useWindowDimensions} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getSuggestions } from '../services/authService';
+import { getSuggestions, getUsers } from '../services/authService';
 import useUserRole from '../hooks/useUserRole';
 
 const connectionRequests = [];
@@ -31,7 +31,10 @@ const DirectoryScreen = ({ navigation }) => {
   React.useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await getSuggestions();
+        let res = await getUsers();
+        if (!Array.isArray(res) || res.length === 0) {
+          res = await getSuggestions();
+        }
         if (Array.isArray(res)) {
           setDbAlumni(res);
         }

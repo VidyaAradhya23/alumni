@@ -57,11 +57,11 @@ exports.checkEmailExists = async (req, res) => {
     }
 };
 
-// @desc    Send OTP to email after full validation
 // @desc    Send 6-Digit OTP to email after full validation & duplicate check
 // @route   POST /api/auth/send-otp
 exports.sendOtp = async (req, res) => {
     try {
+        await connectDB();
         const { email } = req.body;
         if (!email || !email.trim()) {
             return res.status(400).json({ message: 'Please enter a valid email address' });
@@ -69,50 +69,42 @@ exports.sendOtp = async (req, res) => {
 
         const emailClean = email.trim().toLowerCase();
 
-        // 1. Instant format + disposable check (no DB, no DNS for gmail/yahoo/outlook)
+        // 1. Fast format & domain validation
         const validation = await validateEmailFull(emailClean);
         if (!validation.valid) {
             return res.status(400).json({ message: validation.message });
         }
 
-        // 2. Generate OTP
+        // 2. Check duplicate user in DB
+        const existingUser = await User.findOne({ email: emailClean }).lean();
+        if (existingUser) {
+            return res.status(400).json({ message: 'An account with this email address already exists.' });
+        }
+
+        // 3. Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 3. Respond IMMEDIATELY — user sees confirmation without waiting
-        res.json({ message: '6-digit verification code sent successfully to your email' });
-
-        // 4. Fire all heavy work in background after response (non-blocking)
-        setImmediate(async () => {
-            try {
-                await connectDB();
-                // Check duplicate + send email + store OTP all concurrently
-                const [existingUser, emailResult] = await Promise.all([
-                    User.findOne({ email: emailClean }).lean(),
-                    sendOtpEmail(emailClean, otp)
-                ]);
-
-                if (existingUser) {
-                    console.warn(`[OTP SKIPPED] ${emailClean} already registered.`);
-                    return;
-                }
-
-                if (!emailResult.success) {
-                    console.error(`[OTP EMAIL FAILED] ${emailClean}:`, emailResult.error);
-                    return;
-                }
-
+        // 4. Send email AND save OTP concurrently (await both so Vercel executes SendGrid before terminating lambda)
+        const [emailResult] = await Promise.all([
+            sendOtpEmail(emailClean, otp),
+            (async () => {
                 await OTP.deleteMany({ email: emailClean });
                 await OTP.create({ email: emailClean, otp });
-                console.log(`[OTP SENT & STORED] ${emailClean}`);
-            } catch (bgErr) {
-                console.error('[OTP BACKGROUND ERROR]:', bgErr.message);
-            }
-        });
+            })()
+        ]);
+
+        if (!emailResult.success) {
+            console.error(`[OTP EMAIL FAILED] ${emailClean}:`, emailResult.error);
+            return res.status(400).json({
+                message: 'Failed to send OTP email. Please check your email address and try again.'
+            });
+        }
+
+        return res.json({ message: '6-digit verification code sent successfully to your email' });
 
     } catch (error) {
-        if (!res.headersSent) {
-            res.status(500).json({ message: error.message });
-        }
+        console.error('[SEND OTP CONTROLLER ERROR]:', error);
+        return res.status(500).json({ message: error.message || 'Internal server error' });
     }
 };
 

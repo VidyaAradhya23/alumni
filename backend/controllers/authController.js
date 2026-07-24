@@ -224,6 +224,18 @@ exports.loginUser = async (req, res) => {
                 return res.status(403).json({ message: 'Your account is pending admin approval. You cannot log in yet.' });
             }
 
+            // Strict Institution Access Validation
+            const portalInst = req.body.portalInstitution || req.body.targetInstitution;
+            if (portalInst && portalInst !== 'All') {
+                const targetClean = portalInst.trim().toLowerCase();
+                const userInstClean = (user.institution || '').trim().toLowerCase();
+                if (userInstClean && userInstClean !== 'all' && !userInstClean.includes(targetClean) && !targetClean.includes(userInstClean)) {
+                    return res.status(403).json({
+                        message: `Access Denied: Your account is registered under '${user.institution}'. You cannot log into the ${portalInst} portal using these credentials.`
+                    });
+                }
+            }
+
             // Check if user has 2FA enabled
             if (user.twoFactorEnabled) {
                 // Issue a short-lived temporary 2FA token (valid for 5 minutes)

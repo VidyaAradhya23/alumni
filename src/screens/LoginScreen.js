@@ -174,9 +174,9 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{portal ? `Log in to ${portal.name}` : 'Welcome Back'}</Text>
+            <Text style={styles.title}>Log in to Alumni Network</Text>
             <Text style={styles.subtitle}>
-              {portal ? portal.fullName : 'Enter your details to access your alumni account.'}
+              Enter your credentials to access your alumni account.
             </Text>
           </View>
 

@@ -74,16 +74,12 @@ const WelcomeScreen = ({ navigation }) => {
       
       <View style={styles.content}>
         {/* Large Logo */}
-        <View style={[styles.logoCircle, portal && { borderColor: portal.color }]}>
-          {portal ? (
-             <Ionicons name={portal.icon} size={60} color={portal.color} />
-          ) : (
-            <Text style={styles.logoText}>Alumni</Text>
-          )}
+        <View style={styles.logoCircle}>
+          <Ionicons name="school" size={60} color="#003366" />
         </View>
         
-        <Text style={styles.title}>{portal ? `Welcome to ${portal.name}` : 'Welcome to System'}</Text>
-        <Text style={styles.subtitle}>{portal ? portal.fullName : 'Alumni Portal Network'}</Text>
+        <Text style={styles.title}>Welcome to RV Educational Institutions</Text>
+        <Text style={styles.subtitle}>Alumni & Student Portal Network</Text>
       </View>
 
       <View style={styles.bottomSection}>

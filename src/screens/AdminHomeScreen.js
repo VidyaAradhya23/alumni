@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -20,6 +21,9 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
+import { getImageUrl } from '../services/uploadService';
+import { addComment, createPost, toggleSavePost, resharePost } from '../services/postService';
 
 const AdminHomeScreen = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -37,6 +41,14 @@ const AdminHomeScreen = ({ navigation }) => {
   const [followedSuggestions, setFollowedSuggestions] = useState({});
   const [searchText, setSearchText] = useState('');
   const [userInstitution, setUserInstitution] = useState('Our Network');
+  const [userName, setUserName] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Real data states
+  const [posts, setPosts] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [eventsAndJobs, setEventsAndJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Modal States
   const [activeModal, setActiveModal] = useState(null);
@@ -56,41 +68,199 @@ const AdminHomeScreen = ({ navigation }) => {
     setCommentText('');
   };
 
+  const submitComment = async () => {
+    if (commentText.trim() && selectedPost) {
+      try {
+        await addComment(selectedPost.id, commentText);
+        const newComment = {
+          id: Date.now().toString(),
+          user: userName || 'Admin User',
+          content: commentText,
+          time: 'Just now',
+          avatar: userName ? userName.substring(0, 2).toUpperCase() : 'AD',
+        };
+        selectedPost.commentsCount = (selectedPost.commentsCount || 0) + 1;
+        selectedPost.comments = [...(selectedPost.comments || []), newComment];
+        setCommentText('');
+      } catch (err) {
+        console.error('Failed to add comment:', err);
+        if (Platform.OS === 'web') window.alert("Failed to add comment.");
+        else Alert.alert("Error", "Failed to add comment.");
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       const userInfoString = await AsyncStorage.getItem('userInfo');
       if (userInfoString) {
         const userInfo = JSON.parse(userInfoString);
+        setCurrentUser(userInfo);
         if (userInfo.institution) {
           setUserInstitution(userInfo.institution);
+        }
+        if (userInfo.name) {
+          setUserName(userInfo.name);
         }
       }
     };
     fetchUserInfo();
   }, []);
 
-  // ─── Data ──────────────────────────────────────────────
-  const posts = [];
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d`;
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks}w`;
+  };
 
-  const suggestions = [];
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          const [postsData, suggestionsData, eventsData] = await Promise.allSettled([
+            getPosts(),
+            getSuggestions(),
+            getEvents(),
+          ]);
 
-  const eventsAndJobs = [];
+          if (postsData.status === 'fulfilled' && postsData.value.length > 0) {
+            const formatted = postsData.value.map(p => ({
+              id: p._id,
+              user: p.user?.name || 'Alumni',
+              authorId: p.user?._id || null,
+              role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
+              avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+              content: p.content,
+              image: getImageUrl(p.image),
+              likes: p.likes?.length || 0,
+              comments: p.comments || [],
+              commentsCount: p.comments?.length || 0,
+              time: getTimeAgo(p.createdAt),
+            }));
+            setPosts(formatted);
+          }
 
-  // ─── Handlers ──────────────────────────────────────────
-  const toggleLike = (postId) => {
-    setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+          if (suggestionsData.status === 'fulfilled' && suggestionsData.value.length > 0) {
+            const formatted = suggestionsData.value.map(s => ({
+              id: s._id,
+              name: s.name,
+              avatar: s.name ? s.name.substring(0, 2).toUpperCase() : '??',
+              subtitle: s.company ? `${s.designation || ''} @ ${s.company}`.trim() : `Batch of ${s.batchYear || ''} • ${s.department || s.institution || ''}`.trim(),
+            }));
+            setSuggestions(formatted);
+          }
+
+          if (eventsData.status === 'fulfilled' && eventsData.value.length > 0) {
+            const formatted = eventsData.value.map(e => ({
+              id: e._id,
+              title: e.title,
+              subtitle: e.date ? `${new Date(e.date).toLocaleDateString()} • ${e.location || 'Online'}` : e.location || 'Online',
+              btnText: 'View Details',
+              image: e.image || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=400&h=260&q=80',
+            }));
+            setEventsAndJobs(formatted);
+          }
+
+          const followingData = await getFollowing();
+          if (followingData) {
+            const initialFollowed = {};
+            followingData.forEach(user => {
+              initialFollowed[user._id] = true;
+            });
+            setFollowedSuggestions(initialFollowed);
+            setFollowedUsers(initialFollowed);
+          }
+        } catch (err) {
+          console.error('Error fetching dashboard data:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }, [])
+  );
+  const toggleLike = async (postId) => {
+    try {
+      setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+      await toggleLikePost(postId);
+    } catch (err) {
+      setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+    }
   };
 
   const toggleBookmark = (postId) => {
     setBookmarkedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const toggleFollow = (postId) => {
-    setFollowedUsers((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  const toggleFollow = async (authorId) => {
+    if (!authorId) return;
+    try {
+      setFollowedUsers((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+      await toggleFollowUser(authorId);
+    } catch (err) {
+      setFollowedUsers((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+    }
   };
 
-  const toggleSuggestionFollow = (id) => {
-    setFollowedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleSuggestionFollow = async (authorId) => {
+    if (!authorId) return;
+    try {
+      setFollowedSuggestions((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+      await toggleFollowUser(authorId);
+    } catch (err) {
+      setFollowedSuggestions((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
+    }
+  };
+
+  const handleReshare = (post) => {
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm(`Reshare ${post.user}'s post to your feed?`);
+      if (confirm) {
+        doReshare(post);
+      }
+    } else {
+      Alert.alert(
+        "Reshare Post",
+        `Reshare ${post.user}'s post to your feed?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reshare", onPress: () => doReshare(post) }
+        ]
+      );
+    }
+  };
+
+  const doReshare = async (post) => {
+    try {
+      await createPost({
+        content: `Reshared from @${post.user}:\n\n${post.content}`,
+        image: post.image,
+        tags: []
+      });
+      if (Platform.OS === 'web') {
+        window.alert("Post reshared successfully!");
+      } else {
+        Alert.alert("Success", "Post reshared successfully!");
+      }
+    } catch (err) {
+      console.error('Failed to reshare:', err);
+      if (Platform.OS === 'web') {
+        window.alert("Failed to reshare post. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to reshare post.");
+      }
+    }
   };
 
   const handleShare = async (post) => {

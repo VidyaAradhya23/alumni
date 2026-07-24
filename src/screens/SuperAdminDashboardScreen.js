@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useIsFocused } from '@react-navigation/native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -21,7 +21,9 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { getPosts, getEvents } from '../services/authService';
+import { getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost, getSuggestions } from '../services/authService';
+import { getImageUrl } from '../services/uploadService';
+import { addComment, createPost, toggleSavePost, resharePost } from '../services/postService';
 
 // ==========================================
 // DUMMY DATABASE / SEED DATA
@@ -197,7 +199,60 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   }, []);
 
   // News Feed & Dropdown States
-  const [postsList, setPostsList] = useState(MOCK_POSTS);
+  const [postsList, setPostsList] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userName, setUserName] = useState('');
+
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d`;
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks}w`;
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchFeedData = async () => {
+        try {
+          const postsData = await getPosts();
+          if (postsData && postsData.length > 0) {
+            const formatted = postsData.map(p => ({
+              id: p._id,
+              user: p.user?.name || 'Alumni',
+              authorId: p.user?._id || null,
+              role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
+              avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+              content: p.content,
+              image: getImageUrl(p.image),
+              likes: p.likes?.length || 0,
+              comments: p.comments || [],
+              commentsCount: p.comments?.length || 0,
+              time: getTimeAgo(p.createdAt),
+            }));
+            setPostsList(formatted);
+          }
+        } catch (err) {
+          console.error('Error fetching dashboard data:', err);
+        }
+      };
+      fetchFeedData();
+    }, [])
+  );
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isPostModalVisible, setPostModalVisible] = useState(false);
+  const [isCommentModalVisible, setCommentModalVisible] = useState(false);
+  const [activePostForComment, setActivePostForComment] = useState(null);
+  const [commentText, setCommentText] = useState('');
   const [likedPosts, setLikedPosts] = useState({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState({});
   const [followedUsers, setFollowedUsers] = useState({});
@@ -205,28 +260,38 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   const [broadcastText, setBroadcastText] = useState('');
 
   // Post Actions
-  const togglePostLike = (postId) => {
-    setLikedPosts((prev) => {
-      const isLiked = prev[postId];
-      setPostsList(curr => curr.map(p => {
-        if (p.id === postId) {
-          return {
-            ...p,
-            likes: isLiked ? p.likes - 1 : p.likes + 1
-          };
-        }
-        return p;
-      }));
-      return { ...prev, [postId]: !isLiked };
-    });
+  const togglePostLike = async (postId) => {
+    try {
+      setLikedPosts((prev) => {
+        const isLiked = prev[postId];
+        setPostsList(curr => curr.map(p => {
+          if (p.id === postId) {
+            return {
+              ...p,
+              likes: isLiked ? p.likes - 1 : p.likes + 1
+            };
+          }
+          return p;
+        }));
+        return { ...prev, [postId]: !isLiked };
+      });
+      await toggleLikePost(postId);
+    } catch (err) {
+      console.error('Failed to toggle like', err);
+    }
   };
 
   const togglePostBookmark = (postId) => {
     setBookmarkedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const togglePostFollow = (postId) => {
-    setFollowedUsers((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  const togglePostFollow = async (postId) => {
+    try {
+      setFollowedUsers((prev) => ({ ...prev, [postId]: !prev[postId] }));
+      await toggleFollowUser(postId);
+    } catch (err) {
+      console.error('Failed to toggle follow', err);
+    }
   };
 
   const handlePostShare = async (post) => {

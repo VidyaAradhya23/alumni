@@ -1,54 +1,44 @@
 const mongoose = require('mongoose');
 
-let isConnected = false;
-
-// Attach event listeners for robust database monitoring
-mongoose.connection.on('connected', () => {
-    console.log('MongoDB connection established successfully.');
-});
+// Cache the connection promise to avoid re-connecting on every Vercel serverless invocation
+let connectionPromise = null;
 
 mongoose.connection.on('error', (err) => {
     console.error(`MongoDB Connection Error: ${err.message}`);
-});
-
-mongoose.connection.on('disconnected', () => {
-    console.warn('MongoDB connection lost. Attempting to reconnect...');
-    isConnected = false;
-});
-
-mongoose.connection.on('reconnected', () => {
-    console.log('MongoDB connection restored.');
-    isConnected = true;
+    connectionPromise = null; // Reset so next request tries to reconnect
 });
 
 const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) {
-        isConnected = true;
+    // If already connected, return immediately (O(1) check)
+    if (mongoose.connection.readyState === 1) {
         return;
+    }
+
+    // If a connection is already in progress, wait for it (avoid duplicate connects)
+    if (connectionPromise) {
+        return connectionPromise;
     }
 
     const mongoUri = process.env.MONGO_URI || 'mongodb+srv://rveducational_db_user:Alumni%40123@cluster0.xk6n9j6.mongodb.net/?appName=Cluster0';
 
-    if (isConnected && mongoose.connection.readyState === 1) {
-        return;
-    }
-
-    try {
-        const conn = await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000,
-            maxPoolSize: 10,
-            minPoolSize: 2,
-            socketTimeoutMS: 45000,
-            autoIndex: true
-        });
-        isConnected = true;
+    connectionPromise = mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 8000,  // Fail fast if Atlas is unreachable
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        autoIndex: false,                // Disable auto-index on Vercel (speeds up cold start)
+        heartbeatFrequencyMS: 10000
+    }).then((conn) => {
         console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch (error) {
+        return conn;
+    }).catch((error) => {
+        connectionPromise = null;       // Reset on failure so next request retries
         console.error(`Database Connection Error: ${error.message}`);
-        if (process.env.NODE_ENV !== 'production') {
-            process.exit(1);
-        }
-    }
+        throw error;
+    });
+
+    return connectionPromise;
 };
 
 module.exports = connectDB;

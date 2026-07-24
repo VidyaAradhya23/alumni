@@ -54,3 +54,8 @@ export const checkMatch = async (userId) => {
     const { data } = await api.get(`/admin/users/${userId}/check-match`);
     return data;
 };
+
+export const getActivityLogs = async (limit = 100, search = '') => {
+    const { data } = await api.get(`/activity?limit=${limit}&search=${encodeURIComponent(search)}`);
+    return data;
+};

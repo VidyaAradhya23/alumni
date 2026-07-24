@@ -4,12 +4,19 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { forgotPassword } from '../services/authService';
 
-const ForgotPasswordScreen = ({ navigation }) => {
+const ForgotPasswordScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
   
-  const [email, setEmail] = useState('');
+  const initialEmail = route?.params?.email || '';
+  const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  React.useEffect(() => {
+    if (route?.params?.email) {
+      setEmail(route.params.email.trim());
+    }
+  }, [route?.params?.email]);
 
   const handleResetPassword = async () => {
     if (!email) {

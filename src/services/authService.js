@@ -71,6 +71,11 @@ export const getSuggestions = async () => {
     return data;
 };
 
+export const getUsers = async (params = {}) => {
+    const { data } = await api.get('/auth/users', { params });
+    return data;
+};
+
 export const toggleFollowUser = async (userId) => {
     const { data } = await api.post(`/auth/follow/${userId}`);
     return data;
@@ -160,6 +165,26 @@ export const getActiveSessions = async () => {
 
 export const revokeSession = async (sessionId) => {
     const { data } = await api.delete(`/auth/sessions/${sessionId}`);
+    return data;
+};
+
+export const sendConnectionRequest = async (recipientId) => {
+    const { data } = await api.post(`/auth/connect/${recipientId}`);
+    return data;
+};
+
+export const getConnectionRequests = async () => {
+    const { data } = await api.get('/auth/connection-requests');
+    return data;
+};
+
+export const acceptConnectionRequest = async (requestId) => {
+    const { data } = await api.post(`/auth/connection-requests/${requestId}/accept`);
+    return data;
+};
+
+export const declineConnectionRequest = async (requestId) => {
+    const { data } = await api.post(`/auth/connection-requests/${requestId}/decline`);
     return data;
 };
 

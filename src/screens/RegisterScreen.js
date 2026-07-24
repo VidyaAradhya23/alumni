@@ -205,17 +205,18 @@ const RegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
-  const [isCustomInstitution, setIsCustomInstitution] = useState(false);
+  // Security Captcha Challenge (Bot Protection)
+  const [captcha, setCaptcha] = useState({ num1: Math.floor(Math.random() * 9) + 1, num2: Math.floor(Math.random() * 9) + 1, userAnswer: '' });
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
-  // Inline Email OTP Verification States
-  const [emailState, setEmailState] = useState('idle'); // 'idle' | 'sent' | 'verified'
-  const [inlineOtp, setInlineOtp] = useState(['', '', '', '', '', '']);
-  const [sendingOtpLoading, setSendingOtpLoading] = useState(false);
-  const [verifyingOtpLoading, setVerifyingOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [otpVerified, setOtpVerified] = useState(false);
-  const otpRefs = useRef([]);
+  const refreshCaptcha = () => {
+    setCaptcha({
+      num1: Math.floor(Math.random() * 9) + 1,
+      num2: Math.floor(Math.random() * 9) + 1,
+      userAnswer: ''
+    });
+    setCaptchaVerified(false);
+  };
 
   const handleSendInlineOtp = async () => {
     const emailClean = formData.email.trim().toLowerCase();
@@ -224,6 +225,14 @@ const RegisterScreen = ({ navigation }) => {
       setOtpError('Please enter a valid email address');
       return;
     }
+
+    const expectedSum = captcha.num1 + captcha.num2;
+    if (parseInt(captcha.userAnswer, 10) !== expectedSum) {
+      setOtpError(`Security Check Failed: Please answer ${captcha.num1} + ${captcha.num2} correctly.`);
+      return;
+    }
+    setCaptchaVerified(true);
+
     setSendingOtpLoading(true);
     setOtpError('');
     try {
@@ -478,6 +487,48 @@ const RegisterScreen = ({ navigation }) => {
                 )}
               </View>
 
+              {/* Anti-Bot Security Captcha Challenge */}
+              {emailState !== 'verified' && (
+                <View style={{
+                  marginTop: 10,
+                  padding: 12,
+                  backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC',
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="shield-checkmark" size={18} color={theme.primary} style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text }}>
+                      Security Verification: {captcha.num1} + {captcha.num2} =
+                    </Text>
+                  </View>
+                  <TextInput
+                    style={{
+                      width: 50,
+                      height: 36,
+                      borderWidth: 1,
+                      borderColor: captchaVerified ? '#10B981' : (isDarkMode ? '#475569' : '#CBD5E1'),
+                      borderRadius: 6,
+                      textAlign: 'center',
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: theme.text,
+                      backgroundColor: isDarkMode ? '#0F172A' : '#FFFFFF'
+                    }}
+                    placeholder="?"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    value={captcha.userAnswer}
+                    onChangeText={(text) => setCaptcha({ ...captcha, userAnswer: text })}
+                    maxLength={3}
+                  />
+                </View>
+              )}
+
               {/* Validation Error Banner */}
               {otpError ? (
                 <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 6, fontWeight: '500' }}>
@@ -488,36 +539,52 @@ const RegisterScreen = ({ navigation }) => {
               {/* Inline OTP Verification Section (Appears directly down below Email field) */}
               {emailState === 'sent' && !otpVerified ? (
                 <View style={{
-                  marginTop: 12,
-                  padding: 14,
-                  backgroundColor: 'rgba(0, 33, 68, 0.04)',
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0, 33, 68, 0.15)'
+                  marginTop: 14,
+                  padding: 16,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 14,
+                  borderWidth: 2,
+                  borderColor: theme.primary,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 6,
+                  elevation: 4
                 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text, marginBottom: 10 }}>
-                    📩 Enter 6-Digit OTP sent to {formData.email}:
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                      📩 Enter 6-Digit Verification Code
+                    </Text>
+                    <TouchableOpacity onPress={handleSendInlineOtp} disabled={sendingOtpLoading}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: theme.primary, textDecorationLine: 'underline' }}>
+                        {sendingOtpLoading ? 'Resending...' : 'Resend Code'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={{ fontSize: 12, color: '#475569', marginBottom: 14, lineHeight: 17 }}>
+                    Code sent to <Text style={{ fontWeight: '700', color: '#0F172A' }}>{formData.email}</Text>. (Check your Inbox / Spam folder)
                   </Text>
                   
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
                     {[0, 1, 2, 3, 4, 5].map((index) => (
                       <TextInput
                         key={index}
                         ref={(el) => (otpRefs.current[index] = el)}
                         style={{
-                          width: 42,
-                          height: 44,
-                          borderWidth: 1.5,
-                          borderColor: inlineOtp[index] ? theme.primary : '#CBD5E1',
-                          borderRadius: 8,
+                          width: 44,
+                          height: 48,
+                          borderWidth: 2,
+                          borderColor: inlineOtp[index] ? theme.primary : '#94A3B8',
+                          borderRadius: 10,
                           textAlign: 'center',
-                          fontSize: 18,
-                          fontWeight: '700',
-                          color: theme.text,
-                          backgroundColor: theme.card
+                          fontSize: 20,
+                          fontWeight: '800',
+                          color: '#0F172A',
+                          backgroundColor: inlineOtp[index] ? '#EFF6FF' : '#F8FAFC'
                         }}
                         keyboardType="number-pad"
-                        maxLength={1}
+                        maxLength={6}
                         value={inlineOtp[index]}
                         onChangeText={(val) => {
                           const digitsOnly = val.replace(/[^0-9]/g, '');
@@ -543,12 +610,25 @@ const RegisterScreen = ({ navigation }) => {
                     ))}
                   </View>
 
+                  {otpError ? (
+                    <View style={{ backgroundColor: '#FEF2F2', padding: 8, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#FCA5A5' }}>
+                      <Text style={{ color: '#DC2626', fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
+                        ⚠️ {otpError}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   <TouchableOpacity
                     style={{
                       backgroundColor: theme.primary,
-                      paddingVertical: 12,
-                      borderRadius: 8,
+                      paddingVertical: 14,
+                      borderRadius: 10,
                       alignItems: 'center',
+                      shadowColor: theme.primary,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 5,
+                      elevation: 3,
                       opacity: verifyingOtpLoading ? 0.7 : 1
                     }}
                     disabled={verifyingOtpLoading}
@@ -557,7 +637,9 @@ const RegisterScreen = ({ navigation }) => {
                     {verifyingOtpLoading ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Verify OTP Code</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 }}>
+                        Verify OTP Code
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>

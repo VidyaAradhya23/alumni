@@ -174,9 +174,9 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{portal ? `Log in to ${portal.name}` : 'Welcome Back'}</Text>
+            <Text style={styles.title}>Log in to Alumni Network</Text>
             <Text style={styles.subtitle}>
-              {portal ? portal.fullName : 'Enter your details to access your alumni account.'}
+              Enter your credentials to access your alumni account.
             </Text>
           </View>
 
@@ -214,7 +214,7 @@ const LoginScreen = ({ navigation }) => {
 
             <TouchableOpacity 
               style={{ alignSelf: 'flex-end', marginBottom: 16 }}
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() => navigation.navigate('ForgotPassword', { email: email ? email.trim() : '' })}
             >
               <Text style={{ color: theme.primary, fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
             </TouchableOpacity>

@@ -131,6 +131,7 @@ const MASTER_BATCHES = ['2015', '2016', '2017', '2018', '2019', '2020', '2021', 
 const MASTER_COMPANIES = ['Cisco Systems', 'Accenture', 'Qualcomm', 'Infosys', 'Wipro', 'TCS', 'IBM', 'Amazon', 'Google', 'Microsoft', 'Oracle', 'SAP'];
 
 const panelItems = [
+  { id: '0', title: 'Alumni Portals', icon: 'grid-outline', color: '#EFF6FF', iconColor: '#2563EB', moduleName: 'alumni_portals_grid', desc: 'Select institution to access dedicated alumni networks' },
   { id: '1', title: 'Administrator', icon: 'person-add-outline', color: '#FEF3C7', iconColor: '#D97706', moduleName: 'administrator', desc: 'Manage institution administrators' },
   { id: '2', title: 'Network Settings', icon: 'settings-outline', color: '#F5F3FF', iconColor: '#7C3AED', moduleName: 'network_settings', desc: 'AlmaConnect-style institution configs' },
   { id: '3', title: 'Bulk Import', icon: 'cloud-upload-outline', color: '#ECFDF5', iconColor: '#059669', moduleName: 'bulk_import', desc: 'Bulk import alumni profiles via CSV' },
@@ -572,6 +573,7 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
 
   // Search, tabs and toggles
   const [searchQuery, setSearchQuery] = useState('');
+  const [portalSearchQuery, setPortalSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('1'); // Generic state for inner module tabs
   const [uploadedRoster, setUploadedRoster] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({}); // adminId -> bool
@@ -2462,8 +2464,143 @@ const SuperAdminDashboardScreen = ({ navigation, route }) => {
   };
 
   // Switch to render chosen sub-module
+  // 0. Alumni Portals Module (Inside Super Admin Dashboard)
+  const renderAlumniPortalsGrid = () => {
+    const portalList = [
+      { id: 'RV School', name: 'RVS', fullName: 'RV School', icon: 'school', color: '#3B82F6' },
+      { id: 'RV Girls High School', name: 'RVGHS', fullName: 'RV Girls High School', icon: 'school', color: '#EC4899' },
+      { id: 'RV Public School', name: 'RVPS', fullName: 'RV Public School', icon: 'school', color: '#10B981' },
+      { id: 'RV Learning Hub', name: 'RVLH', fullName: 'RV Learning Hub', icon: 'book', color: '#F59E0B' },
+      { id: 'SSMRV PU College', name: 'SSMRVPU', fullName: 'SSMRV PU College', icon: 'book', color: '#6366F1' },
+      { id: 'NMKRV PU College', name: 'NMKRVPU', fullName: 'NMKRV PU College', icon: 'book', color: '#8B5CF6' },
+      { id: 'RV PU College Jayanagar', name: 'RVPU_JAY', fullName: 'RV PU College Jayanagar', icon: 'book', color: '#14B8A6' },
+      { id: 'RV PU College North', name: 'RVPU_NOR', fullName: 'RV PU College North', icon: 'book', color: '#3B82F6' },
+      { id: 'RV PU College South', name: 'RVPU_SOU', fullName: 'RV PU College South', icon: 'book', color: '#6366F1' },
+      { id: 'RV PU College, E-City', name: 'RVPU_ECI', fullName: 'RV PU College, E-City', icon: 'book', color: '#10B981' },
+      { id: 'RV PU College, Harohalli', name: 'RVPU_HAR', fullName: 'RV PU College, Harohalli', icon: 'book', color: '#F59E0B' },
+      { id: 'RV PU College, Mysuru', name: 'RVPU_MYS', fullName: 'RV PU College, Mysuru', icon: 'book', color: '#8B5CF6' },
+      { id: 'RV College of Engineering', name: 'RVCE', fullName: 'RV College of Engineering', icon: 'build', color: '#003366' },
+      { id: 'RV Institute of Technology and Management', name: 'RVITM', fullName: 'RV Institute of Technology and Management', icon: 'code-working', color: '#1E3A5F' },
+      { id: 'RV-Skills', name: 'RVSK', fullName: 'RV-Skills', icon: 'laptop', color: '#F43F5E' },
+      { id: 'RV College of Architecture', name: 'RVCA', fullName: 'RV College of Architecture', icon: 'color-palette', color: '#8B5CF6' },
+      { id: 'RV Institute of Management', name: 'RVIM', fullName: 'RV Institute of Management', icon: 'trending-up', color: '#0EA5E9' },
+      { id: 'MKPM RV Institute of Legal Studies', name: 'RVILS', fullName: 'MKPM RV Institute of Legal Studies', icon: 'briefcase', color: '#EF4444' },
+      { id: 'RV Teachers College', name: 'RVTC', fullName: 'RV Teachers College', icon: 'people', color: '#6366F1' },
+      { id: 'D.A. Pandu Memorial RV Dental College', name: 'DAPMRV', fullName: 'D.A. Pandu Memorial RV Dental College', icon: 'medkit', color: '#14B8A6' },
+      { id: 'RV College of Physiotherapy', name: 'RVCP', fullName: 'RV College of Physiotherapy', icon: 'fitness', color: '#F59E0B' },
+      { id: 'RV College of Nursing', name: 'RVCN', fullName: 'RV College of Nursing', icon: 'pulse', color: '#EC4899' },
+      { id: 'NMKRV College', name: 'NMKRV', fullName: 'NMKRV College', icon: 'grid', color: '#8B5CF6' },
+      { id: 'SSMRV College', name: 'SSMRV', fullName: 'SSMRV College', icon: 'grid', color: '#3B82F6' },
+      { id: 'RV University, Bengaluru Campus', name: 'RVU_BLR', fullName: 'RV University, Bengaluru Campus', icon: 'ribbon', color: '#D97706' },
+      { id: 'RV University, Mysuru Campus', name: 'RVU_MYS', fullName: 'RV University, Mysuru Campus', icon: 'ribbon', color: '#D97706' }
+    ];
+
+    const filteredPortals = portalList.filter(inst =>
+      inst.fullName.toLowerCase().includes(portalSearchQuery.toLowerCase()) ||
+      inst.name.toLowerCase().includes(portalSearchQuery.toLowerCase())
+    );
+
+    return (
+      <ScrollView style={styles.moduleContainer} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ fontSize: 26, fontWeight: '800', color: theme.primary, marginBottom: 4 }}>Alumni Portals</Text>
+          <Text style={{ fontSize: 14, color: theme.textSecondary }}>Select your institution to access your dedicated alumni network.</Text>
+        </View>
+
+        {/* Search Bar */}
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+          borderRadius: 12,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          borderWidth: 1,
+          borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+          marginBottom: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 1
+        }}>
+          <Ionicons name="search-outline" size={20} color="#94A3B8" style={{ marginRight: 10 }} />
+          <TextInput
+            style={{ flex: 1, fontSize: 15, color: theme.text }}
+            placeholder="Search institutions..."
+            placeholderTextColor="#94A3B8"
+            value={portalSearchQuery}
+            onChangeText={setPortalSearchQuery}
+          />
+          {portalSearchQuery ? (
+            <TouchableOpacity onPress={() => setPortalSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Grid of Institution Cards */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8 }}>
+          {filteredPortals.map((inst) => {
+            const cardWidth = width > 1200 ? '25%' : width > 800 ? '33.33%' : width > 600 ? '50%' : '100%';
+            const isSelected = selectedInstitution === inst.name || selectedInstitution === inst.fullName;
+
+            return (
+              <View key={inst.id} style={{ width: cardWidth, padding: 8 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                    borderRadius: 14,
+                    padding: 16,
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? theme.primary : (isDarkMode ? '#334155' : '#E2E8F0'),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 6,
+                    elevation: 2
+                  }}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSelectedInstitution(inst.name);
+                    global.selectedInstitution = inst.name;
+                    Alert.alert('Institution Portal Selected', `Super Admin Dashboard context switched to ${inst.fullName} (${inst.name})`);
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+                    <View style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: `${inst.color}15`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 12
+                    }}>
+                      <Ionicons name={inst.icon || 'school'} size={22} color={inst.color} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: theme.text }}>{inst.name}</Text>
+                      <Text style={{ fontSize: 12, color: theme.textSecondary }} numberOfLines={1}>{inst.fullName}</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={isSelected ? theme.primary : '#CBD5E1'} />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
+  };
+
   const renderModuleContent = () => {
     switch (activeModule) {
+      case 'alumni_portals_grid':
+        return renderAlumniPortalsGrid();
       case 'spam_report':
         return renderSpamReport();
       case 'welcome_mail':

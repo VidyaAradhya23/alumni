@@ -138,9 +138,17 @@ io.on('connection', (socket) => {
 });
 
 // ─── Database Connection ────────────────────────────────────────
-// Ensure database is connected before handling any requests
-app.use(async (req, res, next) => {
-    await connectDB();
+// Kick off DB connection immediately on startup (warm it up before first request)
+connectDB().catch(err => console.error('[DB STARTUP ERROR]:', err.message));
+
+// Middleware: ensure DB is connected, but don't block request processing
+app.use((req, res, next) => {
+    // If already connected, proceed instantly
+    if (require('mongoose').connection.readyState === 1) {
+        return next();
+    }
+    // Otherwise connect and proceed (controller will retry if needed)
+    connectDB().catch(err => console.warn('[DB CONNECT WARN]:', err.message));
     next();
 });
 app.use(activityLogger);

@@ -1,11 +1,15 @@
 const Post = require('../models/Post');
+const User = require('../models/User');
 const BlockedUser = require('../models/BlockedUser');
 const Notification = require('../models/Notification');
+const connectDB = require('../config/db');
 
-// @desc    Get all posts
+// @desc    Get all posts (Filtered to Followed Alumni, Own Posts & Official Announcements)
 // @route   GET /api/posts
 exports.getPosts = async (req, res) => {
     try {
+        await connectDB();
+
         // Fetch users the current user has blocked or who have blocked the current user
         const blockedRecords = await BlockedUser.find({
             $or: [{ blocker: req.user._id }, { blocked: req.user._id }]
@@ -17,13 +21,37 @@ exports.getPosts = async (req, res) => {
                 : record.blocker;
         });
 
-        const posts = await Post.find({ user: { $nin: blockedUserIds } })
-            .populate('user', 'name branch department batchYear avatar_url username')
+        // Fetch current user details including following list and role
+        const currentUser = await User.findById(req.user._id).select('following role');
+
+        let query = { user: { $nin: blockedUserIds } };
+
+        // For Alumni and Student roles: display ONLY posts from followed users, own posts, and official announcements
+        if (currentUser && currentUser.role !== 'Super Admin' && currentUser.role !== 'Admin') {
+            const followedUserIds = (currentUser.following || []).map(id => id.toString());
+            
+            // Include Admin and Super Admin user IDs so official announcements remain visible
+            const adminUsers = await User.find({ role: { $in: ['Admin', 'Super Admin'] } }).select('_id');
+            const adminUserIds = adminUsers.map(a => a._id.toString());
+
+            const allowedCreatorIds = Array.from(new Set([
+                req.user._id.toString(),
+                ...followedUserIds,
+                ...adminUserIds
+            ]));
+
+            query.user = { $in: allowedCreatorIds, $nin: blockedUserIds };
+        }
+
+        const posts = await Post.find(query)
+            .populate('user', 'name branch department batchYear avatar_url username role institution')
             .populate('tags', 'name username avatar_url')
             .populate('comments.user', 'name avatar_url username')
             .sort({ createdAt: -1 });
+
         res.json(posts);
     } catch (error) {
+        console.error('[GET POSTS CONTROLLER ERROR]:', error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -147,18 +175,79 @@ exports.toggleSavePost = async (req, res) => {
     try {
         const user = req.user;
         const postId = req.params.id;
+        const post = await Post.findById(postId);
         
-        const isSaved = user.savedPosts && user.savedPosts.includes(postId);
-        
-        if (isSaved) {
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const isSavedUser = user.savedPosts && user.savedPosts.includes(postId);
+        if (isSavedUser) {
             user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId.toString());
+            post.savedBy = (post.savedBy || []).filter(id => id.toString() !== user._id.toString());
         } else {
             if (!user.savedPosts) user.savedPosts = [];
             user.savedPosts.push(postId);
+            if (!post.savedBy) post.savedBy = [];
+            post.savedBy.push(user._id);
         }
         
-        await user.save();
-        res.json({ savedPosts: user.savedPosts });
+        await Promise.all([user.save(), post.save()]);
+        res.json({ saved: !isSavedUser, savedPosts: user.savedPosts });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user's saved posts
+// @route   GET /api/posts/saved
+exports.getSavedPosts = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate({
+            path: 'savedPosts',
+            populate: {
+                path: 'user',
+                select: 'name branch department batchYear avatar_url'
+            }
+        });
+        res.json(user.savedPosts || []);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Reshare a post to user's feed
+// @route   POST /api/posts/:id/reshare
+exports.resharePost = async (req, res) => {
+    try {
+        const originalPost = await Post.findById(req.params.id).populate('user', 'name');
+        if (!originalPost) {
+            return res.status(404).json({ message: 'Original post not found' });
+        }
+
+        // Increment reshares on original post
+        if (!originalPost.reshares) originalPost.reshares = [];
+        if (!originalPost.reshares.includes(req.user._id)) {
+            originalPost.reshares.push(req.user._id);
+            await originalPost.save();
+        }
+
+        // Create new reshared post entry in feed
+        const { note } = req.body;
+        const resharedPost = await Post.create({
+            user: req.user._id,
+            content: note ? `${note}\n\n🔄 Reshared from @${originalPost.user?.name || 'Alumni'}: ${originalPost.content || ''}` : `🔄 Reshared from @${originalPost.user?.name || 'Alumni'}: ${originalPost.content || ''}`,
+            image: originalPost.image,
+            fileType: originalPost.fileType,
+            fileName: originalPost.fileName,
+            originalPost: originalPost._id,
+            originalAuthorName: originalPost.user?.name || 'Alumni Member'
+        });
+
+        const populatedReshare = await Post.findById(resharedPost._id)
+            .populate('user', 'name branch department batchYear avatar_url');
+
+        res.status(201).json({ message: 'Post reshared to your feed successfully!', post: populatedReshare, resharesCount: originalPost.reshares.length });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -2,6 +2,9 @@ const User = require('../models/User');
 const Post = require('../models/Post');
 const Event = require('../models/Event');
 const Report = require('../models/Report');
+const StudentData = require('../models/StudentData');
+const connectDB = require('../config/db');
+const mongoose = require('mongoose');
 
 // @desc    Get Admin Dashboard Stats
 // @route   GET /api/admin/stats
@@ -135,7 +138,6 @@ exports.updateUserRole = async (req, res) => {
     }
 };
 
-const StudentData = require('../models/StudentData');
 const Message = require('../models/Message');
 
 // @desc    Get all messages stored in MongoDB (Admin view)
@@ -152,37 +154,45 @@ exports.getAllMessages = async (req, res) => {
     }
 };
 
-// @desc    Check potential Mediacell matches for a user
+// @desc    Check potential student roster matches for a user
 // @route   GET /api/admin/users/:id/check-match
 exports.checkMatch = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        await connectDB();
+        const userId = req.params.id;
+        if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(200).json({ success: false, message: 'Invalid or missing user ID', matches: [] });
         }
 
-        // Search for matches in StudentData based on joiningYear or leavingYear
-        // We'll search for partial name match or exact year match
-        let query = {};
-        if (user.name) {
-            query.name = { $regex: user.name.trim(), $options: 'i' };
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(200).json({ success: false, message: 'User not found in system', matches: [] });
         }
-        
-        let matches = await StudentData.find(query);
-        
+
+        let matches = [];
+
+        // 1. Search by name regex (partial match, case-insensitive)
+        if (user.name && user.name.trim()) {
+            const escapedName = user.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            matches = await StudentData.find({
+                name: { $regex: escapedName, $options: 'i' }
+            }).limit(10);
+        }
+
+        // 2. Fallback: Search by joining/leaving year if no name match
         if (matches.length === 0) {
-            // Fallback: search by batchYear or joiningYear
             let yearQuery = { $or: [] };
             if (user.joiningYear) yearQuery.$or.push({ joiningYear: user.joiningYear.trim() });
             if (user.batchYear) yearQuery.$or.push({ leavingYear: user.batchYear.trim() });
             
             if (yearQuery.$or.length > 0) {
-                 matches = await StudentData.find(yearQuery).limit(5); // Return up to 5 suggested matches based on year
+                 matches = await StudentData.find(yearQuery).limit(5);
             }
         }
 
-        res.json({ matches });
+        res.json({ success: true, matches: matches || [] });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[CHECK MATCH CONTROLLER ERROR]:', error.message);
+        res.status(200).json({ success: false, matches: [], message: error.message });
     }
 };

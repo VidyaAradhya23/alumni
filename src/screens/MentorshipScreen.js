@@ -1,14 +1,55 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, ScrollView , Platform} from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
 const MentorshipScreen = () => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
-  const mentors = [];
+  const mentors = [
+    {
+      id: '1',
+      name: 'Aarav Sharma',
+      batch: '2019',
+      company: 'Google • Senior Software Engineer',
+      expertise: 'System Design, Backend Development, Interview Prep',
+      initials: 'AS'
+    },
+    {
+      id: '2',
+      name: 'Ananya Rao',
+      batch: '2020',
+      company: 'Microsoft • Product Manager',
+      expertise: 'Product Management, Resume Review, Tech Transition',
+      initials: 'AR'
+    },
+    {
+      id: '3',
+      name: 'Rohan Kulkarni',
+      batch: '2018',
+      company: 'Amazon • Lead Data Scientist',
+      expertise: 'Machine Learning, AI Research, Career Guidance',
+      initials: 'RK'
+    }
+  ];
 
-    const isWeb = Platform.OS === 'web';
+  const handleRequestMentorship = (mentorName) => {
+    Alert.alert(
+      'Request Mentorship',
+      `Your mentorship request has been sent to ${mentorName}. They will receive an email and notification!`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleBecomeMentor = () => {
+    Alert.alert(
+      'Become a Mentor',
+      'Thank you for offering to mentor junior alumni and students! Our team will review your application within 24 hours.',
+      [{ text: 'Great!' }]
+    );
+  };
+
+  const isWeb = Platform.OS === 'web';
   const webContainerStyle = isWeb ? { alignSelf: 'center', width: '100%', maxWidth: 800, flex: 1 } : { flex: 1 };
 
   return (
@@ -22,7 +63,7 @@ const MentorshipScreen = () => {
         <View style={styles.heroSection}>
           <Text style={styles.heroTitle}>Learn from the Best</Text>
           <Text style={styles.heroSubtitle}>Connect with senior alumni for career guidance, technical mentorship, and industry insights.</Text>
-          <TouchableOpacity style={styles.becomeMentorBtn}>
+          <TouchableOpacity style={styles.becomeMentorBtn} onPress={handleBecomeMentor}>
             <Text style={styles.becomeMentorText}>Become a Mentor</Text>
           </TouchableOpacity>
         </View>
@@ -49,7 +90,7 @@ const MentorshipScreen = () => {
               <Text style={styles.expertiseLabel}>Expertise:</Text>
               <Text style={styles.expertiseValue}>{mentor.expertise}</Text>
             </View>
-            <TouchableOpacity style={styles.requestBtn}>
+            <TouchableOpacity style={styles.requestBtn} onPress={() => handleRequestMentorship(mentor.name)}>
               <Text style={styles.requestBtnText}>Request Mentorship</Text>
             </TouchableOpacity>
           </View>

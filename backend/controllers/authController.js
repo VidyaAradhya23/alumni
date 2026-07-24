@@ -3,13 +3,15 @@ const StudentData = require('../models/StudentData');
 const connectDB = require('../config/db');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
+const { sendWelcomeEmail, sendOtpEmail, sendPasswordResetEmail } = require('../utils/sendEmail');
 const { validateEmailFull } = require('../utils/emailValidator');
 const crypto = require('crypto');
 const OTP = require('../models/OTP');
 const Notification = require('../models/Notification');
 const TokenBlacklist = require('../models/TokenBlacklist');
 const RefreshToken = require('../models/RefreshToken');
+const ActivityLog = require('../models/ActivityLog');
+const ConnectionRequest = require('../models/ConnectionRequest');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const { OAuth2Client } = require('google-auth-library');
@@ -57,7 +59,6 @@ exports.checkEmailExists = async (req, res) => {
     }
 };
 
-// @desc    Send OTP to email after full validation
 // @desc    Send 6-Digit OTP to email after full validation & duplicate check
 // @route   POST /api/auth/send-otp
 exports.sendOtp = async (req, res) => {
@@ -70,37 +71,42 @@ exports.sendOtp = async (req, res) => {
 
         const emailClean = email.trim().toLowerCase();
 
-        // 1. Validate Email Format, MX Records & Disposable Filter
+        // 1. Fast format & domain validation
         const validation = await validateEmailFull(emailClean);
         if (!validation.valid) {
             return res.status(400).json({ message: validation.message });
         }
 
-        // 2. Check Duplicate Email
-        const existingUser = await User.findOne({ email: emailClean });
+        // 2. Check duplicate user in DB
+        const existingUser = await User.findOne({ email: emailClean }).lean();
         if (existingUser) {
             return res.status(400).json({ message: 'An account with this email address already exists.' });
         }
 
         // 3. Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 4. Store OTP in Database
-        await OTP.deleteMany({ email: emailClean });
-        await OTP.create({ email: emailClean, otp });
+        // 4. Send email AND save OTP concurrently (await both so Vercel executes SendGrid before terminating lambda)
+        const [emailResult] = await Promise.all([
+            sendOtpEmail(emailClean, otp),
+            (async () => {
+                await OTP.deleteMany({ email: emailClean });
+                await OTP.create({ email: emailClean, otp });
+            })()
+        ]);
 
-        // 5. Send OTP via Email Service (with SMTP Retries)
-        const emailResult = await sendOtpEmail(emailClean, otp);
         if (!emailResult.success) {
-            console.error(`[OTP EMAIL REJECTED] Failed to send email to ${emailClean}:`, emailResult.error);
-            return res.status(400).json({ 
-                message: `Failed to send OTP. Please enter a valid, active email address and try again.` 
+            console.error(`[OTP EMAIL FAILED] ${emailClean}:`, emailResult.error);
+            return res.status(400).json({
+                message: 'Failed to send OTP email. Please check your email address and try again.'
             });
         }
 
-        res.json({ message: '6-digit verification code sent successfully to your email' });
+        return res.json({ message: '6-digit verification code sent successfully to your email' });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[SEND OTP CONTROLLER ERROR]:', error);
+        return res.status(500).json({ message: error.message || 'Internal server error' });
     }
 };
 
@@ -218,6 +224,18 @@ exports.loginUser = async (req, res) => {
         if (user && user.password && (await user.comparePassword(password))) {
             if (!user.is_approved) {
                 return res.status(403).json({ message: 'Your account is pending admin approval. You cannot log in yet.' });
+            }
+
+            // Strict Institution Access Validation
+            const portalInst = req.body.portalInstitution || req.body.targetInstitution;
+            if (portalInst && portalInst !== 'All') {
+                const targetClean = portalInst.trim().toLowerCase();
+                const userInstClean = (user.institution || '').trim().toLowerCase();
+                if (userInstClean && userInstClean !== 'all' && !userInstClean.includes(targetClean) && !targetClean.includes(userInstClean)) {
+                    return res.status(403).json({
+                        message: `Access Denied: Your account is registered under '${user.institution}'. You cannot log into the ${portalInst} portal using these credentials.`
+                    });
+                }
             }
 
             // Check if user has 2FA enabled
@@ -377,24 +395,55 @@ exports.changePassword = async (req, res) => {
 // @route   POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
     try {
+        await connectDB();
         const { email } = req.body;
-        const user = await User.findOne({ email: email.trim().toLowerCase() });
+        if (!email || !email.trim()) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+
+        const emailClean = email.trim().toLowerCase();
+        const user = await User.findOne({ email: emailClean });
 
         if (!user) {
-            return res.status(404).json({ message: 'There is no user with this email address.' });
+            return res.status(404).json({ message: 'There is no user registered with this email address.' });
         }
 
         const resetToken = user.createPasswordResetToken();
         await user.save({ validateBeforeSave: false });
 
-        // In a real app, send this token via email using nodemailer/sendgrid
-        // For now, we'll just log it or return it for testing purposes if email is not fully configured
-        // const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        // await sendPasswordResetEmail(user.email, resetUrl);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://almafrontend-eight.vercel.app';
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
-        res.status(200).json({ message: 'Password reset link sent to email (simulated). Token: ' + resetToken });
+        // Dispatch real Password Reset Email via SendGrid API
+        const emailResult = await sendPasswordResetEmail(user.email, resetUrl, resetToken);
+
+        // Store activity log in MongoDB Atlas
+        try {
+            await ActivityLog.create({
+                user: user._id,
+                actionType: 'REQUEST_PASSWORD_RESET_LINK',
+                method: 'POST',
+                endpoint: '/api/auth/forgot-password',
+                metadata: { email: user.email, resetUrl, tokenGenerated: true },
+                ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+                userAgent: req.get('user-agent') || 'Client App',
+                status: 200
+            });
+        } catch (logErr) {
+            console.error('[ACTIVITY LOG ERROR]:', logErr.message);
+        }
+
+        if (!emailResult.success) {
+            console.error(`[PASSWORD RESET EMAIL FAILED] ${user.email}`);
+        }
+
+        res.status(200).json({
+            message: 'A secure password reset link and verification code have been sent to your email address.',
+            token: resetToken
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[FORGOT PASSWORD CONTROLLER ERROR]:', error);
+        res.status(500).json({ message: error.message || 'Server error' });
     }
 };
 
@@ -402,8 +451,12 @@ exports.forgotPassword = async (req, res) => {
 // @route   POST /api/auth/reset-password
 exports.resetPassword = async (req, res) => {
     try {
+        await connectDB();
         const { token, newPassword } = req.body;
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        if (!token) {
+            return res.status(400).json({ message: 'Token is required' });
+        }
+        const hashedToken = crypto.createHash('sha256').update(token.trim()).digest('hex');
 
         const user = await User.findOne({
             passwordResetToken: hashedToken,
@@ -422,6 +475,22 @@ exports.resetPassword = async (req, res) => {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save();
+
+        // Store activity log in MongoDB Atlas
+        try {
+            await ActivityLog.create({
+                user: user._id,
+                actionType: 'PASSWORD_RESET_LINK_COMPLETED',
+                method: 'POST',
+                endpoint: '/api/auth/reset-password',
+                metadata: { email: user.email, resetSuccess: true },
+                ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+                userAgent: req.get('user-agent') || 'Client App',
+                status: 200
+            });
+        } catch (logErr) {
+            console.error('[ACTIVITY LOG ERROR]:', logErr.message);
+        }
 
         res.status(200).json({ message: 'Password reset successful' });
     } catch (error) {
@@ -451,18 +520,32 @@ exports.deleteAccount = async (req, res) => {
 // @route   GET /api/auth/suggestions
 exports.getSuggestions = async (req, res) => {
     try {
+        await connectDB();
         const currentUser = await User.findById(req.user._id);
         const query = {
             _id: { $ne: req.user._id },
             is_approved: true,
         };
-        // If the current user has an institution, filter by it
-        if (currentUser.institution) {
-            query.institution = currentUser.institution;
+
+        if (currentUser && currentUser.institution) {
+            const instStr = currentUser.institution.trim();
+            if (instStr.toLowerCase().includes('media') || instStr.toLowerCase().includes('mci')) {
+                query.institution = { $regex: 'media|mci', $options: 'i' };
+            } else {
+                query.institution = { $regex: instStr, $options: 'i' };
+            }
         }
-        const suggestions = await User.find(query)
+
+        let suggestions = await User.find(query)
             .select('name email institution department degree batchYear company designation avatar_url role')
-            .limit(10);
+            .limit(100);
+
+        if (suggestions.length === 0) {
+            suggestions = await User.find({ _id: { $ne: req.user._id }, is_approved: true })
+                .select('name email institution department degree batchYear company designation avatar_url role')
+                .limit(100);
+        }
+
         res.json(suggestions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -473,8 +556,30 @@ exports.getSuggestions = async (req, res) => {
 // @route   GET /api/auth/users
 exports.getUsers = async (req, res) => {
     try {
-        // Exclude password and tokens
-        const users = await User.find({}).select('-password -passwordResetToken -passwordResetExpires');
+        await connectDB();
+        const { institution, search } = req.query;
+        let query = {};
+
+        if (institution && institution !== 'All') {
+            const instStr = institution.trim();
+            if (instStr.toLowerCase().includes('media') || instStr.toLowerCase().includes('mci')) {
+                query.institution = { $regex: 'media|mci', $options: 'i' };
+            } else {
+                query.institution = { $regex: instStr, $options: 'i' };
+            }
+        }
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { institution: { $regex: search, $options: 'i' } },
+                { company: { $regex: search, $options: 'i' } },
+                { designation: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const users = await User.find(query).select('-password -passwordResetToken -passwordResetExpires').sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -1073,6 +1178,155 @@ exports.revokeSession = async (req, res) => {
         res.json({ message: 'Session revoked successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// ─── Connection Request Management Controllers ────────────────────
+
+// @desc    Send a connection request to an alumni / user
+// @route   POST /api/auth/connect/:id
+exports.sendConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const recipientId = req.params.id;
+        const senderId = req.user._id;
+
+        if (senderId.toString() === recipientId.toString()) {
+            return res.status(400).json({ message: 'You cannot send a connection request to yourself' });
+        }
+
+        const recipient = await User.findById(recipientId);
+        if (!recipient) {
+            return res.status(404).json({ message: 'Target user not found' });
+        }
+
+        // Check for existing connection request
+        let request = await ConnectionRequest.findOne({
+            sender: senderId,
+            recipient: recipientId
+        });
+
+        if (request) {
+            if (request.status === 'accepted') {
+                return res.status(400).json({ message: 'You are already connected with this user' });
+            }
+            request.status = 'pending';
+            await request.save();
+        } else {
+            request = await ConnectionRequest.create({
+                sender: senderId,
+                recipient: recipientId,
+                status: 'pending'
+            });
+        }
+
+        // Dispatch Notification to recipient
+        await Notification.create({
+            recipient: recipientId,
+            sender: senderId,
+            type: 'follow',
+            title: 'New Connection Request',
+            message: `${req.user.name || 'An alumni'} sent you a connection request.`
+        });
+
+        res.status(200).json({ success: true, message: 'Connection request sent successfully', request });
+    } catch (error) {
+        console.error('[SEND CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Get all pending incoming connection requests for current user
+// @route   GET /api/auth/connection-requests
+exports.getConnectionRequests = async (req, res) => {
+    try {
+        await connectDB();
+        const requests = await ConnectionRequest.find({
+            recipient: req.user._id,
+            status: 'pending'
+        })
+        .populate('sender', 'name email institution branch department batchYear company designation location avatar_url role')
+        .sort({ createdAt: -1 });
+
+        res.json(requests);
+    } catch (error) {
+        console.error('[GET CONNECTION REQUESTS ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Accept a connection request
+// @route   POST /api/auth/connection-requests/:id/accept
+exports.acceptConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const requestId = req.params.id;
+
+        const request = await ConnectionRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ message: 'Connection request not found' });
+        }
+
+        if (request.recipient.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to accept this request' });
+        }
+
+        request.status = 'accepted';
+        await request.save();
+
+        // Mutually connect both users by updating following / followers lists
+        const sender = await User.findById(request.sender);
+        const recipient = await User.findById(request.recipient);
+
+        if (sender && recipient) {
+            if (!sender.following.includes(recipient._id)) sender.following.push(recipient._id);
+            if (!sender.followers.includes(recipient._id)) sender.followers.push(recipient._id);
+            await sender.save();
+
+            if (!recipient.following.includes(sender._id)) recipient.following.push(sender._id);
+            if (!recipient.followers.includes(sender._id)) recipient.followers.push(sender._id);
+            await recipient.save();
+        }
+
+        // Notify sender that their request was accepted
+        await Notification.create({
+            recipient: request.sender,
+            sender: req.user._id,
+            type: 'follow',
+            title: 'Connection Request Accepted',
+            message: `${req.user.name || 'An alumni'} accepted your connection request.`
+        });
+
+        res.json({ success: true, message: 'Connection request accepted successfully' });
+    } catch (error) {
+        console.error('[ACCEPT CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+};
+
+// @desc    Decline a connection request
+// @route   POST /api/auth/connection-requests/:id/decline
+exports.declineConnectionRequest = async (req, res) => {
+    try {
+        await connectDB();
+        const requestId = req.params.id;
+
+        const request = await ConnectionRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ message: 'Connection request not found' });
+        }
+
+        if (request.recipient.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to decline this request' });
+        }
+
+        request.status = 'declined';
+        await request.save();
+
+        res.json({ success: true, message: 'Connection request declined' });
+    } catch (error) {
+        console.error('[DECLINE CONNECTION REQUEST ERROR]:', error.message);
+        res.status(500).json({ message: error.message || 'Server error' });
     }
 };
 

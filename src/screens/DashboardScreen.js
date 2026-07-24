@@ -24,7 +24,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { getSuggestions, getPosts, getEvents, toggleFollowUser, getFollowing, toggleLikePost } from '../services/authService';
 import { getImageUrl } from '../services/uploadService';
-import { addComment, createPost } from '../services/postService';
+import { addComment, createPost, toggleSavePost, resharePost } from '../services/postService';
 import { sendMessage } from '../services/messageService';
 import useUserRole from '../hooks/useUserRole';
 
@@ -227,8 +227,48 @@ const DashboardScreen = ({ navigation }) => {
     }
   };
 
-  const toggleBookmark = (postId) => {
-    setBookmarkedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  const [reshareNote, setReshareNote] = useState('');
+  const [resharingLoading, setResharingLoading] = useState(false);
+
+  const toggleBookmark = async (postId) => {
+    try {
+      setBookmarkedPosts((prev) => {
+        const nextState = !prev[postId];
+        if (nextState) {
+          Alert.alert('📌 Saved', 'Post saved to your bookmarks!');
+        } else {
+          Alert.alert('Removed', 'Post removed from saved items.');
+        }
+        return { ...prev, [postId]: nextState };
+      });
+      await toggleSavePost(postId);
+    } catch (error) {
+      console.error('Error toggling save post:', error);
+    }
+  };
+
+  const refreshPostsFeed = async () => {
+    try {
+      const postsData = await getPosts();
+      if (Array.isArray(postsData)) {
+        const formatted = postsData.map(p => ({
+          id: p._id,
+          user: p.user?.name || 'Alumni',
+          authorId: p.user?._id || null,
+          role: p.user?.department ? `${p.user.department} • Batch ${p.user.batchYear || ''}` : 'Alumni Member',
+          avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+          content: p.content,
+          image: getImageUrl(p.image),
+          likes: p.likes?.length || 0,
+          comments: p.comments || [],
+          commentsCount: p.comments?.length || 0,
+          time: getTimeAgo(p.createdAt),
+        }));
+        setPosts(formatted);
+      }
+    } catch (e) {
+      console.error('Error refreshing posts feed:', e);
+    }
   };
 
   const toggleFollow = async (authorId) => {
@@ -236,6 +276,7 @@ const DashboardScreen = ({ navigation }) => {
     try {
       setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
       await toggleFollowUser(authorId);
+      await refreshPostsFeed();
     } catch (error) {
       setFollowingMap((prev) => ({ ...prev, [authorId]: !prev[authorId] }));
       console.error('Error toggling follow:', error);
@@ -246,6 +287,7 @@ const DashboardScreen = ({ navigation }) => {
     try {
       setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       await toggleFollowUser(id);
+      await refreshPostsFeed();
     } catch (error) {
       setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
       console.error('Error toggling follow:', error);
@@ -466,7 +508,21 @@ const DashboardScreen = ({ navigation }) => {
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                {posts.map(post => renderPostCard(post))}
+                {posts.length > 0 ? (
+                  posts.map(post => renderPostCard(post))
+                ) : (
+                  <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 24, alignItems: 'center', marginVertical: 12, borderWidth: 1, borderColor: theme.border }}>
+                    <Ionicons name="people-outline" size={48} color={theme.primary} style={{ marginBottom: 12 }} />
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 6, textAlign: 'center' }}>No Followed Alumni Posts Yet</Text>
+                    <Text style={{ fontSize: 13, color: theme.textMuted, textAlign: 'center', lineHeight: 18, marginBottom: 16 }}>Follow alumni members from "People you may know" or the Directory to view their posts in your feed!</Text>
+                    <TouchableOpacity 
+                      style={{ backgroundColor: theme.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 }}
+                      onPress={() => navigation.navigate('Directory', { tab: 'directory' })}
+                    >
+                      <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Explore Alumni Directory</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </ScrollView>
             </View>
 
@@ -476,7 +532,9 @@ const DashboardScreen = ({ navigation }) => {
               <View style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, marginBottom: 24, elevation: 2, borderWidth: 1, borderColor: theme.border }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text }}>People you may know</Text>
-                  <Text style={{ fontSize: 13, color: theme.primary, fontWeight: '600' }}>See all</Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('Directory', { tab: 'directory' })} activeOpacity={0.7}>
+                    <Text style={{ fontSize: 13, color: theme.primary, fontWeight: '600' }}>See all</Text>
+                  </TouchableOpacity>
                 </View>
                 {suggestions.map(s => (
                   <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
@@ -684,6 +742,98 @@ const DashboardScreen = ({ navigation }) => {
                 <Text style={styles.shareText}>Copy Link</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+      <Modal visible={activeModal === 'reshare'} animationType="slide" transparent={true}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={isWeb ? styles.webModalOverlay : styles.modalOverlay}>
+          <View style={isWeb ? styles.webModalContainer : styles.bottomSheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Reshare Post to Feed</Text>
+              <TouchableOpacity onPress={closeModal}><Ionicons name="close" size={24} color={theme.text} /></TouchableOpacity>
+            </View>
+
+            {selectedPost ? (
+              <View style={{ padding: 16 }}>
+                <View style={{ backgroundColor: 'rgba(0, 33, 68, 0.04)', borderRadius: 12, padding: 12, marginBottom: 16, borderLeftWidth: 3, borderLeftColor: theme.primary }}>
+                  <Text style={{ fontWeight: '700', fontSize: 13, color: theme.text }}>
+                    @{selectedPost.user?.name || selectedPost.user || 'Alumni Member'}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 4 }} numberOfLines={3}>
+                    {selectedPost.content}
+                  </Text>
+                </View>
+
+                <TextInput
+                  style={{
+                    backgroundColor: theme.card,
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                    borderRadius: 10,
+                    padding: 12,
+                    fontSize: 14,
+                    color: theme.text,
+                    minHeight: 70,
+                    marginBottom: 16
+                  }}
+                  placeholder="Add your thoughts or note (optional)..."
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                  value={reshareNote}
+                  onChangeText={setReshareNote}
+                />
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.primary,
+                    paddingVertical: 14,
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    opacity: resharingLoading ? 0.7 : 1
+                  }}
+                  disabled={resharingLoading}
+                  onPress={async () => {
+                    if (!selectedPost) return;
+                    setResharingLoading(true);
+                    try {
+                      const targetId = selectedPost.id || selectedPost._id;
+                      await resharePost(targetId, reshareNote);
+                      Alert.alert('Success', 'Post reshared to your feed!');
+                      setReshareNote('');
+                      closeModal();
+                      // Refresh posts
+                      const freshPosts = await getPosts();
+                      if (freshPosts && Array.isArray(freshPosts)) {
+                        setPosts(freshPosts.map(p => ({
+                          id: p._id,
+                          _id: p._id,
+                          user: p.user?.name || 'Alumni',
+                          avatar: p.user?.name ? p.user.name.substring(0, 2).toUpperCase() : 'AL',
+                          role: `${p.user?.branch || 'Alumni'} ${p.user?.batchYear ? '• Batch of ' + p.user.batchYear : ''}`,
+                          time: getTimeAgo(p.createdAt),
+                          content: p.content,
+                          image: p.image,
+                          likes: p.likes ? p.likes.length : 0,
+                          commentsCount: p.comments ? p.comments.length : 0,
+                          comments: p.comments || [],
+                          resharesCount: p.reshares ? p.reshares.length : 0,
+                          isSaved: p.savedBy ? p.savedBy.includes(currentUser?._id) : false,
+                          authorId: p.user?._id
+                        })));
+                      }
+                    } catch (err) {
+                      Alert.alert('Error', err?.response?.data?.message || err?.message || 'Failed to reshare post');
+                    } finally {
+                      setResharingLoading(false);
+                    }
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }}>
+                    {resharingLoading ? 'Resharing...' : '🔄 Reshare Post'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         </KeyboardAvoidingView>
       </Modal>

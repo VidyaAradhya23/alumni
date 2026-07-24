@@ -26,6 +26,24 @@ const ChatScreen = ({ route, navigation }) => {
   const [pendingAttachment, setPendingAttachment] = useState(null); // { url, type, name }
   const [previewImageModal, setPreviewImageModal] = useState(null);
   
+  // Instagram Shared Post Modal States
+  const [selectedPostModal, setSelectedPostModal] = useState(null);
+  const [modalCommentText, setModalCommentText] = useState('');
+  const [modalPostLiked, setModalPostLiked] = useState(false);
+  const [modalLikesCount, setModalLikesCount] = useState(12);
+  const [modalComments, setModalComments] = useState([]);
+
+  const openPostModal = (postData) => {
+    if (!postData) return;
+    setSelectedPostModal(postData);
+    setModalPostLiked(false);
+    setModalLikesCount(postData.likes || 12);
+    setModalComments(postData.comments && Array.isArray(postData.comments) ? postData.comments : [
+      { user: 'Harshitha', text: 'Awesome post! 🎉' },
+      { user: 'Alumni Network', text: 'Great update!' }
+    ]);
+  };
+  
   // WhatsApp Features States
   const [replyToMsg, setReplyToMsg] = useState(null); // { _id, text, senderName }
   const [forwardModalMsg, setForwardModalMsg] = useState(null); // Message to forward
@@ -412,11 +430,45 @@ const ChatScreen = ({ route, navigation }) => {
     );
   };
 
+  const parseSharedPost = (text, item) => {
+    if (item.sharedPost) return item.sharedPost;
+    if (!text || typeof text !== 'string') return null;
+
+    if (text.includes('Shared Post:') || text.includes('Check out this post')) {
+      let user = 'Alumni Member';
+      let content = text;
+
+      if (text.includes('from ') && text.includes(' on Institution Alumni App:')) {
+        const parts = text.split('on Institution Alumni App:');
+        user = parts[0].replace('Check out this post from', '').trim();
+        content = parts[1] ? parts[1].replace(/^["\s]+|["\s]+$/g, '') : text;
+      } else if (text.includes('Shared Post:')) {
+        content = text.replace('Shared Post:', '').trim().replace(/^["\s]+|["\s]+$/g, '');
+      }
+
+      return {
+        id: item._id || Date.now().toString(),
+        user: user || 'Alumni Member',
+        role: 'Institution Alumni',
+        avatar: user ? user.substring(0, 2).toUpperCase() : 'AL',
+        content: content || 'Shared Alumni Post',
+        image: item.attachment?.url || null,
+        likes: item.likes || 14,
+        comments: item.comments || [
+          { user: 'Harshitha', text: 'Great alumni post!' }
+        ]
+      };
+    }
+    return null;
+  };
+
   const renderMessage = ({ item }) => {
     const senderIdStr = typeof item.sender === 'object' ? (item.sender._id || item.sender.id) : item.sender;
     const chatUserIdStr = (chatUser.id || chatUser._id || '').toString();
 
     const isMe = item.sender === 'me' || (senderIdStr && senderIdStr.toString() !== chatUserIdStr);
+    const sharedPostData = parseSharedPost(item.text, item);
+
     return (
       <View style={[styles.messageWrapper, isMe ? styles.messageWrapperMe : styles.messageWrapperThem]}>
         {!isMe && (
@@ -424,8 +476,71 @@ const ChatScreen = ({ route, navigation }) => {
             <Text style={styles.avatarText}>{chatUser.initials}</Text>
           </View>
         )}
-        <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem]}>
-          <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
+        <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleThem, sharedPostData ? { padding: 4 } : {}]}>
+          {/* Render Attachment if any */}
+          {renderMessageAttachment(item.attachment, isMe)}
+
+          {/* Render Instagram-Style Shared Post Card */}
+          {sharedPostData ? (
+            <TouchableOpacity
+              style={{
+                backgroundColor: isMe ? '#002B5B' : '#F1F5F9',
+                borderRadius: 14,
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderColor: isMe ? '#1E40AF' : '#CBD5E1',
+                width: 250,
+                marginVertical: 2
+              }}
+              activeOpacity={0.88}
+              onPress={() => openPostModal(sharedPostData)}
+            >
+              {/* Card Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: isMe ? 'rgba(255,255,255,0.1)' : '#E2E8F0' }}>
+                <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#003366', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                  <Text style={{ color: '#FFF', fontSize: 11, fontWeight: '700' }}>{sharedPostData.avatar}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: isMe ? '#FFFFFF' : '#0F172A' }} numberOfLines={1}>
+                    {sharedPostData.user}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: isMe ? '#93C5FD' : '#64748B' }}>Shared Alumni Post</Text>
+                </View>
+                <Ionicons name="logo-instagram" size={16} color={isMe ? '#E0E7FF' : '#003366'} />
+              </View>
+
+              {/* Image preview or standard sleek banner */}
+              {sharedPostData.image ? (
+                <Image source={{ uri: sharedPostData.image }} style={{ width: '100%', height: 140 }} resizeMode="cover" />
+              ) : (
+                <View style={{ height: 80, backgroundColor: isMe ? '#1E3A8A' : '#E2E8F0', justifyContent: 'center', alignItems: 'center', padding: 10 }}>
+                  <Ionicons name="newspaper-outline" size={24} color={isMe ? '#93C5FD' : '#475569'} style={{ marginBottom: 4 }} />
+                  <Text style={{ fontSize: 11, fontStyle: 'italic', color: isMe ? '#DBEAFE' : '#334155', textAlign: 'center' }} numberOfLines={2}>
+                    "{sharedPostData.content}"
+                  </Text>
+                </View>
+              )}
+
+              {/* Content snippet & Footer */}
+              <View style={{ padding: 10 }}>
+                <Text style={{ fontSize: 12, color: isMe ? '#F8FAFC' : '#1E293B', fontWeight: '500', marginBottom: 6 }} numberOfLines={2}>
+                  {sharedPostData.content}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: isMe ? '#60A5FA' : '#003366' }}>
+                    Tap to open post ➔
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="heart-outline" size={13} color={isMe ? '#93C5FD' : '#64748B'} />
+                    <Ionicons name="chatbubble-outline" size={13} color={isMe ? '#93C5FD' : '#64748B'} />
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <Text style={[styles.messageText, isMe ? styles.messageTextMe : styles.messageTextThem]}>{item.text}</Text>
+          )}
+
           <View style={styles.messageMeta}>
             <Text style={[styles.messageTime, isMe ? styles.messageTimeMe : styles.messageTimeThem]}>
               {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
@@ -806,6 +921,117 @@ const ChatScreen = ({ route, navigation }) => {
             />
           </TouchableOpacity>
         )}
+
+        {/* Instagram-Style Post Viewer Modal */}
+        <Modal visible={Boolean(selectedPostModal)} animationType="slide" transparent={true}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+            <View style={{ width: isDesktop ? 550 : '100%', maxHeight: '90%', backgroundColor: theme.card, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: theme.border }}>
+              
+              {/* Modal Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.border, backgroundColor: theme.card }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="logo-instagram" size={20} color={theme.primary} style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text }}>Alumni Post</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedPostModal(null)} style={{ padding: 4 }}>
+                  <Ionicons name="close" size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Author Info Bar */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>
+                      {selectedPostModal?.avatar || (selectedPostModal?.user ? selectedPostModal.user.substring(0, 2).toUpperCase() : 'AL')}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>{selectedPostModal?.user || 'Alumni Member'}</Text>
+                    <Text style={{ fontSize: 12, color: theme.textMuted }}>{selectedPostModal?.role || 'Institution Alumni'}</Text>
+                  </View>
+                </View>
+
+                {/* Main Post Image */}
+                {selectedPostModal?.image ? (
+                  <Image 
+                    source={{ uri: selectedPostModal.image }} 
+                    style={{ width: '100%', height: 300, backgroundColor: '#000' }} 
+                    resizeMode="cover" 
+                  />
+                ) : null}
+
+                {/* Caption Content */}
+                <View style={{ padding: 16 }}>
+                  <Text style={{ fontSize: 15, color: theme.text, lineHeight: 22, marginBottom: 14 }}>
+                    {selectedPostModal?.content}
+                  </Text>
+
+                  {/* Actions (Like, Comment, Share) */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 14, marginBottom: 16 }}>
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      onPress={() => {
+                        setModalPostLiked(!modalPostLiked);
+                        setModalLikesCount(prev => modalPostLiked ? prev - 1 : prev + 1);
+                      }}
+                    >
+                      <Ionicons 
+                        name={modalPostLiked ? "heart" : "heart-outline"} 
+                        size={24} 
+                        color={modalPostLiked ? "#EF4444" : theme.text} 
+                      />
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>{modalLikesCount}</Text>
+                    </TouchableOpacity>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>{modalComments.length}</Text>
+                    </View>
+                  </View>
+
+                  {/* Comments Section */}
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text, marginBottom: 10 }}>
+                    Comments ({modalComments.length})
+                  </Text>
+
+                  {modalComments.map((c, i) => (
+                    <View key={i} style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'flex-start' }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#003366', justifyContent: 'center', alignItems: 'center', marginRight: 8, marginTop: 2 }}>
+                        <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '700' }}>{(c.user || 'A').charAt(0).toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1, backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', padding: 10, borderRadius: 12 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: theme.text, marginBottom: 2 }}>{c.user}</Text>
+                        <Text style={{ fontSize: 13, color: theme.text }}>{c.text}</Text>
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Add Comment Bar */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                    <TextInput
+                      placeholder="Add a comment..."
+                      placeholderTextColor={theme.textMuted}
+                      style={{ flex: 1, backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: theme.text, fontSize: 13, marginRight: 8 }}
+                      value={modalCommentText}
+                      onChangeText={setModalCommentText}
+                    />
+                    <TouchableOpacity
+                      style={{ backgroundColor: theme.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 }}
+                      onPress={() => {
+                        if (!modalCommentText.trim()) return;
+                        setModalComments(prev => [...prev, { user: 'You', text: modalCommentText.trim() }]);
+                        setModalCommentText('');
+                      }}
+                    >
+                      <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 13 }}>Post</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
 
         {/* Forward Message Contact Picker Modal */}
         <Modal visible={Boolean(forwardModalMsg)} animationType="slide" transparent={true}>

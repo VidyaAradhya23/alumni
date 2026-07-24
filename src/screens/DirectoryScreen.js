@@ -539,6 +539,15 @@ const DirectoryScreen = ({ navigation, route }) => {
 
       {/* ───── Tab Bar ───── */}
       <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'directory' && styles.activeTab]}
+          onPress={() => setActiveTab('directory')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === 'directory' && styles.activeTabText]}>
+            Directory
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tab, activeTab === 'request' && styles.activeTab]}
@@ -556,6 +565,7 @@ const DirectoryScreen = ({ navigation, route }) => {
             )}
           </View>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'community' && styles.activeTab]}
           onPress={() => setActiveTab('community')}

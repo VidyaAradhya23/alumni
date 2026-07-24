@@ -10,6 +10,7 @@ const OTP = require('../models/OTP');
 const Notification = require('../models/Notification');
 const TokenBlacklist = require('../models/TokenBlacklist');
 const RefreshToken = require('../models/RefreshToken');
+const FioriNonce = require('../models/FioriNonce');
 const ActivityLog = require('../models/ActivityLog');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const speakeasy = require('speakeasy');

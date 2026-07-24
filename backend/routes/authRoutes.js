@@ -33,7 +33,8 @@ const {
     sendConnectionRequest,
     getConnectionRequests,
     acceptConnectionRequest,
-    declineConnectionRequest
+    declineConnectionRequest,
+    handleFioriSSO
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { authLimiter, otpLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
@@ -49,6 +50,7 @@ router.post('/logout', protect, logoutUser);
 router.post('/google', googleAuth);
 router.post('/refresh-token', refreshAccessToken);
 router.post('/oauth', oauthLogin);
+router.get('/fiori-sso', handleFioriSSO);
 router.get('/linkedin/callback', linkedinAuthCallback);
 router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, forgotPassword);
 router.post('/reset-password', resetPassword);

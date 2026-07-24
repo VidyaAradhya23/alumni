@@ -334,7 +334,10 @@ function SuperAdminTabs() {
 const linking = {
   prefixes: [
     'http://localhost:19006',
+    'http://localhost:3000',
+    'https://almafrontend-eight.vercel.app',
     'https://alumni-app-nine.vercel.app',
+    'https://alma-connect.vercel.app',
     'alumni://'
   ],
   config: {
@@ -344,6 +347,8 @@ const linking = {
       Welcome: 'welcome',
       Login: 'login',
       Signup: 'signup',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'reset-password',
       OTPVerification: 'otp-verification',
       ProfileSetup: 'profile-setup',
       SelectInstitution: 'select-institution',
@@ -364,8 +369,6 @@ const linking = {
         path: 'admin',
         screens: {
           DemoCarousel: 'demo',
-          ForgotPassword: 'forgot-password',
-          ResetPassword: 'reset-password',
           AdminHome: 'home',
           AdminUsers: 'users',
           AdminJobs: 'jobs',

@@ -70,7 +70,7 @@ exports.sendOtp = async (req, res) => {
 
         const emailClean = email.trim().toLowerCase();
 
-        // 1. Run email format/disposable validation + duplicate check concurrently
+        // 1. Fast validation + duplicate check in parallel (no DNS for gmail/yahoo/outlook)
         const [validation, existingUser] = await Promise.all([
             validateEmailFull(emailClean),
             User.findOne({ email: emailClean }).lean()
@@ -87,24 +87,28 @@ exports.sendOtp = async (req, res) => {
         // 2. Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 3. Send email AND store OTP concurrently — do NOT await DB write before sending email
-        const [emailResult] = await Promise.all([
+        // 3. Respond IMMEDIATELY — do not make the user wait for email delivery or DB write
+        res.json({ message: '6-digit verification code sent successfully to your email' });
+
+        // 4. Fire email + DB write in background (non-blocking after response)
+        Promise.all([
             sendOtpEmail(emailClean, otp),
             OTP.deleteMany({ email: emailClean })
                 .then(() => OTP.create({ email: emailClean, otp }))
-                .catch(err => console.error('[OTP STORE ERROR]:', err.message))
-        ]);
+        ]).then(([emailResult]) => {
+            if (!emailResult.success) {
+                console.error(`[OTP EMAIL FAILED] ${emailClean}:`, emailResult.error);
+            } else {
+                console.log(`[OTP SENT] ${emailClean} — OTP stored and email dispatched.`);
+            }
+        }).catch(err => {
+            console.error('[OTP BACKGROUND ERROR]:', err.message);
+        });
 
-        if (!emailResult.success) {
-            console.error(`[OTP EMAIL REJECTED] Failed to send email to ${emailClean}:`, emailResult.error);
-            return res.status(400).json({
-                message: `Failed to send OTP. Please enter a valid, active email address and try again.`
-            });
-        }
-
-        res.json({ message: '6-digit verification code sent successfully to your email' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        if (!res.headersSent) {
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 

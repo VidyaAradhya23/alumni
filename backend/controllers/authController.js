@@ -410,7 +410,7 @@ exports.forgotPassword = async (req, res) => {
         const resetToken = user.createPasswordResetToken();
         await user.save({ validateBeforeSave: false });
 
-        const frontendUrl = process.env.FRONTEND_URL || 'https://alumni-app-nine.vercel.app';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://alma-connect.vercel.app';
         const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
         // Dispatch real Password Reset Email via SendGrid API

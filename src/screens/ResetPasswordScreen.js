@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { resetPassword } from '../services/authService';
 
-const ResetPasswordScreen = ({ navigation }) => {
+const ResetPasswordScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
   
   const [password, setPassword] = useState('');
@@ -15,11 +15,21 @@ const ResetPasswordScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
 
-  const token = navigation.getState()?.routes?.find(r => r.name === 'ResetPassword')?.params?.token || 'dummy_token';
+  // Extract token from route params or window.location URL search params on web
+  const getTokenFromUrl = () => {
+    if (route?.params?.token) return route.params.token;
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlToken = searchParams.get('token');
+      if (urlToken) return urlToken;
+    }
+    const navToken = navigation.getState()?.routes?.find(r => r.name === 'ResetPassword')?.params?.token;
+    return navToken || '';
+  };
+
+  const token = getTokenFromUrl();
 
   useEffect(() => {
-    // If we had deep linking, we would extract the token from the URL here
-    // For now, assume token is passed via navigation params
     if (token) {
       setSession(true);
     }

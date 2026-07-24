@@ -399,7 +399,7 @@ function RootNavigator() {
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator 
-        initialRouteName="PortalSelection"
+        initialRouteName="Welcome"
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },

@@ -205,17 +205,18 @@ const RegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'institution', 'branch' or 'batch'
-  const [isCustomInstitution, setIsCustomInstitution] = useState(false);
+  // Security Captcha Challenge (Bot Protection)
+  const [captcha, setCaptcha] = useState({ num1: Math.floor(Math.random() * 9) + 1, num2: Math.floor(Math.random() * 9) + 1, userAnswer: '' });
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
-  // Inline Email OTP Verification States
-  const [emailState, setEmailState] = useState('idle'); // 'idle' | 'sent' | 'verified'
-  const [inlineOtp, setInlineOtp] = useState(['', '', '', '', '', '']);
-  const [sendingOtpLoading, setSendingOtpLoading] = useState(false);
-  const [verifyingOtpLoading, setVerifyingOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [otpVerified, setOtpVerified] = useState(false);
-  const otpRefs = useRef([]);
+  const refreshCaptcha = () => {
+    setCaptcha({
+      num1: Math.floor(Math.random() * 9) + 1,
+      num2: Math.floor(Math.random() * 9) + 1,
+      userAnswer: ''
+    });
+    setCaptchaVerified(false);
+  };
 
   const handleSendInlineOtp = async () => {
     const emailClean = formData.email.trim().toLowerCase();
@@ -224,6 +225,14 @@ const RegisterScreen = ({ navigation }) => {
       setOtpError('Please enter a valid email address');
       return;
     }
+
+    const expectedSum = captcha.num1 + captcha.num2;
+    if (parseInt(captcha.userAnswer, 10) !== expectedSum) {
+      setOtpError(`Security Check Failed: Please answer ${captcha.num1} + ${captcha.num2} correctly.`);
+      return;
+    }
+    setCaptchaVerified(true);
+
     setSendingOtpLoading(true);
     setOtpError('');
     try {
@@ -477,6 +486,48 @@ const RegisterScreen = ({ navigation }) => {
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* Anti-Bot Security Captcha Challenge */}
+              {emailState !== 'verified' && (
+                <View style={{
+                  marginTop: 10,
+                  padding: 12,
+                  backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC',
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="shield-checkmark" size={18} color={theme.primary} style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: theme.text }}>
+                      Security Verification: {captcha.num1} + {captcha.num2} =
+                    </Text>
+                  </View>
+                  <TextInput
+                    style={{
+                      width: 50,
+                      height: 36,
+                      borderWidth: 1,
+                      borderColor: captchaVerified ? '#10B981' : (isDarkMode ? '#475569' : '#CBD5E1'),
+                      borderRadius: 6,
+                      textAlign: 'center',
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: theme.text,
+                      backgroundColor: isDarkMode ? '#0F172A' : '#FFFFFF'
+                    }}
+                    placeholder="?"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    value={captcha.userAnswer}
+                    onChangeText={(text) => setCaptcha({ ...captcha, userAnswer: text })}
+                    maxLength={3}
+                  />
+                </View>
+              )}
 
               {/* Validation Error Banner */}
               {otpError ? (

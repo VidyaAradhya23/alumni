@@ -10,6 +10,7 @@ const OTP = require('../models/OTP');
 const Notification = require('../models/Notification');
 const TokenBlacklist = require('../models/TokenBlacklist');
 const RefreshToken = require('../models/RefreshToken');
+const ActivityLog = require('../models/ActivityLog');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const { OAuth2Client } = require('google-auth-library');
@@ -415,6 +416,22 @@ exports.forgotPassword = async (req, res) => {
         // Dispatch real Password Reset Email via SendGrid API
         const emailResult = await sendPasswordResetEmail(user.email, resetUrl, resetToken);
 
+        // Store activity log in MongoDB Atlas
+        try {
+            await ActivityLog.create({
+                user: user._id,
+                actionType: 'REQUEST_PASSWORD_RESET_LINK',
+                method: 'POST',
+                endpoint: '/api/auth/forgot-password',
+                metadata: { email: user.email, resetUrl, tokenGenerated: true },
+                ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+                userAgent: req.get('user-agent') || 'Client App',
+                status: 200
+            });
+        } catch (logErr) {
+            console.error('[ACTIVITY LOG ERROR]:', logErr.message);
+        }
+
         if (!emailResult.success) {
             console.error(`[PASSWORD RESET EMAIL FAILED] ${user.email}`);
         }
@@ -433,8 +450,12 @@ exports.forgotPassword = async (req, res) => {
 // @route   POST /api/auth/reset-password
 exports.resetPassword = async (req, res) => {
     try {
+        await connectDB();
         const { token, newPassword } = req.body;
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        if (!token) {
+            return res.status(400).json({ message: 'Token is required' });
+        }
+        const hashedToken = crypto.createHash('sha256').update(token.trim()).digest('hex');
 
         const user = await User.findOne({
             passwordResetToken: hashedToken,
@@ -453,6 +474,22 @@ exports.resetPassword = async (req, res) => {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save();
+
+        // Store activity log in MongoDB Atlas
+        try {
+            await ActivityLog.create({
+                user: user._id,
+                actionType: 'PASSWORD_RESET_LINK_COMPLETED',
+                method: 'POST',
+                endpoint: '/api/auth/reset-password',
+                metadata: { email: user.email, resetSuccess: true },
+                ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+                userAgent: req.get('user-agent') || 'Client App',
+                status: 200
+            });
+        } catch (logErr) {
+            console.error('[ACTIVITY LOG ERROR]:', logErr.message);
+        }
 
         res.status(200).json({ message: 'Password reset successful' });
     } catch (error) {

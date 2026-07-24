@@ -37,9 +37,14 @@ const activityLogger = (req, res, next) => {
             else if (url.includes('/api/auth/register')) actionType = 'USER_REGISTER';
             else if (url.includes('/api/auth/send-otp')) actionType = 'REQUEST_EMAIL_OTP';
             else if (url.includes('/api/auth/verify-otp')) actionType = 'VERIFY_EMAIL_OTP';
+            else if (url.includes('/api/auth/forgot-password')) actionType = 'REQUEST_PASSWORD_RESET_LINK';
+            else if (url.includes('/api/auth/reset-password')) actionType = 'PASSWORD_RESET_LINK_COMPLETED';
+            else if (url.includes('/api/auth/validate-reset-token')) actionType = 'PASSWORD_RESET_LINK_ACCESSED';
+            else if (url.includes('/check-match')) actionType = 'CHECK_SHEET_DATA_MATCH';
+            else if (url.includes('/api/auth/google') || url.includes('oauth')) actionType = 'OAUTH_LINK_LOGIN';
             else if (url.includes('/api/auth/logout')) actionType = 'USER_LOGOUT';
             else if (url.includes('/api/auth/profile')) actionType = method === 'GET' ? 'VIEW_PROFILE' : 'UPDATE_PROFILE';
-            else if (url.includes('/api/auth/directory')) actionType = 'SEARCH_DIRECTORY';
+            else if (url.includes('/api/auth/directory') || url.includes('/api/auth/users')) actionType = 'SEARCH_DIRECTORY';
             else if (url.includes('/api/posts') && method === 'GET') actionType = 'VIEW_FEED';
             else if (url.includes('/api/posts') && method === 'POST') actionType = 'CREATE_POST';
             else if (url.includes('/save')) actionType = 'SAVE_POST_TOGGLE';

@@ -49,6 +49,13 @@ exports.createJob = async (req, res) => {
             postedBy: req.user._id
         });
 
+        // Automatically create a post in the feed about this job
+        const Post = require('../models/Post');
+        await Post.create({
+            user: req.user._id,
+            content: `I'm hiring! 🚀\n\nRole: ${title}\nCompany: ${company}\nLocation: ${location}\nType: ${jobType || 'Full-time'}\n\nCheck out the Jobs tab to apply!`
+        });
+
         res.status(201).json(job);
     } catch (error) {
         res.status(500).json({ message: error.message });

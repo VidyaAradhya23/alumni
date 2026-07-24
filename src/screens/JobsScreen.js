@@ -165,7 +165,7 @@ const JobsScreen = ({ navigation, route }) => {
     }
     setPostingJob(true);
     try {
-      await createJobPosting({
+      const newJob = await createJobPosting({
         title: pTitle,
         company: pCompany,
         location: pLocation,
@@ -176,6 +176,7 @@ const JobsScreen = ({ navigation, route }) => {
       });
       Alert.alert('Job Posted! 🚀', 'Your job vacancy is now live on the Alumni portal.');
       setPTitle(''); setPCompany(''); setPLocation(''); setPSalary(''); setPDesc('');
+      setJobs(prevJobs => [newJob, ...prevJobs]);
       setActiveTab('search');
     } catch (e) {
       Alert.alert('Error', 'Failed to post job opportunity.');

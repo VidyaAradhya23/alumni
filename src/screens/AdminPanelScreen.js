@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
   Alert,
   FlatList,
   Modal,
+  ActivityIndicator,
   useWindowDimensions, Platform} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import AdminMetricsScreen from './AdminMetricsScreen';
+import { getActivityLogs } from '../services/adminService';
 
 // ==========================================
 // DUMMY DATA FOR THE NEW MODULES
@@ -87,6 +89,31 @@ export default function AdminPanelScreen({ navigation }) {
   const [activityTab, setActivityTab] = useState('past'); // 'past' | 'due'
   const [activityCategory, setActivityCategory] = useState('All'); // 'All' | 'Memories' | 'Events' | 'Mentorship'
   const [selectedActivityTypes, setSelectedActivityTypes] = useState([]);
+  
+  // Real-time MongoDB System Activity Logs State
+  const [mongoLogs, setMongoLogs] = useState([]);
+  const [mongoLogsLoading, setMongoLogsLoading] = useState(false);
+  const [mongoLogSearch, setMongoLogSearch] = useState('');
+
+  useEffect(() => {
+    if (activeModule === 'admin_activities') {
+      fetchMongoLogs();
+    }
+  }, [activeModule]);
+
+  const fetchMongoLogs = async (searchStr = '') => {
+    setMongoLogsLoading(true);
+    try {
+      const data = await getActivityLogs(100, searchStr);
+      if (data && data.activities) {
+        setMongoLogs(data.activities);
+      }
+    } catch (err) {
+      console.log('[LOGS FETCH NOTE]:', err.message);
+    } finally {
+      setMongoLogsLoading(false);
+    }
+  };
 
   // Data Export Stats
   const [exportProgress, setExportProgress] = useState(0);
@@ -676,99 +703,104 @@ export default function AdminPanelScreen({ navigation }) {
     </View>
   );
 
-  // 8. ADMIN ACTIVITIES
+  // 8. ADMIN ACTIVITIES (MongoDB System Audit Logs)
   const renderAdminActivities = () => (
     <View style={styles.moduleContainer}>
-      <Text style={styles.moduleHeading}>Admin Log Dashboard</Text>
-      <View style={styles.activityLayout}>
-        
-        {/* Left Filters Sidebar */}
-        <View style={[styles.activityLeftSidebar, { width: width * 0.22 }]}>
-          <Text style={styles.sidebarSectionTitle}>Modules</Text>
-          {['All', 'Memories', 'Events', 'Mentorship Program'].map((cat) => (
-            <TouchableOpacity 
-              key={cat} 
-              style={[styles.sidebarTab, activityCategory === cat && styles.sidebarTabActive]} 
-              onPress={() => setActivityCategory(cat)}
-            >
-              <Text style={[styles.sidebarTabText, activityCategory === cat && styles.sidebarTabTextActive]}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <View>
+          <Text style={styles.moduleHeading}>MongoDB System Audit Logs</Text>
+          <Text style={styles.moduleSubheading}>Tracking every user action (small & big) stored in MongoDB Atlas</Text>
         </View>
+        <TouchableOpacity 
+          style={{ backgroundColor: theme.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }} 
+          onPress={() => fetchMongoLogs(mongoLogSearch)}
+          disabled={mongoLogsLoading}
+        >
+          <Ionicons name="refresh-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 12 }}>Refresh Logs</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Central Activities Feed */}
-        <View style={styles.activityCenterContent}>
-          <View style={styles.activityFeedTabs}>
-            <TouchableOpacity 
-              style={[styles.activityFeedTabBtn, activityTab === 'past' && styles.activityFeedTabBtnActive]} 
-              onPress={() => setActivityTab('past')}
-            >
-              <Text style={styles.activityFeedTabText}>Past Activities</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.activityFeedTabBtn, activityTab === 'due' && styles.activityFeedTabBtnActive]} 
-              onPress={() => setActivityTab('due')}
-            >
-              <Text style={styles.activityFeedTabText}>Due Activities</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Filter / Search Bar */}
+      <View style={{ flexDirection: 'row', marginBottom: 14, alignItems: 'center' }}>
+        <TextInput
+          style={[styles.textInput, { flex: 1, marginBottom: 0, height: 40 }]}
+          placeholder="Filter by action (e.g. LOGIN, POST, OTP, VIEW_FEED)..."
+          placeholderTextColor="#94A3B8"
+          value={mongoLogSearch}
+          onChangeText={(text) => {
+            setMongoLogSearch(text);
+            fetchMongoLogs(text);
+          }}
+        />
+      </View>
 
-          {activityTab === 'past' ? (
-            <FlatList
-              data={activities.filter((act) => {
-                const matchCategory = activityCategory === 'All' ? true : act.category.toLowerCase().includes(activityCategory.toLowerCase().slice(0, 5));
-                const matchType = selectedActivityTypes.length === 0 ? true : selectedActivityTypes.includes(act.type);
-                return matchCategory && matchType;
-              })}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingVertical: 12 }}
-              renderItem={({ item }) => (
-                <View style={styles.activityLogCard}>
-                  <View style={styles.activityLogHeader}>
-                    <Ionicons 
-                      name={item.type.includes('Email') ? 'mail-outline' : item.type.includes('Call') ? 'call-outline' : 'logo-facebook'} 
-                      size={16} 
-                      color="#003366" 
-                    />
-                    <Text style={styles.activityLogType}>{item.type}</Text>
-                    <Text style={styles.activityLogDate}>{item.date}</Text>
+      {mongoLogsLoading ? (
+        <View style={{ padding: 40, alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={{ marginTop: 12, color: theme.textSecondary }}>Fetching MongoDB Audit Logs...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={mongoLogs}
+          keyExtractor={(item) => item._id || Math.random().toString()}
+          contentContainerStyle={{ paddingVertical: 6 }}
+          renderItem={({ item }) => (
+            <View style={{
+              backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 10,
+              borderWidth: 1,
+              borderColor: isDarkMode ? '#334155' : '#E2E8F0'
+            }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{
+                    backgroundColor: item.method === 'POST' ? '#3B82F6' : item.method === 'PUT' ? '#F59E0B' : item.method === 'DELETE' ? '#EF4444' : '#10B981',
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    marginRight: 8
+                  }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{item.method}</Text>
                   </View>
-                  <Text style={styles.activityLogDesc}>{item.description}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
+                    {item.actionType}
+                  </Text>
                 </View>
-              )}
-              ListEmptyComponent={
-                <View style={styles.emptyFeedState}>
-                  <Text style={styles.emptyFeedStateText}>Sorry, no results containing all your search filters were found.</Text>
-                </View>
-              }
-            />
-          ) : (
-            <View style={styles.emptyFeedState}>
-              <Text style={styles.emptyFeedStateText}>No due activities found.</Text>
+                <Text style={{ fontSize: 11, color: '#94A3B8' }}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleTimeString() : 'Just now'}
+                </Text>
+              </View>
+
+              <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '600', marginBottom: 4 }}>
+                📍 Endpoint: {item.endpoint}
+              </Text>
+              
+              <Text style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 4 }}>
+                👤 User: {item.user ? `${item.user.name} (${item.user.email})` : 'Anonymous / Unauthenticated'}
+              </Text>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                <Text style={{ fontSize: 11, color: '#64748B' }}>
+                  🌐 IP: {item.ipAddress || '127.0.0.1'}
+                </Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: item.status < 400 ? '#10B981' : '#EF4444' }}>
+                  Status: {item.status || 200}
+                </Text>
+              </View>
             </View>
           )}
-        </View>
-
-        {/* Right Filter Options Sidebar */}
-        <View style={[styles.activityRightSidebar, { width: width * 0.26 }]}>
-          <Text style={styles.sidebarSectionTitle}>Activity Types</Text>
-          {['Call Interaction', 'Email Interaction', 'Facebook Interaction'].map((type) => (
-            <TouchableOpacity 
-              key={type} 
-              style={styles.checkboxOption} 
-              onPress={() => handleToggleActivityType(type)}
-            >
-              <Ionicons 
-                name={selectedActivityTypes.includes(type) ? 'checkbox' : 'square-outline'} 
-                size={18} 
-                color="#003366" 
-              />
-              <Text style={styles.checkboxLabel} numberOfLines={1}>{type}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-      </View>
+          ListEmptyComponent={
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <Ionicons name="list-outline" size={48} color="#94A3B8" />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 10 }}>No Action Logs Recorded</Text>
+              <Text style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>Perform any action in the app to see live MongoDB logs.</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 

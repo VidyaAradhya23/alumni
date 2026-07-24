@@ -4,19 +4,19 @@ const { protect } = require('../middleware/authMiddleware');
 const ActivityLog = require('../models/ActivityLog');
 
 // @route   POST /api/activity/track
-// @desc    Track custom frontend activity (e.g. page views)
+// @desc    Track custom frontend activity (clicks, page views, UI events)
 // @access  Private
 router.post('/track', protect, async (req, res) => {
     try {
         const { actionType, metadata } = req.body;
         
         await ActivityLog.create({
-            user: req.user._id,
-            actionType: actionType || 'CUSTOM_FRONTEND_EVENT',
-            method: 'FRONTEND',
+            user: req.user ? req.user._id : null,
+            actionType: actionType || 'FRONTEND_ACTION',
+            method: 'CLIENT',
             endpoint: req.originalUrl,
             metadata: metadata || {},
-            ipAddress: req.ip || req.connection.remoteAddress,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
             userAgent: req.get('user-agent'),
             status: 200
         });
@@ -29,16 +29,32 @@ router.post('/track', protect, async (req, res) => {
 });
 
 // @route   GET /api/activity
-// @desc    Get activity logs (Admin only ideally, but keeping it open for now for testing)
+// @desc    Get real-time system activity logs from MongoDB Atlas
 // @access  Private
 router.get('/', protect, async (req, res) => {
     try {
-        // Find recent 50 activities
-        const activities = await ActivityLog.find()
-            .populate('user', 'name email')
+        const { limit = 100, search } = req.query;
+
+        let query = {};
+        if (search) {
+            query = {
+                $or: [
+                    { actionType: { $regex: search, $options: 'i' } },
+                    { endpoint: { $regex: search, $options: 'i' } },
+                    { method: { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        const activities = await ActivityLog.find(query)
+            .populate('user', 'name email role department')
             .sort({ createdAt: -1 })
-            .limit(50);
-        res.json(activities);
+            .limit(parseInt(limit, 10));
+
+        res.json({
+            count: activities.length,
+            activities
+        });
     } catch (error) {
         console.error('Get Activity Error:', error);
         res.status(500).json({ message: 'Server error' });

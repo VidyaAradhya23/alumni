@@ -18,15 +18,21 @@ import useUserRole from '../hooks/useUserRole';
 
 const connectionRequests = [];
 
-const DirectoryScreen = ({ navigation }) => {
+const DirectoryScreen = ({ navigation, route }) => {
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
   const { isAlumni, isAdmin, isSuperAdmin, isAdminOrSuper, userRole } = useUserRole();
 
-  const [activeTab, setActiveTab] = useState('request');
+  const [activeTab, setActiveTab] = useState(route?.params?.tab || 'directory');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(connectionRequests);
   const [dbAlumni, setDbAlumni] = useState([]);
+
+  React.useEffect(() => {
+    if (route?.params?.tab) {
+      setActiveTab(route.params.tab);
+    }
+  }, [route?.params?.tab]);
 
   React.useEffect(() => {
     const fetchUsers = async () => {

@@ -144,4 +144,77 @@ const sendOtpEmail = async (userEmail, otp) => {
     }
 };
 
-module.exports = { sendWelcomeEmail, sendOtpEmail };
+// ─── Password Reset Email ───────────────────────────────────────────────────
+const sendPasswordResetEmail = async (userEmail, resetUrl, resetToken) => {
+    const apiKey = process.env.SENDGRID_API_KEY;
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'rvmediadevelopers@gmail.com';
+
+    const plainText = `Password Reset Request\n\nYou requested a password reset for your Alumni Network account.\nPlease use the following reset code or link to reset your password:\n\nReset Token Code: ${resetToken}\n\nReset Link: ${resetUrl}\n\nIf you did not request a password reset, please ignore this email.`;
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; background-color: #FFFFFF;">
+            <div style="background-color: #003366; padding: 24px; text-align: center;">
+                <h1 style="color: #FFFFFF; margin: 0; font-size: 22px; font-weight: 700;">Password Reset Request</h1>
+            </div>
+            <div style="padding: 32px 24px; background-color: #FFFFFF;">
+                <p style="font-size: 15px; color: #334155; margin-top: 0;">Hello,</p>
+                <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+                    We received a request to reset the password for your Alumni Network account. Use the token code below or click the link to set a new password:
+                </p>
+                
+                <div style="text-align: center; margin: 24px 0;">
+                    <div style="background-color: #F1F5F9; color: #003366; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 24px; letter-spacing: 3px; border: 1px solid #CBD5E1; display: inline-block;">
+                        ${resetToken}
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 28px 0;">
+                    <a href="${resetUrl}" style="background-color: #003366; color: #FFFFFF; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                        Reset Your Password
+                    </a>
+                </div>
+
+                <p style="font-size: 13px; color: #64748B; text-align: center; margin-bottom: 0;">
+                    This link and code will expire in <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email.
+                </p>
+            </div>
+            <div style="background-color: #F8FAFC; padding: 16px; text-align: center; border-top: 1px solid #E2E8F0;">
+                <p style="font-size: 12px; color: #94A3B8; margin: 0;">© ${new Date().getFullYear()} Alumni Network. All rights reserved.</p>
+            </div>
+        </div>
+    `;
+
+    if (apiKey && apiKey.startsWith('SG.')) {
+        try {
+            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    personalizations: [{ to: [{ email: userEmail }] }],
+                    from: { email: fromEmail, name: 'Alumni Network Security' },
+                    subject: 'Password Reset Request - Alumni Network',
+                    content: [
+                        { type: 'text/plain', value: plainText },
+                        { type: 'text/html', value: html }
+                    ]
+                })
+            });
+
+            if (response.status >= 200 && response.status < 300) {
+                console.log(`[PASSWORD RESET EMAIL OK] Sent to ${userEmail}`);
+                return { success: true };
+            }
+            const errText = await response.text();
+            console.error('[PASSWORD RESET SENDGRID ERROR]:', errText);
+        } catch (e) {
+            console.error('[PASSWORD RESET FETCH ERROR]:', e.message);
+        }
+    }
+
+    return { success: false };
+};
+
+module.exports = { sendWelcomeEmail, sendOtpEmail, sendPasswordResetEmail };

@@ -3,7 +3,7 @@ const StudentData = require('../models/StudentData');
 const connectDB = require('../config/db');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { sendWelcomeEmail, sendOtpEmail } = require('../utils/sendEmail');
+const { sendWelcomeEmail, sendOtpEmail, sendPasswordResetEmail } = require('../utils/sendEmail');
 const { validateEmailFull } = require('../utils/emailValidator');
 const crypto = require('crypto');
 const OTP = require('../models/OTP');
@@ -381,24 +381,39 @@ exports.changePassword = async (req, res) => {
 // @route   POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
     try {
+        await connectDB();
         const { email } = req.body;
-        const user = await User.findOne({ email: email.trim().toLowerCase() });
+        if (!email || !email.trim()) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+
+        const emailClean = email.trim().toLowerCase();
+        const user = await User.findOne({ email: emailClean });
 
         if (!user) {
-            return res.status(404).json({ message: 'There is no user with this email address.' });
+            return res.status(404).json({ message: 'There is no user registered with this email address.' });
         }
 
         const resetToken = user.createPasswordResetToken();
         await user.save({ validateBeforeSave: false });
 
-        // In a real app, send this token via email using nodemailer/sendgrid
-        // For now, we'll just log it or return it for testing purposes if email is not fully configured
-        // const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        // await sendPasswordResetEmail(user.email, resetUrl);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://alumni-app-nine.vercel.app';
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
-        res.status(200).json({ message: 'Password reset link sent to email (simulated). Token: ' + resetToken });
+        // Dispatch real Password Reset Email via SendGrid API
+        const emailResult = await sendPasswordResetEmail(user.email, resetUrl, resetToken);
+
+        if (!emailResult.success) {
+            console.error(`[PASSWORD RESET EMAIL FAILED] ${user.email}`);
+        }
+
+        res.status(200).json({
+            message: 'A secure password reset link and verification code have been sent to your email address.',
+            token: resetToken
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[FORGOT PASSWORD CONTROLLER ERROR]:', error);
+        res.status(500).json({ message: error.message || 'Server error' });
     }
 };
 
